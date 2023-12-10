@@ -3,6 +3,9 @@ import InvoiceSidebar from "./components/sidebar";
 export async function generateMetadata() {
     return {
         title: "Invoice | BKTSK Notion Invoice",
+        robots: {
+            index: false,
+        }
     }
 }
 

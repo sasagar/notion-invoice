@@ -11,6 +11,9 @@ export const metadata = {
   metadataBase: new URL(defaultUrl),
   title: "BKTSK Notion Invoice",
   description: "BKTSK専用Notionから請求書を吐き出す仕組み",
+  robots: {
+    index: false,
+  }
 };
 
 export default function RootLayout({

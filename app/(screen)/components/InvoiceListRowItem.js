@@ -1,9 +1,9 @@
 import Link from "next/link"
-import { plain_text } from "../../utils/properties/plain_text"
-import { get_customer } from "../../utils/properties/get_customer"
+import { plain_text } from "../utils/properties/plain_text"
+import { get_customer } from "../utils/properties/get_customer"
 import { parseISO, format } from 'date-fns'
 import ja from 'date-fns/locale/ja'
-import StatusTag from "../../invoice/components/statusTag";
+import StatusTag from "../invoice/components/statusTag";
 
 const InvoiceListRowItem = ({ invoice }) => {
     return (

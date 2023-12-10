@@ -1,5 +1,5 @@
 import { Client } from '@notionhq/client';
-import InvoiceListRow from '../(screen)/components/InvoiceListRow';
+import InvoiceListRow from '@/app/(screen)/components/InvoiceListRow';
 
 export default async function Invoice() {
     const databaseId = process.env.INVOICE_DATABASE_ID;

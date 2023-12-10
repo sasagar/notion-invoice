@@ -22,7 +22,7 @@ const Header = async () => {
 
     return user ? (
         <div className='w-10/12 max-w-screen-xl mx-auto flex justify-between items-center'>
-            <h1 className='text-2xl font-bold'>BKTSK Notion Invoice</h1>
+            <h1 className='text-2xl font-bold'><Link href="/">BKTSK Notion Invoice</Link></h1>
             <nav>
                 <ul className='flex gap-6'>
                     <li>
@@ -39,8 +39,8 @@ const Header = async () => {
             </nav>
         </div>
     ) : (
-        <div className='w-10/12 max-w-screen-xl mx-auto flex justify-between'>
-            <h1 className='text-2xl font-bold'>BKTSK Notion Invoice</h1>
+        <div className='w-10/12 max-w-screen-xl mx-auto flex justify-between items-center'>
+            <h1 className='text-2xl font-bold'><Link href="/">BKTSK Notion Invoice</Link></h1>
             <nav>
                 <ul>
                     <li>

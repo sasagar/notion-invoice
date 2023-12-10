@@ -10,6 +10,9 @@ export async function generateMetadata() {
 
     return {
         title: `Invoice #${pathNameArray[3]} | BKTSK Notion Invoice`,
+        robots: {
+            index: false,
+        }
     }
 }
 
