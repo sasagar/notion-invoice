@@ -1,0 +1,20 @@
+:root {
+  --foreground-rgb: theme("colors.slate.900");
+  --background-start-rgb: theme("colors.slate.50");
+  --background-end-rgb: theme("colors.white");
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: theme("colors.slate.100");
+    /* --background-start-rgb: 0, 0, 0; */
+    --background-start-rgb: theme("colors.slate.700");
+    --background-end-rgb: theme("colors.slate.800");
+  }
+}
+
+body {
+  color: var(--foreground-rgb);
+  background: linear-gradient(to bottom, transparent, var(--background-end-rgb))
+    var(--background-start-rgb);
+}
