@@ -45,7 +45,7 @@ const invoicePrintPage = async ({ params }) => {
                     <section className="double-border">
                         <div className="flex justify-start items-baseline gap-10 px-3 py-2 border-b-2 border-kent-blue-500">
                             <h2 className="text-xl">御請求額</h2>
-                            <p className="text-2xl font-bold">¥ {sanitizedInvoice.sum.toLocaleString()}</p>
+                            <p className="text-2xl font-bold">¥ {sanitizedInvoice.invoice_sum.toLocaleString()}</p>
                         </div>
                         <div className="flex justify-start items-baseline gap-10 px-3 py-2">
                             <h2 className="text-lg">支払期限</h2>
