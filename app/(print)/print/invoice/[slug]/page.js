@@ -62,7 +62,7 @@ const invoicePrintPage = async ({ params }) => {
                             登録番号: {plain_text(account.properties['登録番号']) ? plain_text(account.properties['登録番号']) : "(未登録)"}
                         </div>
                         <div className="w-20 h-auto">
-                            <Image src={account.properties['印鑑画像'].files[0].file.url} alt={account.properties['印鑑画像'].files[0].file.name} width={1024} height={1024} />
+                            <Image src={account.properties['印鑑画像'].files[0].file.url} alt={account.properties['印鑑画像'].files[0].file.name} width={1024} height={1024} priority={true} />
                         </div>
                     </section>
                     <section className="double-border my-3 flex-1">
