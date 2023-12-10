@@ -6,7 +6,7 @@ export const GET = async (req) => {
     const origin = req.nextUrl.origin;
     const path = req.nextUrl.pathname.split("/");
 
-    const browser = await puppeteer.launch({ headless: "new" });
+    const browser = await puppeteer.launch({ headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
     page.setExtraHTTPHeaders({
         'bktsk_notion_invoice': process.env.NOTION_API_KEY,
