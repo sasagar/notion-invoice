@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import puppeteer from "puppeteer";
 
 export const GET = async (req) => {
-    const origin = req.nextUrl.origin;
+    const host = req.nextUrl.host;
+    // const origin = req.nextUrl.origin;
     const path = req.nextUrl.pathname.split("/");
 
     const browser = await puppeteer.launch({ headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox'] });
@@ -11,7 +12,7 @@ export const GET = async (req) => {
     page.setExtraHTTPHeaders({
         'bktsk_notion_invoice': process.env.NOTION_API_KEY,
     })
-    await page.goto(origin + "/print/invoice/" + path[path.length - 1]);
+    await page.goto("http://" + host + "/print/invoice/" + path[path.length - 1]);
     await page.emulateMediaType("print");
 
     const pdf = await page.pdf({ format: "A4", landscape: false, margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" } });
