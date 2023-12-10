@@ -8,6 +8,11 @@ const nextConfig = {
                 port: ''
             }
         ]
+    },
+    experimental: {
+        serverActions: {
+            allowedOrigins: ['http://localhost:3000', 'https://invoice.bktsk.com']
+        }
     }
 }
 
