@@ -7,7 +7,10 @@ const getInvoices = async (status) => {
         database_id: databaseId,
         sorts: [
             {
-                // 昇順で並べ替える
+                property: '発行日',
+                direction: 'descending',
+            },
+            {
                 timestamp: 'last_edited_time',
                 direction: 'descending',
             }

@@ -8,21 +8,12 @@ export default async function Invoice() {
         database_id: databaseId,
         sorts: [
             {
-                // 昇順で並べ替える
+                property: '発行日',
+                direction: 'descending',
+            },
+            {
                 timestamp: 'last_edited_time',
                 direction: 'descending',
-                // 降順で並べ替える
-                // property: 'Date',
-                // direction: 'descending',
-                // 数値で並べ替える
-                // property: 'Amount',
-                // direction: 'ascending',
-                // 文字列で並べ替える
-                // property: 'Status',
-                // direction: 'ascending',
-                // 日付で並べ替える
-                // property: 'Date',
-                // direction: 'ascending',
             }
         ]
     })
