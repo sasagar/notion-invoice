@@ -11,7 +11,10 @@ const nextConfig = {
     },
     experimental: {
         serverActions: {
-            allowedOrigins: ['http://localhost:3000', 'https://invoice.bktsk.com']
+            allowedOrigins: [
+                'http://localhost:3000',
+                'https://invoice.bktsk.com'
+            ]
         }
     }
 }
