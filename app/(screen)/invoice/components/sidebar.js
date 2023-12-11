@@ -15,7 +15,7 @@ const InvoiceSidebar = async () => {
             <ul>
                 <li>
                     <details>
-                        <summary>
+                        <summary className="bg-green-500/30 border-green-500/50 hover:bg-green-500/40 transition-all">
                             <SlPencil /> ドラフト
                         </summary>
                         <ul className="aside_draft">
@@ -35,7 +35,7 @@ const InvoiceSidebar = async () => {
                 </li>
                 <li>
                     <details>
-                        <summary>
+                        <summary className="bg-amber-500/30 border-amber-500/50 hover:bg-amber-500/40 transition-all">
                             <SlEnvolopeLetter /> 送付済み
                         </summary>
                         <ul className="aside_sent">
@@ -55,7 +55,7 @@ const InvoiceSidebar = async () => {
                 </li>
                 <li>
                     <details>
-                        <summary>
+                        <summary className="bg-blue-500/30  border-blue-500/50 hover:bg-blue-500/40 transition-all">
                             <SlCheck /> 支払い済み
                         </summary>
                         <ul className="aside_completed">
@@ -73,7 +73,7 @@ const InvoiceSidebar = async () => {
                     </details>
                 </li>
             </ul>
-        </aside>
+        </aside >
     );
 }
 
