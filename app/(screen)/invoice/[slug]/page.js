@@ -128,7 +128,7 @@ const InvoiceDetail = async ({ params }) => {
                                         <td>{plain_text(row.properties['名前'])}</td>
                                         <td className="text-slate-400">{row.properties['項目名'].rollup.array[0].title[0].plain_text}</td>
                                         <td className="text-right">&yen; {row.properties['単価'].rollup.array[0].number.toLocaleString()}</td>
-                                        <td className="text-right">{row.properties['数量'].number.toLocaleString()}</td>
+                                        <td className="text-right">{row.properties['数量'].number.toLocaleString()} {plain_text(row.properties['単位'])}</td>
                                         <td className="text-right">&yen; {row.properties['小計'].formula.number.toLocaleString()}</td>
                                         <td className="text-center">{plain_text(row.properties['税率'])}</td>
                                     </tr>

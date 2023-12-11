@@ -15,7 +15,7 @@ const InvoiceSidebar = async () => {
             <ul>
                 <li>
                     <details>
-                        <summary className="bg-green-500/30 border-green-500/50 hover:bg-green-500/40 transition-all">
+                        <summary className="bg-lime-500/30 border-lime-500/50 hover:bg-lime-500/40 transition-all">
                             <SlPencil /> ドラフト
                         </summary>
                         <ul className="aside_draft">

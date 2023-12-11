@@ -91,7 +91,7 @@ const invoicePrintPage = async ({ params }) => {
                                 <tr key={index}>
                                     <td>{plain_text(row.properties['名前'])}</td>
                                     <td className="text-right">&yen; {row.properties['単価'].rollup.array[0].number.toLocaleString()}</td>
-                                    <td className="text-right">{row.properties['数量'].number.toLocaleString()}</td>
+                                    <td className="text-right">{row.properties['数量'].number.toLocaleString()} {plain_text(row.properties['単位'])}</td>
                                     <td className="text-right">&yen; {row.properties['小計'].formula.number.toLocaleString()}</td>
                                     <td className="text-center">{plain_text(row.properties['税率'])}</td>
                                 </tr>
