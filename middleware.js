@@ -11,14 +11,23 @@ export async function middleware(request) {
 
     const token = request.headers.get("bktsk_notion_invoice");
 
+    // Pupeteerのリクエストのため、トークンが一致する場合はリクエストを処理しない。
     if (token === process.env.NOTION_API_KEY) {
         return response;
     }
 
-    if (!session && !request.url.includes("/login")) {
+    // ログインしていない場合でもトップページは表示させる
+    if (!session && request.nextUrl.pathname === "/") {
+        return response;
+    }
+
+    // ログインしていない場合はログイン画面にリダイレクトする。
+    if (!session && !request.nextUrl.pathname.startsWith("/login")) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
-    if (session && request.url.includes("/login")) {
+
+    // ログインしている場合はログイン画面から請求書画面にリダイレクトする。
+    if (session && request.nextUrl.pathname.startsWith("/login")) {
         return NextResponse.redirect(new URL("/invoice", request.url));
     }
 
