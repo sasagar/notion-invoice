@@ -1,6 +1,9 @@
+import { cache } from 'react';
 import { Client } from '@notionhq/client';
 
-const getInvoiceItem = async (id) => {
+const getInvoiceItem = cache(async (id) => {
+    console.log('Func: [Notion] getInvoiceItem');
+
     const databaseId = process.env.INVOICE_DATABASE_ID;
     const notion = new Client({ auth: process.env.NOTION_API_KEY });
     const response = await notion.databases.query({
@@ -29,6 +32,6 @@ const getInvoiceItem = async (id) => {
     const account = await notion.pages.retrieve({ page_id: invoices[0].properties['担当者'].relation[0].id });
 
     return { invoices, customer, account };
-}
+})
 
 export default getInvoiceItem;

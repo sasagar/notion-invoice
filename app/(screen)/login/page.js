@@ -1,28 +1,40 @@
-import { headers, cookies } from 'next/headers'
-import { createClient } from '../utils/supabase/server'
+'use client';
+// import { headers, cookies } from 'next/headers'
+import { useState } from 'react'
+
+// import { createClient } from '../utils/supabase/server'
+import { createClient } from '../utils/supabase/client'
 import { redirect } from 'next/navigation'
 
-export default function Login({
-    searchParams,
-}) {
+import { Turnstile } from '@marsidev/react-turnstile'
+
+
+export default function Login({ searchParams }) {
+    const [captchaToken, setCaptchaToken] = useState()
+
     const signIn = async (formData) => {
-        'use server'
+        // 'use server'
 
         const email = formData.get('email')
         const password = formData.get('password')
-        const cookieStore = cookies()
-        const supabase = createClient(cookieStore)
+        // const cookieStore = cookies()
+        // const supabase = createClient(cookieStore)
+        const supabase = createClient();
 
         const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
+            options: {
+                captchaToken
+            }
         })
 
         if (error) {
-            return redirect('/login?message=ユーザー認証できませんでした')
+            const redirectPath = encodeURI('/login?message=ユーザー認証できませんでした');
+            return redirect(redirectPath);
         }
 
-        return redirect('/invoice')
+        return redirect('/')
     }
 
     // const signUp = async (formData) => {
@@ -95,6 +107,7 @@ export default function Login({
                     placeholder="••••••••"
                     required
                 />
+                <Turnstile siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY} onSuccess={(token) => { setCaptchaToken(token) }} />
                 <button className="bg-green-700 hover:bg-green-600 text-green-100 rounded-md px-4 py-2 text-foreground mb-2 transition-all">
                     ログイン
                 </button>

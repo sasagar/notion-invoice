@@ -14,6 +14,8 @@ import PrintTaxTable from "./components/printTaxTable";
 import PrintWithHoldingTable from "./components/printWithHoldingTable";
 import PrintWithHoldingRow from "./components/printWithHoldingRow";
 
+export const revalidate = 30 // キャッシュの有効期限30秒
+
 const invoicePrintPage = async ({ params }) => {
 
     const { invoices, customer, account } = await getInvoiceItem(params.slug);

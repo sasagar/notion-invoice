@@ -23,7 +23,7 @@ const InvoiceSidebar = async () => {
                                 draft.map(invoice => {
                                     const number = plain_text(invoice.properties['請求書番号']);
                                     return (
-                                        <li key="number">
+                                        <li key={number}>
                                             <InvoiceLink number={number} />
                                         </li>
                                     )
@@ -43,7 +43,7 @@ const InvoiceSidebar = async () => {
                                 sent.map(invoice => {
                                     const number = plain_text(invoice.properties['請求書番号']);
                                     return (
-                                        <li key="number">
+                                        <li key={number}>
                                             <InvoiceLink number={number} />
                                         </li>
                                     )
@@ -63,7 +63,7 @@ const InvoiceSidebar = async () => {
                                 completed.map(invoice => {
                                     const number = plain_text(invoice.properties['請求書番号']);
                                     return (
-                                        <li key="number">
+                                        <li key={number}>
                                             <InvoiceLink number={number} />
                                         </li>
                                     )

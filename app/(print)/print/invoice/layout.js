@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import './print.css';
 
-export async function generateMetadata() {
+export const generateMetadata = async () => {
     const headersList = headers();
 
     const url = headersList.get("x-url") || null;

@@ -1,6 +1,8 @@
 import { headers } from "next/headers";
 
-export async function generateMetadata() {
+export const revalidate = 30 // キャッシュの有効期限30秒
+
+export const generateMetadata = async () => {
     const headersList = headers();
 
     const url = headersList.get("x-url") || null;

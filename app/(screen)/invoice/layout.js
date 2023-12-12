@@ -1,6 +1,8 @@
 import InvoiceSidebar from "./components/sidebar";
 
-export async function generateMetadata() {
+export const revalidate = 30 // キャッシュの有効期限30秒
+
+export const generateMetadata = async () => {
     return {
         title: "Invoice | BKTSK Notion Invoice",
         robots: {

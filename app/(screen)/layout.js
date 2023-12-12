@@ -1,6 +1,8 @@
 import Header from "@/app/(screen)/components/Header";
 import './style.css';
 
+export const revalidate = 30 // キャッシュの有効期限30秒
+
 export default function ScreenLayout({
     children
 }) {

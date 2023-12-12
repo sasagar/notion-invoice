@@ -17,6 +17,8 @@ import WithHoldingTable from "../components/withHoldingTable";
 import WithHoldingRow from "../components/withHoldingRow";
 import PdfDownload from "../components/pdfDownload";
 
+export const revalidate = 30 // キャッシュの有効期限30秒
+
 
 const InvoiceDetail = async ({ params }) => {
     const { invoices, customer, account } = await getInvoiceItem(params.slug);
@@ -89,7 +91,7 @@ const InvoiceDetail = async ({ params }) => {
                         <h3 className="text-xl font-bold">会社名</h3>
                         <div className="flex items-center justify-start gap-2">
                             <span>{plain_text(account.properties['会社名'])}</span>
-                            <Image src={account.properties['印鑑画像'].files[0].file.url} alt={account.properties['印鑑画像'].files[0].name} className="w-10 h-10 object-contain" width="1024" height="1024" />
+                            <Image src={account.properties['印鑑画像'].files[0].file.url} alt={account.properties['印鑑画像'].files[0].name} className="w-10 h-10 object-contain" width="1024" height="1024" priority="true" />
                         </div>
                     </div>
                     <div className="mb-2">

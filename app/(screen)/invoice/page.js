@@ -1,24 +1,10 @@
-import { Client } from '@notionhq/client';
+import getAllInvoices from '../utils/notion/getAllInvoices';
 import InvoiceListRow from '@/app/(screen)/components/InvoiceListRow';
 
-export default async function Invoice() {
-    const databaseId = process.env.INVOICE_DATABASE_ID;
-    const notion = new Client({ auth: process.env.NOTION_API_KEY });
-    const response = await notion.databases.query({
-        database_id: databaseId,
-        sorts: [
-            {
-                property: '発行日',
-                direction: 'descending',
-            },
-            {
-                timestamp: 'last_edited_time',
-                direction: 'descending',
-            }
-        ]
-    })
+export const revalidate = 30 // キャッシュの有効期限30秒
 
-    const invoices = response.results;
+const Invoice = async () => {
+    const invoices = await getAllInvoices();
 
     return (
         <div className='w-10/12 mx-auto'>
@@ -27,3 +13,5 @@ export default async function Invoice() {
         </div>
     )
 }
+
+export default Invoice;
