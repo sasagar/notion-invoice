@@ -1,9 +1,7 @@
 'use client';
-// import { headers, cookies } from 'next/headers'
 import { useState } from 'react'
 
-// import { createClient } from '@/app/(screen)/_utils/supabase/server'
-import { createClient } from '@/(screen)/_utils/supabase/client'
+import { createClient } from '@/app/(screen)/_utils/supabase/client';
 import { redirect } from 'next/navigation'
 
 import { Turnstile } from '@marsidev/react-turnstile'
