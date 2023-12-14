@@ -1,3 +1,5 @@
+const { Truculenta } = require('next/font/google')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
@@ -16,6 +18,25 @@ const nextConfig = {
                 'https://invoice.bktsk.com'
             ]
         }
+    },
+    async redirects() {
+        return [
+            {
+                source: '/invoice',
+                destination: '/invoice/list/1',
+                permanent: true
+            },
+            {
+                source: '/invoice/:id',
+                destination: '/invoice/list/:id',
+                permanent: true
+            },
+            {
+                source: '/invoice/list',
+                destination: '/invoice/list/1',
+                permanent: true
+            }
+        ]
     }
 }
 

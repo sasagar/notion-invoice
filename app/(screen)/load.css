@@ -1,5 +1,5 @@
 .skeleton {
-  @apply relative isolate overflow-hidden shadow-xl shadow-black/5;
+  @apply relative isolate overflow-hidden shadow-xl shadow-black/5 bg-white/20;
   &::before {
     content: "";
     @apply absolute inset-0 bg-gradient-to-r from-transparent via-kent-blue-100/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite] border-t border-kent-blue-100/10;

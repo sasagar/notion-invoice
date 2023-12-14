@@ -1,16 +1,18 @@
-import InvoiceLink from "./invoiceLink";
-import getInvoices from "@/app/(screen)/utils/notion/getInvoices";
+import InvoiceLink from "./_components/invoiceLink";
+import getInvoices from "@/app/(screen)/_utils/notion/getInvoices";
 import { SlPencil, SlEnvolopeLetter, SlCheck } from "react-icons/sl";
-import "./sidebar.css";
-import { plain_text } from "@/app/(screen)/utils/properties/plain_text";
+import { plain_text } from "@/app/(screen)/_utils/properties/plain_text";
 
-const InvoiceSidebar = async () => {
+import './style.css'
+
+const InvoiceSidebarDefault = async () => {
     const draft = await getInvoices("ドラフト");
     const sent = await getInvoices("送付済み");
     const completed = await getInvoices("支払い済み");
+
     return (
         <aside className="fixed top-16 w-2/12 bg-slate-800 rounded-tr-2xl rounded-br-2xl shadow shadow-slate-950 border-r border-t border-b border-slate-600 py-8 px-5 transition-all">
-            <h2 className=" text-2xl font-bold mb-5">Notion Invoice</h2>
+            <h2 className="text-2xl font-bold mb-5">Notion Invoice</h2>
 
             <ul>
                 <li>
@@ -29,7 +31,6 @@ const InvoiceSidebar = async () => {
                                     )
                                 })
                             }
-
                         </ul>
                     </details>
                 </li>
@@ -73,8 +74,8 @@ const InvoiceSidebar = async () => {
                     </details>
                 </li>
             </ul>
-        </aside >
+        </aside>
     );
 }
 
-export default InvoiceSidebar;
+export default InvoiceSidebarDefault;

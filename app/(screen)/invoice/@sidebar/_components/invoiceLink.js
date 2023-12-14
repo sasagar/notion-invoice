@@ -3,7 +3,7 @@ import Link from "next/link";
 
 const InvoiceLink = (props) => {
     return (
-        <Link href={`/invoice/${props.number}`} className="text-sm">
+        <Link href={`/invoice/item/${props.number}`} className="text-sm">
             <SlDoc /> {props.number}
         </Link>
     )

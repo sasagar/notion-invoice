@@ -2,11 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link'
-// import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-// import { createClient } from '@/app/(screen)/utils/supabase/server'
-// import HeaderInner from './HeaderInner'
-import { createClient } from '../utils/supabase/client';
+import { createClient } from '@/app/(screen)/_utils/supabase/client';
 
 const Header = () => {
     const [supabase] = useState(() => createClient());

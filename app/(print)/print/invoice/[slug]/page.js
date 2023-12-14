@@ -1,18 +1,18 @@
 import Image from "next/image";
 
-import getInvoiceItem from "@/app/(screen)/utils/notion/getInvoiceItem";
-import invoiceSanitizer from "@/app/(screen)/utils/notion/invoiceSanitizer";
-import getInvoiceRow from "@/app/(screen)/utils/notion/getInvoiceRow";
-import dateFormat from "@/app/(screen)/utils/properties/dateFormat";
+import getInvoiceItem from "@/app/(screen)/_utils/notion/getInvoiceItem";
+import invoiceSanitizer from "@/app/(screen)/_utils/notion/invoiceSanitizer";
+import getInvoiceRow from "@/app/(screen)/_utils/notion/getInvoiceRow";
+import dateFormat from "@/app/(screen)/_utils/properties/dateFormat";
 
-import { plain_text } from "@/app/(screen)/utils/properties/plain_text";
+import { plain_text } from "@/app/(screen)/_utils/properties/plain_text";
 
-import CustomerInfo from "./components/customerInfo";
-import CustomerPerson from "./components/customerPerson";
-import AccountInfo from "./components/accountInfo";
-import PrintTaxTable from "./components/printTaxTable";
-import PrintWithHoldingTable from "./components/printWithHoldingTable";
-import PrintWithHoldingRow from "./components/printWithHoldingRow";
+import CustomerInfo from "./_components/customerInfo";
+import CustomerPerson from "./_components/customerPerson";
+import AccountInfo from "./_components/accountInfo";
+import PrintTaxTable from "./_components/printTaxTable";
+import PrintWithHoldingTable from "./_components/printWithHoldingTable";
+import PrintWithHoldingRow from "./_components/printWithHoldingRow";
 
 export const revalidate = 30 // キャッシュの有効期限30秒
 

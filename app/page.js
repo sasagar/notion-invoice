@@ -1,5 +1,5 @@
-import AuthButton from "./(screen)/components/AuthButton";
-import Header from "./(screen)/components/Header";
+// import AuthButton from "./(screen)/_components/AuthButton";
+import Header from "./(screen)/_components/Header";
 
 import './(screen)/style.css'
 

@@ -1,4 +1,3 @@
-import InvoiceSidebar from "./components/sidebar";
 
 export const revalidate = 30 // キャッシュの有効期限30秒
 
@@ -12,11 +11,12 @@ export const generateMetadata = async () => {
 }
 
 const invoiceLayout = ({
-    children
+    children,
+    sidebar,
 }) => {
     return (
         <>
-            <InvoiceSidebar />
+            {sidebar}
             <section className="invoice-layout min-h-full ml-[20%] w-full">
                 {children}
             </section>

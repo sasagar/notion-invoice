@@ -15,12 +15,17 @@ export const generateMetadata = async () => {
 }
 
 const invoiceSlugLayout = ({
-    children
+    // children,
+    invoiceHeader,
+    invoiceInfo,
+    invoiceDetail
 }) => {
     return (
-        <>
-            {children}
-        </>
+        <article className="mr-8">
+            {invoiceHeader}
+            {invoiceInfo}
+            {invoiceDetail}
+        </article>
     )
 }
 

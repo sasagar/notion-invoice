@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from "react";
 
-import { plain_text } from "../../utils/properties/plain_text";
+import { plain_text } from "@/app/(screen)/_utils/properties/plain_text";
 import { SlCloudDownload } from "react-icons/sl";
 import { CgSpinnerTwo } from "react-icons/cg";
 
