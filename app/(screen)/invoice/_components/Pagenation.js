@@ -1,16 +1,17 @@
 import { SlArrowLeft, SlArrowRight } from "react-icons/sl";
 import getAllInvoices from "@/app/(screen)/_utils/notion/getAllInvoices";
 
-const Pagenation = async (param) => {
+const Pagenation = async ({ params }) => {
+    console.log(params)
     const perPage = process.env.NEXT_PUBLIC_PER_PAGE;
 
     const invoices = await getAllInvoices();
     const count = invoices.length;
 
-    const page = param.page ? param.page : 1;
+    const page = params.page ? params.page * 1 : 1;
 
     const start = (page - 1) * perPage + 1;
-    const end = page * perPage;
+    const end = (page * perPage > count) ? count : page * perPage;
 
     const lastPage = Math.ceil(count / perPage);
 
@@ -60,13 +61,15 @@ const Pagenation = async (param) => {
                         <a href={`/invoice/list/${page}`} aria-current="page" className="z-10 flex items-center justify-center px-3 h-8 leading-tight text-blue-600 border border-blue-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white">{page}</a>
                     </li>
 
-                    {page + 1 <= lastPage &&
+                    {
+                        page + 1 <= lastPage &&
                         <li>
                             <a href={`/invoice/list/${page + 1}`} className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">{page + 1}</a>
                         </li>
                     }
 
-                    {page + 2 <= lastPage &&
+                    {
+                        page + 2 <= lastPage &&
                         <li>
                             <a href={`/invoice/list/${page + 2}`} className="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">{page + 2}</a>
                         </li>
