@@ -1,11 +1,9 @@
-const UserLayout = ({ children, profile, notion }) => {
+const UserLayout = ({children, notion }) => {
   return (
     <>
       <div className='flex gap-10 justify-center w-full p-16'>
-        {/* {profile} */}
         {notion}
-      </div>
-      {children}
+      </div>children
     </>
   );
 };
