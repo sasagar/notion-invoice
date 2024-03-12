@@ -4,7 +4,8 @@ import ClientProfileComponent from './client';
 const Profile = async () => {
   const session = await getSession();
 
-  return <ClientProfileComponent session={session} />;
+  // return <ClientProfileComponent session={session} />;
+  return <></>
 };
 
 export default Profile;
