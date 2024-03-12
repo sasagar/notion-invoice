@@ -2,6 +2,7 @@ const { Truculenta } = require('next/font/google')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: 'standalone',
     images: {
         remotePatterns: [
             {
