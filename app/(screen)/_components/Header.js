@@ -103,7 +103,10 @@ const Header = () => {
     <div className='w-10/12 max-w-screen-xl mx-auto flex justify-between items-center'>
       <h1 className='text-2xl font-bold'>
         <Link href='/'>BKTSK Notion Invoice</Link>
-      </h1>navComponent
+      </h1>
+      <>
+        {navComponent}
+      </>
     </div>
   );
 };
