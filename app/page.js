@@ -1,4 +1,3 @@
-// import AuthButton from "./(screen)/_components/AuthButton";
 import Header from "./(screen)/_components/Header";
 
 import './(screen)/style.css'

@@ -1,18 +1,13 @@
-import InvoiceListRowItem from "./InvoiceListRowItem"
+import InvoiceListRowItem from './InvoiceListRowItem';
 
-function InvoiceListRow(props) {
-
-    const invoices = props.invoices;
-
-    return (
-        <article>
-            {
-                invoices.map((invoice, index) => (
-                    <InvoiceListRowItem invoice={invoice} key={index} />
-                ))
-            }
-        </article>
-    )
+function InvoiceListRow({ invoices }) {
+  return (
+    <article>
+      {invoices.map(invoice => (
+        <InvoiceListRowItem invoice={invoice} key={invoice.id} />
+      ))}
+    </article>
+  );
 }
 
 export default InvoiceListRow;
