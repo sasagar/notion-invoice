@@ -1,4 +1,4 @@
-'use client';
+// 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/app/(screen)/_utils/supabase/client';
 import { cookies } from 'next/headers'
