@@ -1,15 +1,7 @@
-// import { useState } from "react";
 import getClientCredentials from '@/app/(screen)/_utils/crypto/getClientCredentials';
 import { updateNotion } from './update';
 
 const NotionInfo = async () => {
-  // const [credentials, setCredentials] = useState();
-  // const get_session = async () => {
-  //     const data = await getClientCredentials();
-  //     setCredentials(data);
-  // }
-
-  // get_session();
 
   const credentials = await getClientCredentials();
 
