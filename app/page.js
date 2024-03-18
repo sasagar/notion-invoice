@@ -5,7 +5,7 @@ import './(screen)/style.css'
 export default async function Index() {
   return (
     <>
-      <header className='w-full bg-slate-800 border-b border-slate-700 h-12 flex items-center mb-5 shadow shadow-slate-900 fixed'>
+      <header className='w-full bg-stone-200 dark:bg-slate-800 border-b border-stone-300 dark:border-slate-700 h-12 flex items-center mb-5 shadow shadow-stone-800 dark:shadow-slate-900 fixed'>
         <Header />
       </header>
       <main className="flex min-h-full w-full pt-20">

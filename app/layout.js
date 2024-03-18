@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja" className={mplus1.className}>
-      <body className="min-h-screen">
+      <body className="min-h-screen text-stone-800 dark:text-slate-200">
         {children}
       </body>
     </html>

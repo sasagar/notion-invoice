@@ -37,11 +37,11 @@ const Header = () => {
       <nav>
         <ul className='flex items-center gap-6'>
           <li>
-            <Link href='/invoice'>請求書一覧</Link>
+            <Link href='/invoice' class="text-stone-800 dark:text-slate-100 hover:text-stone-600 dark:hover:text-slate-300">請求書一覧</Link>
           </li>
           <li>
             <form action={signOut}>
-              <button type='submit'>ログアウト</button>
+              <button type='submit' class="text-stone-800 dark:text-slate-100 hover:text-stone-600 dark:hover:text-slate-300">ログアウト</button>
             </form>
           </li>
           <li>
@@ -62,7 +62,7 @@ const Header = () => {
       <nav>
         <ul>
           <li>
-            <Link href='/auth/login'>ログイン</Link>
+            <Link href='/auth/login' class="text-stone-800 dark:text-slate-100 hover:text-stone-500 dark:hover:text-slate-300">ログイン</Link>
           </li>
         </ul>
       </nav>

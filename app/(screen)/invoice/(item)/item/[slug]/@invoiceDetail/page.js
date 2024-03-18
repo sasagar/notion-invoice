@@ -15,7 +15,7 @@ const InvoiceDetail = async ({ params }) => {
   const rows = await getInvoiceRow(sanitizedInvoice.items);
 
   return (
-    <section className='rounded border border-slate-600 bg-slate-900 px-6 py-4 mb-5'>
+    <section className='rounded border border-stone-600 dark:border-slate-600 bg-stone-100 dark:bg-slate-900 px-6 py-4 mb-5'>
       <div className='mb-5'>
         <h2 className='text-2xl font-bold mb-3'>請求内容</h2>
         <table className='w-full'>
@@ -34,16 +34,14 @@ const InvoiceDetail = async ({ params }) => {
               return (
                 <tr key={row.id}>
                   <td>{plain_text(row.properties.名前)}</td>
-                  <td className='text-slate-400'>
+                  <td className='text-stone-600 dark:text-slate-400'>
                     {row.properties.項目名.rollup.array[0].title[0].plain_text}
                   </td>
                   <td className='text-right'>
-                    &yen;{' '}
-                    {row.properties.単価.rollup.array[0].number.toLocaleString()}
+                    &yen; {row.properties.単価.rollup.array[0].number.toLocaleString()}
                   </td>
                   <td className='text-right'>
-                    {row.properties.数量.number.toLocaleString()}{' '}
-                    {plain_text(row.properties.単位)}
+                    {row.properties.数量.number.toLocaleString()} {plain_text(row.properties.単位)}
                   </td>
                   <td className='text-right'>
                     &yen; {row.properties.小計.formula.number.toLocaleString()}

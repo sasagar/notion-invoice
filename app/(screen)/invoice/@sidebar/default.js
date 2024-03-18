@@ -31,7 +31,7 @@ const InvoiceSidebarDefault = async () => {
   };
 
   return (
-    <aside className='fixed top-16 w-2/12 bg-slate-800 rounded-tr-2xl rounded-br-2xl shadow shadow-slate-950 border-r border-t border-b border-slate-600 py-8 px-5 transition-all'>
+    <aside className='fixed top-16 w-2/12 bg-stone-100 dark:bg-slate-800 rounded-tr-2xl rounded-br-2xl shadow shadow-stone-800 dark:shadow-slate-950 border-r border-t border-b border-stone-500 dark:border-slate-600 py-8 px-5 transition-all'>
       <h2 className='text-2xl font-bold mb-5'>Notion Invoice</h2>
 
       <ul>

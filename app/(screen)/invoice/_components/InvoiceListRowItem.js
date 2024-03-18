@@ -20,7 +20,7 @@ const InvoiceListRowItem = ({ invoice }) => {
   return (
     <Link href={`/invoice/item/${plain_text(invoice.properties.請求書番号)}`}>
       <Suspense fallback={<InvoiceListRowItemLoading />}>
-        <section className='mt-4 border rounded border-slate-700 px-6 py-4 bg-slate-900 shadow shadow-slate-900'>
+        <section className='mt-4 border rounded border-stone-700 dark:border-slate-700 px-6 py-4 bg-stone-100 dark:bg-slate-900 shadow shadow-stone-600 dark:shadow-slate-900'>
           <div className='flex justify-between'>
             <h2 className='text-xl font-bold leading-8'>
               {plain_text(invoice.properties.件名)}

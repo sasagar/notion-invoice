@@ -1,6 +1,6 @@
 const invoiceDetailLoading = () => {
   return (
-    <section className='rounded border border-slate-600 bg-slate-900 px-6 py-4 mb-5'>
+    <section className='rounded border border-stone-600 dark:border-slate-600 bg-stone-200 dark:bg-slate-900 px-6 py-4 mb-5'>
       <div className='mb-5'>
         <div className='skeleton rounded-full h-6 w-60 mb-4' />
         <table className='w-full'>
