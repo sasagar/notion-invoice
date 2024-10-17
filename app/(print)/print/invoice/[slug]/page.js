@@ -114,19 +114,25 @@ const invoicePrintPage = async ({ params }) => {
           </thead>
           <tbody>
             {rows.map((row, index) => {
+              let price;
+              if (row.properties.小計.formula.number >= 0) {
+                price = '¥ ' + row.properties.小計.formula.number.toLocaleString();
+              } else {
+                price = '▲ ¥ ' + Math.abs(row.properties.小計.formula.number).toLocaleString();
+              }
+            
               return (
                 <tr key={index}>
                   <td>{plain_text(row.properties.名前)}</td>
                   <td className='text-right'>
-                    &yen;{' '}
-                    {row.properties.単価.rollup.array[0].number.toLocaleString()}
+                    &yen; {row.properties.単価.rollup.array[0].number.toLocaleString()}
                   </td>
                   <td className='text-right'>
                     {row.properties.数量.number.toLocaleString()}{' '}
                     {plain_text(row.properties.単位)}
                   </td>
                   <td className='text-right'>
-                    &yen; {row.properties.小計.formula.number.toLocaleString()}
+                    {price}
                   </td>
                   <td className='text-center'>
                     {plain_text(row.properties.税率)}

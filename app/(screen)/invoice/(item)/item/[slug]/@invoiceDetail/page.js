@@ -31,6 +31,13 @@ const InvoiceDetail = async ({ params }) => {
           </thead>
           <tbody>
             {rows.map(row => {
+              let price;
+              if (row.properties.小計.formula.number >= 0) {
+                price = '¥ ' + row.properties.小計.formula.number.toLocaleString();
+              } else {
+                price = '▲ ¥ ' + Math.abs(row.properties.小計.formula.number).toLocaleString();
+              }
+            
               return (
                 <tr key={row.id}>
                   <td>{plain_text(row.properties.名前)}</td>
@@ -44,7 +51,7 @@ const InvoiceDetail = async ({ params }) => {
                     {row.properties.数量.number.toLocaleString()} {plain_text(row.properties.単位)}
                   </td>
                   <td className='text-right'>
-                    &yen; {row.properties.小計.formula.number.toLocaleString()}
+                    {price}
                   </td>
                   <td className='text-center'>
                     {plain_text(row.properties.税率)}

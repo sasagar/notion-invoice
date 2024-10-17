@@ -12,6 +12,8 @@ const getInvoiceRow = cache(async items => {
   const rows = await Promise.all(
     items.map(async item => await notion.pages.retrieve({ page_id: item.id })),
   );
+
+  rows.sort((a, b) => a.properties['並び順'].number - b.properties['並び順'].number);
   return rows;
 });
 
