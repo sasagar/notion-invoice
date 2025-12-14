@@ -1,6 +1,7 @@
 import AuthForm from './auth-form';
 
-const Login = ({ searchParams }) => {
+const Login = async props => {
+  const searchParams = await props.searchParams;
 
   return <AuthForm searchParams={searchParams} />;
 };

@@ -7,7 +7,8 @@ import dateTimeFormat from '@/app/(screen)/_utils/properties/dateTimeFormat';
 import StatusTag from '@/app/(screen)/invoice/_components/statusTag';
 import PdfDownload from '../_components/pdfDownload';
 
-const InvoiceHeader = async ({ params }) => {
+const InvoiceHeader = async props => {
+  const params = await props.params;
   const Loading = (
     <section className='rounded border border-stone-600 dark:border-slate-600 bg-stone-200 dark:bg-slate-900 px-6 py-4 flex justify-between items-center mb-5 gap-6'>
       <div className=''>

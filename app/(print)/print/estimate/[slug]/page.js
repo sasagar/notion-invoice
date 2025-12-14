@@ -16,7 +16,8 @@ import PrintWithHoldingRow from './_components/printWithHoldingRow';
 
 export const revalidate = 30; // キャッシュの有効期限30秒
 
-const invoicePrintPage = async ({ params }) => {
+const invoicePrintPage = async props => {
+  const params = await props.params;
   const { invoices, customer, account } = await getInvoiceItem(params.slug);
   const sanitizedInvoice = await invoiceSanitizer(invoices[0]);
   const rows = await getInvoiceRow(sanitizedInvoice.items);

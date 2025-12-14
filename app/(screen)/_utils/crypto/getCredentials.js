@@ -5,7 +5,7 @@ import { createClient } from '../supabase/server';
 import decryptoCredentials from './decryptoCredentials';
 
 const getCredentials = cache(async () => {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
   const { data, error } = await supabase

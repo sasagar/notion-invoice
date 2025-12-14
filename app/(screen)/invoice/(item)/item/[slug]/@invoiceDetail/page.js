@@ -7,7 +7,8 @@ import invoiceSanitizer from '@/app/(screen)/_utils/notion/invoiceSanitizer';
 import getInvoiceItem from '@/app/(screen)/_utils/notion/getInvoiceItem';
 import getInvoiceRow from '@/app/(screen)/_utils/notion/getInvoiceRow';
 
-const InvoiceDetail = async ({ params }) => {
+const InvoiceDetail = async props => {
+  const params = await props.params;
   const { invoices } = await getInvoiceItem(params.slug);
 
   const sanitizedInvoice = await invoiceSanitizer(invoices[0]);

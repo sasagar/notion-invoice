@@ -2,7 +2,7 @@ import { headers } from 'next/headers';
 import './print.css';
 
 export const generateMetadata = async () => {
-    const headersList = headers();
+    const headersList = await headers();
 
     const url = headersList.get("x-url") || null;
     const pathName = url.replace(/\\/g, '/').replace(/^[^/]*\/\/[^/]*/, '').replace(/[?#].*?$/, '');

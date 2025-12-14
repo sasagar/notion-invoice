@@ -3,7 +3,8 @@ import InvoiceListRow from '@/app/(screen)/invoice/_components/InvoiceListRow';
 
 export const revalidate = 30; // キャッシュの有効期限30秒
 
-const InvoicePage = async ({ params }) => {
+const InvoicePage = async props => {
+  const params = await props.params;
   const invoices = await getAllInvoices();
 
   const paged = params.page * 1;

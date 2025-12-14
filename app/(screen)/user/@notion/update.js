@@ -4,7 +4,7 @@ import { createClient } from "../../_utils/supabase/server"
 import cryptoCredentials from "../../_utils/crypto/cryptoCredentials";
 
 export const updateNotion = async (formData) => {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createClient(cookieStore)
 
     const notion_db_id = formData.get("notion_db_id");

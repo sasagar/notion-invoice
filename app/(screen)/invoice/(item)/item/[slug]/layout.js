@@ -3,7 +3,7 @@ import { headers } from 'next/headers';
 export const revalidate = 30; // キャッシュの有効期限30秒
 
 export const generateMetadata = async () => {
-  const headersList = headers();
+  const headersList = await headers();
 
   const url = headersList.get('x-url') || null;
   const pathName = url

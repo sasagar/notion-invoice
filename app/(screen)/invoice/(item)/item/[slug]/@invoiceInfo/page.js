@@ -5,7 +5,8 @@ import { plain_text } from '@/app/(screen)/_utils/properties/plain_text';
 import dateFormat from '@/app/(screen)/_utils/properties/dateFormat';
 import invoiceSanitizer from '@/app/(screen)/_utils/notion/invoiceSanitizer';
 
-const InvoiceInfo = async ({ params }) => {
+const InvoiceInfo = async props => {
+  const params = await props.params;
   const { invoices, customer, account } = await getInvoiceItem(params.slug);
 
   const sanitizedInvoice = await invoiceSanitizer(invoices[0]);

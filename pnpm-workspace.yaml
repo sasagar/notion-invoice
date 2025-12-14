@@ -1,0 +1,9 @@
+ignoredBuiltDependencies:
+  - puppeteer
+
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - puppeteer
+  - sharp
+  - supabase
+  - unrs-resolver

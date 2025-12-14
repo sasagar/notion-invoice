@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/app/(screen)/_utils/supabase/middleware';
 
-export async function middleware(request) {
+export async function proxy(request) {
   const { supabase, response } = createClient(request);
 
   // リダイレクト処理
