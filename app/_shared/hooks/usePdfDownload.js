@@ -10,31 +10,47 @@ import { useState, useCallback } from 'react';
  * @returns {Object} { inProgress, downloadPdf }
  */
 const usePdfDownload = ({ apiPath, fileName }) => {
-  const [inProgress, setInProgress] = useState(false);
+  // ステップ: 'idle' | 'generating' | 'downloading' | 'complete'
+  const [step, setStep] = useState('idle');
+  const [progress, setProgress] = useState(0);
 
-  const handleEvent = useCallback(e => {
-    if (e.type === 'loadstart') {
-      setInProgress(true);
-    } else if (e.type === 'loadend') {
-      setInProgress(false);
-    }
-  }, []);
-
-  const addListener = useCallback(
-    xhr => {
-      xhr.addEventListener('loadstart', handleEvent);
-      xhr.addEventListener('loadend', handleEvent);
-    },
-    [handleEvent],
-  );
+  const inProgress = step !== 'idle';
 
   const downloadPdf = useCallback(() => {
     const xhr = new XMLHttpRequest();
-    addListener(xhr);
+
+    // リクエスト開始 → 生成中
+    xhr.addEventListener('loadstart', () => {
+      setStep('generating');
+      setProgress(0);
+    });
+
+    // レスポンスヘッダー受信 → ダウンロード開始
+    xhr.addEventListener('readystatechange', () => {
+      if (xhr.readyState === XMLHttpRequest.HEADERS_RECEIVED) {
+        setStep('downloading');
+      }
+    });
+
+    // ダウンロード進捗
+    xhr.addEventListener('progress', e => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        setProgress(percent);
+      }
+    });
+
+    // 完了
+    xhr.addEventListener('loadend', () => {
+      setStep('idle');
+      setProgress(0);
+    });
+
     xhr.open('GET', apiPath, true);
     xhr.responseType = 'blob';
     xhr.onload = () => {
       if (xhr.status === 200) {
+        setStep('complete');
         const blob = new Blob([xhr.response], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -45,9 +61,9 @@ const usePdfDownload = ({ apiPath, fileName }) => {
       }
     };
     xhr.send();
-  }, [apiPath, fileName, addListener]);
+  }, [apiPath, fileName]);
 
-  return { inProgress, downloadPdf };
+  return { inProgress, step, progress, downloadPdf };
 };
 
 export default usePdfDownload;

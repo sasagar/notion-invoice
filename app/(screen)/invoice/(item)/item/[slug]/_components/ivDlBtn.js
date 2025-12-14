@@ -13,29 +13,43 @@ const IvDlBtn = ({ number, customer, account }) => {
     [customer, account, number],
   );
 
-  const { inProgress, downloadPdf } = usePdfDownload({
+  const { inProgress, step, progress, downloadPdf } = usePdfDownload({
     apiPath: `/api/print/invoice/${number}`,
     fileName,
   });
 
   const progressComponent = useMemo(() => {
-    if (inProgress) {
-      return <CgSpinnerTwo className='animate-spin' />;
+    switch (step) {
+      case 'generating':
+        return (
+          <>
+            <CgSpinnerTwo className='animate-spin' />
+            <span className='text-xs'>生成中...</span>
+          </>
+        );
+      case 'downloading':
+        return (
+          <>
+            <CgSpinnerTwo className='animate-spin' />
+            <span className='text-xs tabular-nums'>{progress}%</span>
+          </>
+        );
+      case 'complete':
+        return <span className='text-xs'>完了!</span>;
+      default:
+        return null;
     }
-    return <span />;
-  }, [inProgress]);
+  }, [step, progress]);
 
   return (
-    <>
-      <button
-        type='button'
-        onClick={downloadPdf}
-        className='flex items-center justify-start gap-2 rounded-md border border-green-700 text-green-100 bg-green-600 hover:bg-green-500 px-3 py-1 w-fit transition-all disabled:bg-green-800/70 disabled:cursor-progress'
-        disabled={inProgress}
-      >
-        <SlCloudDownload /> 請求書ダウンロード {progressComponent}
-      </button>
-    </>
+    <button
+      type='button'
+      onClick={downloadPdf}
+      className='flex items-center justify-start gap-2 rounded-md border border-green-700 text-green-100 bg-green-600 hover:bg-green-500 px-3 py-1 w-fit transition-all disabled:bg-green-800/70 disabled:cursor-progress'
+      disabled={inProgress}
+    >
+      <SlCloudDownload /> 請求書ダウンロード {progressComponent}
+    </button>
   );
 };
 
