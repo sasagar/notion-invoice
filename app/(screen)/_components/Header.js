@@ -9,7 +9,6 @@ import md5 from 'crypto-js/md5';
 
 const Header = () => {
   const [supabase] = useState(() => createClient());
-  const [userEmail, setUserEmail] = useState(null);
   const [imgmd5, setImgmd5] = useState(null);
 
   // サインアウト処理
@@ -19,17 +18,20 @@ const Header = () => {
     return redirect('/');
   };
 
-  const getUser = useCallback(async () => {
-    try {
-      const userData = await supabase.auth.getUser();
-      setUserEmail(userData.data.user.email);
-      setImgmd5(md5(userEmail).toString());
-    } catch (error) {
-      console.error(error);
-    }
-  }, [supabase.auth, userEmail]);
-
-  getUser();
+  // ユーザー情報取得
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) {
+          setImgmd5(md5(user.email).toString());
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    getUser();
+  }, [supabase.auth]);
 
   // ログイン中のコンポーネント
   const loggedinComponent = useCallback(() => {
@@ -39,7 +41,7 @@ const Header = () => {
           <li>
             <Link
               href='/invoice'
-              class='text-stone-800 dark:text-slate-100 hover:text-stone-600 dark:hover:text-slate-300'
+              className='text-stone-800 dark:text-slate-100 hover:text-stone-600 dark:hover:text-slate-300'
             >
               請求書一覧
             </Link>
@@ -48,7 +50,7 @@ const Header = () => {
             <form action={signOut}>
               <button
                 type='submit'
-                class='text-stone-800 dark:text-slate-100 hover:text-stone-600 dark:hover:text-slate-300'
+                className='text-stone-800 dark:text-slate-100 hover:text-stone-600 dark:hover:text-slate-300'
               >
                 ログアウト
               </button>
@@ -79,7 +81,7 @@ const Header = () => {
           <li>
             <Link
               href='/auth/login'
-              class='text-stone-800 dark:text-slate-100 hover:text-stone-500 dark:hover:text-slate-300'
+              className='text-stone-800 dark:text-slate-100 hover:text-stone-500 dark:hover:text-slate-300'
             >
               ログイン
             </Link>
@@ -103,18 +105,10 @@ const Header = () => {
     }
   }, [loggedinComponent, supabase.auth]);
 
-  // useStateで上手いこと
+  // ナビゲーションコンポーネントの切り替え
   useEffect(() => {
-    const userInfo = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      return user;
-    };
-    userInfo().then(user => {
-      navigationComponent(user);
-    });
-  }, [navigationComponent, supabase.auth]);
+    navigationComponent();
+  }, [navigationComponent]);
 
   // コンポーネントを返す
   return (
