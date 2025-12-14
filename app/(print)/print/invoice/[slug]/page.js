@@ -10,16 +10,17 @@ import { plain_text } from '@/app/(screen)/_utils/properties/plain_text';
 import CustomerInfo from './_components/customerInfo';
 import CustomerPerson from './_components/customerPerson';
 import AccountInfo from './_components/accountInfo';
-import PrintTaxTable from './_components/printTaxTable';
-import PrintWithHoldingTable from './_components/printWithHoldingTable';
-import PrintWithHoldingRow from './_components/printWithHoldingRow';
+import {
+  PrintTaxTable,
+  PrintWithHoldingTable,
+  PrintWithHoldingRow,
+} from '@/app/_shared/components';
 
 export const revalidate = 30; // キャッシュの有効期限30秒
 
 const invoicePrintPage = async props => {
   const params = await props.params;
   const { invoices, customer, account } = await getInvoiceItem(params.slug);
-  console.log(invoices[0].properties.請求金額);
   const sanitizedInvoice = await invoiceSanitizer(invoices[0]);
   const rows = await getInvoiceRow(sanitizedInvoice.items);
 
@@ -117,24 +118,26 @@ const invoicePrintPage = async props => {
             {rows.map((row, index) => {
               let price;
               if (row.properties.小計.formula.number >= 0) {
-                price = '¥ ' + row.properties.小計.formula.number.toLocaleString();
+                price =
+                  '¥ ' + row.properties.小計.formula.number.toLocaleString();
               } else {
-                price = '▲ ¥ ' + Math.abs(row.properties.小計.formula.number).toLocaleString();
+                price =
+                  '▲ ¥ ' +
+                  Math.abs(row.properties.小計.formula.number).toLocaleString();
               }
-            
+
               return (
                 <tr key={index}>
                   <td>{plain_text(row.properties.名前)}</td>
                   <td className='text-right'>
-                    &yen; {row.properties.単価.rollup.array[0].number.toLocaleString()}
+                    &yen;{' '}
+                    {row.properties.単価.rollup.array[0].number.toLocaleString()}
                   </td>
                   <td className='text-right'>
                     {row.properties.数量.number.toLocaleString()}{' '}
                     {plain_text(row.properties.単位)}
                   </td>
-                  <td className='text-right'>
-                    {price}
-                  </td>
+                  <td className='text-right'>{price}</td>
                   <td className='text-center'>
                     {plain_text(row.properties.税率)}
                   </td>

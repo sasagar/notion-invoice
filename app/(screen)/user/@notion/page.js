@@ -2,7 +2,6 @@ import getClientCredentials from '@/app/(screen)/_utils/crypto/getClientCredenti
 import { updateNotion } from './update';
 
 const NotionInfo = async () => {
-
   const credentials = await getClientCredentials();
 
   return (

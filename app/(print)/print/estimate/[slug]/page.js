@@ -10,9 +10,11 @@ import { plain_text } from '@/app/(screen)/_utils/properties/plain_text';
 import CustomerInfo from './_components/customerInfo';
 import CustomerPerson from './_components/customerPerson';
 import AccountInfo from './_components/accountInfo';
-import PrintTaxTable from './_components/printTaxTable';
-import PrintWithHoldingTable from './_components/printWithHoldingTable';
-import PrintWithHoldingRow from './_components/printWithHoldingRow';
+import {
+  PrintTaxTable,
+  PrintWithHoldingTable,
+  PrintWithHoldingRow,
+} from '@/app/_shared/components';
 
 export const revalidate = 30; // キャッシュの有効期限30秒
 

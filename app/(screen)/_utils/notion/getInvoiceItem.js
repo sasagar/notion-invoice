@@ -1,18 +1,13 @@
 import { cache } from 'react';
-import { Client } from '@notionhq/client';
-import getCredentials from '@/app/(screen)/_utils/crypto/getCredentials';
+import { getNotionClient } from './notionClient';
 
 const getInvoiceItem = cache(async id => {
-  console.log('Func: [Notion] getInvoiceItem');
+  const { notion, credentials } = await getNotionClient();
 
-  const credentials = await getCredentials();
-
-  const notion = new Client({ auth: credentials.api_key });
   const response = await notion.databases.query({
     database_id: credentials.db_id,
     sorts: [
       {
-        // 昇順で並べ替える
         timestamp: 'last_edited_time',
         direction: 'descending',
       },
@@ -27,15 +22,15 @@ const getInvoiceItem = cache(async id => {
 
   const invoices = response.results;
 
-  // 顧客情報
-  const customer = await notion.pages.retrieve({
-    page_id: invoices[0].properties.顧客.relation[0].id,
-  });
-
-  // 担当者
-  const account = await notion.pages.retrieve({
-    page_id: invoices[0].properties.担当者.relation[0].id,
-  });
+  // 顧客情報と担当者を並列取得
+  const [customer, account] = await Promise.all([
+    notion.pages.retrieve({
+      page_id: invoices[0].properties.顧客.relation[0].id,
+    }),
+    notion.pages.retrieve({
+      page_id: invoices[0].properties.担当者.relation[0].id,
+    }),
+  ]);
 
   return { invoices, customer, account };
 });

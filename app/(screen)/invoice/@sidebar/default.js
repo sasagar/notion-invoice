@@ -10,25 +10,25 @@ import { plain_text } from '@/app/(screen)/_utils/properties/plain_text';
 
 import './style.css';
 
+const ListItem = ({ obj }) => {
+  if (obj.length === 0) {
+    return <li className='not-found'>見つかりません</li>;
+  }
+  return obj.map(invoice => {
+    const number = plain_text(invoice.properties.請求書番号);
+    return (
+      <li key={number}>
+        <InvoiceLink number={number} />
+      </li>
+    );
+  });
+};
+
 const InvoiceSidebarDefault = async () => {
   const draft = await getInvoices('ドラフト');
   const essent = await getInvoices('見積送付済み');
   const sent = await getInvoices('請求書送付済み');
   const completed = await getInvoices('支払い済み');
-
-  const ListItem = ({ obj }) => {
-    if (obj.length === 0) {
-      return <li className='not-found'>見つかりません</li>;
-    }
-    return obj.map(invoice => {
-      const number = plain_text(invoice.properties.請求書番号);
-      return (
-        <li key={number}>
-          <InvoiceLink number={number} />
-        </li>
-      );
-    });
-  };
 
   return (
     <aside className='fixed top-16 w-2/12 bg-stone-100 dark:bg-slate-800 rounded-tr-2xl rounded-br-2xl shadow shadow-stone-800 dark:shadow-slate-950 border-r border-t border-b border-stone-500 dark:border-slate-600 py-8 px-5 transition-all'>

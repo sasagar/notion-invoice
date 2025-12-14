@@ -1,13 +1,9 @@
 import { cache } from 'react';
-import { Client } from '@notionhq/client';
-import getCredentials from '@/app/(screen)/_utils/crypto/getCredentials';
+import { getNotionClient } from './notionClient';
 
 const getAllInvoices = cache(async () => {
-  console.log('Func: [Notion] getAllInvoices');
+  const { notion, credentials } = await getNotionClient();
 
-  const credentials = await getCredentials();
-
-  const notion = new Client({ auth: credentials.api_key });
   const response = await notion.databases.query({
     database_id: credentials.db_id,
     sorts: [
@@ -22,8 +18,7 @@ const getAllInvoices = cache(async () => {
     ],
   });
 
-  const invoices = response.results;
-  return invoices;
+  return response.results;
 });
 
 export default getAllInvoices;

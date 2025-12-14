@@ -5,7 +5,7 @@ import getInvoiceRow from './getInvoiceRow';
  *  Sanitize the invoice.
  *
  * @param {*} invoice
- * @return {} 
+ * @return {}
  */
 const invoiceSanitizer = async invoice => {
   const sanitizedInvoice = {
@@ -60,7 +60,7 @@ const invoiceSanitizer = async invoice => {
     } else {
       return Math.floor(sum10 * 0.1);
     }
-  }
+  };
 
   /**
    * Calculate the tax at 8% based on the value of sanitizedInvoice.tax_incl.
@@ -73,7 +73,7 @@ const invoiceSanitizer = async invoice => {
     } else {
       return Math.floor(sum8 * 0.08);
     }
-  }
+  };
 
   const sum = items
     .flatMap(item => item.properties)
@@ -89,26 +89,26 @@ const invoiceSanitizer = async invoice => {
       return 0;
     } else {
       if (sanitizedInvoice.tax_incl) {
-        return Math.floor((sum10 + sum8 - tax10() - tax8()) * 0.1021 ) * -1;
+        return Math.floor((sum10 + sum8 - tax10() - tax8()) * 0.1021) * -1;
       } else {
         return Math.floor((sum10 + sum8) * 0.1021) * -1;
       }
     }
-  }
+  };
 
   /**
-   * Calculates the sum of the invoice, taking into account the tax inclusion status. 
+   * Calculates the sum of the invoice, taking into account the tax inclusion status.
    *
    * @return {number} the total sum of the invoice
    */
   const invoice_sum = () => {
     if (sanitizedInvoice.tax_incl) {
-      return (sum + withholding());
+      return sum + withholding();
     } else {
-      return (sum + tax10() + tax8() + withholding());
+      return sum + tax10() + tax8() + withholding();
     }
-  }
-  
+  };
+
   sanitizedInvoice.sum10 = sum10;
   sanitizedInvoice.sum8 = sum8;
   sanitizedInvoice.sum0 = sum0;

@@ -1,3 +1,5 @@
+@reference "tailwindcss";
+
 table {
   @apply table-auto border-collapse;
   thead {

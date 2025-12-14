@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run test:*)",
+      "Read(~/.zshrc)",
+      "mcp__serena",
+      "mcp__context7",
+      "mcp__deepwiki"
+    ],
+    "deny": ["Edit", "Glob", "Grep", "Read", "Write"],
+    "ask": []
+  },
+  "env": {}
+}

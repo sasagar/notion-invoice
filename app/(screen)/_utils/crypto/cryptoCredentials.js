@@ -10,13 +10,11 @@ const cryptoCredentials = ({ db_id, api_key }) => {
   let encrypted_dbid = cipher1.update(db_id, 'utf8', 'hex');
   encrypted_dbid += cipher1.final('hex');
   const hex_dbid = encrypted_dbid.toString('hex');
-  console.log(`dbid: ${hex_dbid}`);
 
   const cipher2 = crypto.createCipheriv('aes-256-cfb', Buffer.from(key), iv);
   let encrypted_apikey = cipher2.update(api_key, 'utf8', 'hex');
   encrypted_apikey += cipher2.final('hex');
   const hex_apikey = encrypted_apikey.toString('hex');
-  console.log(`apikey: ${hex_apikey}`);
 
   return { db_id: hex_dbid, api_key: hex_apikey };
 };

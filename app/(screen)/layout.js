@@ -12,7 +12,9 @@ export default function ScreenLayout({ children }) {
       </header>
       <main className='flex min-h-full w-full pt-20'>{children}</main>
       <footer className='flex justify-center items-center w-full h-12 bg-stone-200/50 dark:bg-slate-900/50 border-t border-slate-700 mt-auto'>
-        <p className='text-stone-400 dark:text-slate-300'>© 2023 BKTSK Notion Invoice</p>
+        <p className='text-stone-400 dark:text-slate-300'>
+          © 2023 BKTSK Notion Invoice
+        </p>
       </footer>
     </div>
   );

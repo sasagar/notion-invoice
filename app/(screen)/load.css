@@ -1,8 +1,32 @@
+@reference "tailwindcss";
+
+@theme {
+  --color-kent-blue-50: #f0f6fa;
+  --color-kent-blue-100: #dce8f2;
+  --color-kent-blue-200: #afc7e0;
+  --color-kent-blue-300: #85a2cc;
+  --color-kent-blue-400: #425fa8;
+  --color-kent-blue-500: #112382;
+  --color-kent-blue-600: #0e1f75;
+  --color-kent-blue-700: #0a1761;
+  --color-kent-blue-800: #06104f;
+  --color-kent-blue-900: #040a3b;
+  --color-kent-blue-950: #020526;
+
+  --animate-shimmer: shimmer 2s infinite;
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+}
+
 .skeleton {
   @apply relative isolate overflow-hidden shadow-xl shadow-white/5 dark:shadow-black/5 bg-stone-800/80 dark:bg-white/20;
   &::before {
-    content: "";
-    @apply absolute inset-0 bg-gradient-to-r from-transparent via-kent-blue-100/90 dark:via-kent-blue-100/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite] border-t border-kent-blue-100/90 dark:border-kent-blue-100/10;
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-kent-blue-100/90 dark:via-kent-blue-100/10 to-transparent -translate-x-full animate-shimmer border-t border-kent-blue-100/90 dark:border-kent-blue-100/10;
   }
 }
 

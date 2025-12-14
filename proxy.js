@@ -23,8 +23,8 @@ export async function proxy(request) {
   }
 
   // ログインしていない場合はログイン画面にリダイレクトする。
-  if (!session && !request.nextUrl.pathname.startsWith("/auth/login")) {
-      return NextResponse.redirect(new URL("/auth/login", request.url));
+  if (!session && !request.nextUrl.pathname.startsWith('/auth/login')) {
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
   // ログインしている場合はログイン画面から請求書画面にリダイレクトする。

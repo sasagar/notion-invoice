@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { parseISO, format } from 'date-fns';
-import ja from 'date-fns/locale/ja';
+import { ja } from 'date-fns/locale';
 
 import { plain_text } from '@/app/(screen)/_utils/properties/plain_text';
 import { get_customer } from '@/app/(screen)/_utils/properties/get_customer';

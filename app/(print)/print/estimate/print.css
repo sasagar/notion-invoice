@@ -1,3 +1,19 @@
+@reference "tailwindcss";
+
+@theme {
+  --color-kent-blue-50: #f0f6fa;
+  --color-kent-blue-100: #dce8f2;
+  --color-kent-blue-200: #afc7e0;
+  --color-kent-blue-300: #85a2cc;
+  --color-kent-blue-400: #425fa8;
+  --color-kent-blue-500: #112382;
+  --color-kent-blue-600: #0e1f75;
+  --color-kent-blue-700: #0a1761;
+  --color-kent-blue-800: #06104f;
+  --color-kent-blue-900: #040a3b;
+  --color-kent-blue-950: #020526;
+}
+
 :root {
   font-size: 12px;
 }
@@ -12,12 +28,12 @@ body {
 
   &::before {
     @apply absolute w-full h-full -top-1 -left-1 border border-kent-blue-400;
-    content: "";
+    content: '';
   }
 
   &::after {
     @apply absolute w-full h-full top-1 left-1 border border-kent-blue-300;
-    content: "";
+    content: '';
   }
 }
 

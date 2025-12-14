@@ -37,7 +37,8 @@ const InvoiceInfo = async props => {
         <div className='mb-2'>
           <h3 className='text-xl font-bold'>宛名</h3>
           <span>
-            {plain_text(customer.properties['社名/個人名'])} {plain_text(customer.properties.敬称)}
+            {plain_text(customer.properties['社名/個人名'])}{' '}
+            {plain_text(customer.properties.敬称)}
           </span>
         </div>
         <div className='mb-2'>

@@ -5,7 +5,7 @@ const Profile = async () => {
   // const session = await getSession();
 
   // return <ClientProfileComponent session={session} />;
-  return <></>
+  return <></>;
 };
 
 export default Profile;

@@ -6,7 +6,8 @@ const StatusTag = props => {
   if (stat === 'ドラフト') {
     return (
       <span className='flex items-center gap-3 px-3 py-1 text-gray-100 rounded-full border border-gray-400 bg-gray-600 text-sm w-fit'>
-        <SlPencil />{stat}
+        <SlPencil />
+        {stat}
       </span>
     );
   }
@@ -14,7 +15,8 @@ const StatusTag = props => {
   if (stat === '見積送付済み') {
     return (
       <span className='flex items-center gap-3 px-3 py-1 text-rose-100 rounded-full border border-rose-600 bg-rose-800 text-sm w-fit'>
-        <SlEnvolopeLetter />{stat}
+        <SlEnvolopeLetter />
+        {stat}
       </span>
     );
   }
@@ -22,16 +24,18 @@ const StatusTag = props => {
   if (stat === '請求書送付済み') {
     return (
       <span className='flex items-center gap-3 px-3 py-1 text-amber-100 rounded-full border border-amber-600 bg-amber-800 text-sm w-fit'>
-        <SlEnvolopeLetter />{stat}
+        <SlEnvolopeLetter />
+        {stat}
       </span>
     );
   }
 
   return (
     <span className='flex items-center gap-3 px-3 py-1 text-lime-100 rounded-full border border-lime-600 bg-lime-800 text-sm w-fit'>
-      <SlCheck />{stat}
+      <SlCheck />
+      {stat}
     </span>
   );
-}
+};
 
 export default StatusTag;

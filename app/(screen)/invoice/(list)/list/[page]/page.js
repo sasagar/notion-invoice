@@ -8,7 +8,6 @@ const InvoicePage = async props => {
   const invoices = await getAllInvoices();
 
   const paged = params.page * 1;
-  console.log(`[Listing] Page: ${paged}`);
   const perPage = process.env.NEXT_PUBLIC_PER_PAGE;
 
   const start = (paged - 1) * perPage;
