@@ -2,10 +2,11 @@ import { cache } from 'react';
 import { getNotionClient } from './notionClient';
 
 const getAllInvoices = cache(async () => {
-  const { notion, credentials } = await getNotionClient();
+  const { notion, dataSourceId } = await getNotionClient();
 
-  const response = await notion.databases.query({
-    database_id: credentials.db_id,
+  // v5ではdatabases.queryの代わりにdataSources.queryを使用
+  const response = await notion.dataSources.query({
+    data_source_id: dataSourceId,
     sorts: [
       {
         property: '発行日',
