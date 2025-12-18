@@ -41,4 +41,4 @@ export const GET = async req => {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-};
+};;;
