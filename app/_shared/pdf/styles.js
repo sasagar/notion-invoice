@@ -1,15 +1,15 @@
 import { StyleSheet, Font } from '@react-pdf/renderer';
 
-// 日本語フォント登録（Google Fonts - Noto Sans JP）
+// 日本語フォント登録（Google Fonts - M PLUS 1）元のプロジェクトと同じ
 Font.register({
-  family: 'NotoSansJP',
+  family: 'MPLUS1',
   fonts: [
     {
-      src: 'https://fonts.gstatic.com/s/notosansjp/v55/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFBEj75s.ttf',
+      src: 'https://fonts.gstatic.com/s/mplus1/v15/R70EjygA28ymD4HgBUGzkN5Eyoj-WpW5VSa78g.ttf',
       fontWeight: 400,
     },
     {
-      src: 'https://fonts.gstatic.com/s/notosansjp/v55/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFPYk75s.ttf',
+      src: 'https://fonts.gstatic.com/s/mplus1/v15/R70EjygA28ymD4HgBUGzkN5Eyoj-WpW5siG78g.ttf',
       fontWeight: 700,
     },
   ],
@@ -30,14 +30,14 @@ export const colors = {
   kentBlue950: '#020526',
 };
 
-// 元のCSS: font-size: 12px, margin: 10mm
-// @react-pdf: 1pt ≈ 1.333px, 1mm ≈ 2.83pt
-// 12px ≈ 9pt
+// 元のCSS: font-size: 12px (root), margin: 10mm
 export const styles = StyleSheet.create({
   page: {
-    fontFamily: 'NotoSansJP',
-    fontSize: 9, // 12px ≈ 9pt
-    padding: 28, // 10mm ≈ 28pt
+    fontFamily: 'MPLUS1',
+    fontSize: 9,
+    paddingTop: 28,
+    paddingBottom: 28,
+    paddingHorizontal: 28,
     color: colors.kentBlue800,
   },
   // ヘッダーセクション（border-t-[5mm] border-b-[2mm]）
@@ -45,8 +45,8 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopWidth: 14, // 5mm ≈ 14pt
-    borderBottomWidth: 6, // 2mm ≈ 6pt
+    borderTopWidth: 14,
+    borderBottomWidth: 6,
     borderTopColor: colors.kentBlue500,
     borderBottomColor: colors.kentBlue500,
     paddingVertical: 12,
@@ -54,12 +54,12 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
   },
   headerTitle: {
-    fontSize: 22, // text-3xl ≈ 30px ≈ 22pt
+    fontSize: 22,
     fontWeight: 700,
   },
   headerInfo: {
     textAlign: 'right',
-    fontSize: 9, // text-sm ≈ 14px
+    fontSize: 10,
   },
   // メインコンテンツエリア
   mainContent: {
@@ -73,32 +73,42 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   rightColumn: {
-    width: 160,
+    minWidth: 170,
   },
-  // 顧客情報
+  // 顧客情報（mb-6）
+  customerSection: {
+    marginBottom: 18,
+  },
   customerName: {
-    fontSize: 13, // text-lg ≈ 18px ≈ 13pt
+    fontSize: 13,
     fontWeight: 700,
-    marginBottom: 6,
   },
   customerInfo: {
     fontSize: 9,
-    marginBottom: 3,
+  },
+  // 挨拶文（mb-6）
+  greetingSection: {
+    marginBottom: 18,
   },
   greeting: {
     fontSize: 9,
-    marginTop: 18,
-    marginBottom: 12,
   },
-  // 二重線ボックス（double-border）
+  // 二重線ボックス（double-border）- 相対位置で疑似的に再現
   doubleBox: {
-    position: 'relative',
     padding: 12,
     borderWidth: 1,
     borderColor: colors.kentBlue400,
-    marginTop: 4,
   },
-  // 請求額ボックス
+  doubleBoxOuter: {
+    position: 'absolute',
+    top: -3,
+    left: -3,
+    right: 3,
+    bottom: 3,
+    borderWidth: 1,
+    borderColor: colors.kentBlue300,
+  },
+  // 請求額ボックス内部
   amountRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
@@ -110,10 +120,10 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   amountLabel: {
-    fontSize: 15, // text-xl
+    fontSize: 15,
   },
   amountValue: {
-    fontSize: 18, // text-2xl
+    fontSize: 18,
     fontWeight: 700,
   },
   dueRow: {
@@ -125,13 +135,13 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   dueLabel: {
-    fontSize: 13, // text-lg
+    fontSize: 13,
   },
   dueValue: {
     fontSize: 13,
     fontWeight: 700,
   },
-  // 自社情報
+  // 自社情報セクション（flex gap-2）
   companySection: {
     flexDirection: 'row',
     gap: 6,
@@ -139,23 +149,23 @@ export const styles = StyleSheet.create({
   companyName: {
     fontSize: 13,
     fontWeight: 700,
-    marginBottom: 3,
   },
   companyInfo: {
     fontSize: 9,
-    marginBottom: 2,
+  },
+  registrationNumber: {
+    fontSize: 9,
   },
   sealImage: {
     width: 56,
     height: 56,
   },
-  // 振込先ボックス
+  // 振込先ボックス（double-border my-3）
   bankBox: {
-    position: 'relative',
     padding: 12,
     borderWidth: 1,
     borderColor: colors.kentBlue400,
-    marginTop: 9,
+    marginVertical: 9,
   },
   bankTitle: {
     fontSize: 13,
@@ -163,14 +173,13 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.kentBlue500,
     marginBottom: 6,
-    paddingBottom: 3,
   },
   bankInfo: {
     fontSize: 9,
   },
-  // セクションタイトル（border-b-2）
+  // セクションタイトル（text-2xl font-bold mb-3 border-b-2 py-3）
   sectionTitle: {
-    fontSize: 18, // text-2xl
+    fontSize: 18,
     fontWeight: 700,
     borderBottomWidth: 2,
     borderBottomColor: colors.kentBlue500,
@@ -188,7 +197,8 @@ export const styles = StyleSheet.create({
     borderColor: colors.kentBlue300,
   },
   tableHeaderCell: {
-    padding: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
     fontSize: 9,
     fontWeight: 700,
     textAlign: 'center',
@@ -204,16 +214,19 @@ export const styles = StyleSheet.create({
     borderColor: colors.kentBlue300,
   },
   tableCell: {
-    padding: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
     fontSize: 9,
   },
   tableCellRight: {
-    padding: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
     fontSize: 9,
     textAlign: 'right',
   },
   tableCellCenter: {
-    padding: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
     fontSize: 9,
     textAlign: 'center',
   },
@@ -223,17 +236,19 @@ export const styles = StyleSheet.create({
     borderBottomColor: colors.kentBlue300,
   },
   tableFooterCell: {
-    padding: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
     fontSize: 9,
     fontWeight: 700,
   },
   tableFooterValue: {
-    padding: 6,
-    fontSize: 18, // text-2xl
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    fontSize: 18,
     fontWeight: 700,
     textAlign: 'right',
   },
-  // 税金セクション（border-b-2）
+  // 税金セクション（py-4 mx-4 border-b-2）
   taxSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -247,26 +262,25 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   taxTableTitle: {
-    fontSize: 12,
+    fontSize: 9,
     fontWeight: 700,
     marginBottom: 6,
   },
-  // フッターセクション（border-b-[5mm]）
+  // フッターセクション（py-4 px-4 border-b-[5mm]）
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 24,
     paddingVertical: 12,
     paddingHorizontal: 12,
-    borderBottomWidth: 14, // 5mm ≈ 14pt
+    borderBottomWidth: 14,
     borderBottomColor: colors.kentBlue500,
   },
   footerLeft: {
     flex: 1,
   },
-  // 備考ボックス
+  // 備考ボックス（double-border my-3 flex-1）
   noteBox: {
-    position: 'relative',
     padding: 12,
     borderWidth: 1,
     borderColor: colors.kentBlue400,
@@ -279,12 +293,11 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: colors.kentBlue500,
     marginBottom: 6,
-    paddingBottom: 3,
   },
   noteText: {
     fontSize: 9,
   },
-  // 請求明細セクション
+  // 請求明細セクション（pb-4 px-4）
   detailSection: {
     paddingBottom: 12,
     paddingHorizontal: 12,

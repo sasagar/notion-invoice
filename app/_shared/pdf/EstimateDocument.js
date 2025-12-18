@@ -1,5 +1,5 @@
 import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
-import { styles, colors } from './styles';
+import { styles } from './styles';
 
 const EstimateDocument = ({
   sanitizedInvoice,
@@ -25,31 +25,34 @@ const EstimateDocument = ({
         <View style={styles.mainContent}>
           {/* 左カラム - 顧客情報 */}
           <View style={styles.leftColumn}>
-            <Text style={styles.customerName}>
-              {plain_text(customer.properties['社名/個人名'])}{' '}
-              {plain_text(customer.properties.敬称)}
-            </Text>
-
-            {/* 顧客住所 */}
-            {customer.properties.住所 && plain_text(customer.properties.住所) && (
-              <Text style={styles.customerInfo}>
-                {plain_text(customer.properties.住所)}
+            {/* 顧客名セクション (mb-6) */}
+            <View style={styles.customerSection}>
+              <Text style={styles.customerName}>
+                {plain_text(customer.properties['社名/個人名'])}{' '}
+                {plain_text(customer.properties.敬称)}
               </Text>
-            )}
-
-            {/* 担当者 */}
-            {customer.properties.担当者名 &&
-              plain_text(customer.properties.担当者名) && (
+              {/* CustomerInfo - 会社情報 */}
+              {plain_text(customer.properties['会社情報']) && (
+                <Text style={styles.customerInfo}>
+                  {plain_text(customer.properties['会社情報'])}
+                </Text>
+              )}
+              {/* CustomerPerson - 担当者名 */}
+              {plain_text(customer.properties.担当者名) && (
                 <Text style={styles.customerInfo}>
                   担当: {plain_text(customer.properties.担当者名)}
                 </Text>
               )}
+            </View>
 
-            <Text style={styles.greeting}>
-              お世話になっております。下記の通りお見積もりいたします。
-            </Text>
+            {/* 挨拶文セクション (mb-6) */}
+            <View style={styles.greetingSection}>
+              <Text style={styles.greeting}>
+                お世話になっております。下記の通りお見積もりいたします。
+              </Text>
+            </View>
 
-            {/* 見積額ボックス（二重線） */}
+            {/* 見積額ボックス（double-border） - 見積書は支払期限なし */}
             <View style={styles.doubleBox}>
               <View style={styles.amountRow}>
                 <Text style={styles.amountLabel}>御見積額</Text>
@@ -60,20 +63,22 @@ const EstimateDocument = ({
             </View>
           </View>
 
-          {/* 右カラム - 自社情報 */}
+          {/* 右カラム - 自社情報 (min-w-fit) */}
           <View style={styles.rightColumn}>
+            {/* 自社情報セクション (flex gap-2) - 見積書は登録番号なし */}
             <View style={styles.companySection}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.companyName}>
                   {plain_text(account.properties.会社名)}
                 </Text>
-                <Text style={styles.companyInfo}>
-                  {plain_text(account.properties.住所)}
-                </Text>
-                <Text style={styles.companyInfo}>
-                  {plain_text(account.properties.担当者名)}
-                </Text>
+                {/* AccountInfo - 会社情報 */}
+                {plain_text(account.properties['会社情報']) && (
+                  <Text style={styles.companyInfo}>
+                    {plain_text(account.properties['会社情報'])}
+                  </Text>
+                )}
               </View>
+              {/* 印鑑画像 (w-20 h-auto) */}
               {account.properties.印鑑画像?.files?.[0]?.file?.url && (
                 <Image
                   src={account.properties.印鑑画像.files[0].file.url}
@@ -84,7 +89,7 @@ const EstimateDocument = ({
           </View>
         </View>
 
-        {/* 見積明細 */}
+        {/* 見積明細 (pb-4 px-4) */}
         <View style={styles.detailSection}>
           <Text style={styles.sectionTitle}>見積明細</Text>
           <View style={styles.table}>
@@ -128,7 +133,7 @@ const EstimateDocument = ({
           </View>
         </View>
 
-        {/* 消費税・源泉徴収セクション */}
+        {/* 消費税・源泉徴収セクション (py-4 mx-4 border-b-2) */}
         <View style={styles.taxSection}>
           {/* 消費税テーブル */}
           <View style={styles.taxTable}>
@@ -206,7 +211,7 @@ const EstimateDocument = ({
           )}
         </View>
 
-        {/* 見積額・備考 */}
+        {/* 見積額・備考 (py-4 px-4 border-b-[5mm]) */}
         <View style={styles.footer}>
           {/* 見積額テーブル */}
           <View style={styles.footerLeft}>
@@ -253,7 +258,7 @@ const EstimateDocument = ({
             </View>
           </View>
 
-          {/* 備考 */}
+          {/* 備考（double-border my-3 flex-1） */}
           <View style={styles.noteBox}>
             <Text style={styles.noteTitle}>備考</Text>
             <Text style={styles.noteText}>
