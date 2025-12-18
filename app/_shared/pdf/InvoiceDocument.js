@@ -1,5 +1,5 @@
 import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
-import { styles, colors } from './styles';
+import { styles } from './styles';
 
 const InvoiceDocument = ({
   sanitizedInvoice,
@@ -25,31 +25,34 @@ const InvoiceDocument = ({
         <View style={styles.mainContent}>
           {/* 左カラム - 顧客情報 */}
           <View style={styles.leftColumn}>
-            <Text style={styles.customerName}>
-              {plain_text(customer.properties['社名/個人名'])}{' '}
-              {plain_text(customer.properties.敬称)}
-            </Text>
-
-            {/* 顧客住所 */}
-            {customer.properties.住所 && plain_text(customer.properties.住所) && (
-              <Text style={styles.customerInfo}>
-                {plain_text(customer.properties.住所)}
+            {/* 顧客名セクション (mb-6) */}
+            <View style={styles.customerSection}>
+              <Text style={styles.customerName}>
+                {plain_text(customer.properties['社名/個人名'])}{' '}
+                {plain_text(customer.properties.敬称)}
               </Text>
-            )}
-
-            {/* 担当者 */}
-            {customer.properties.担当者名 &&
-              plain_text(customer.properties.担当者名) && (
+              {/* CustomerInfo - 会社情報 */}
+              {plain_text(customer.properties['会社情報']) && (
+                <Text style={styles.customerInfo}>
+                  {plain_text(customer.properties['会社情報'])}
+                </Text>
+              )}
+              {/* CustomerPerson - 担当者名 */}
+              {plain_text(customer.properties.担当者名) && (
                 <Text style={styles.customerInfo}>
                   担当: {plain_text(customer.properties.担当者名)}
                 </Text>
               )}
+            </View>
 
-            <Text style={styles.greeting}>
-              お世話になっております。下記の通りご請求いたします。
-            </Text>
+            {/* 挨拶文セクション (mb-6) */}
+            <View style={styles.greetingSection}>
+              <Text style={styles.greeting}>
+                お世話になっております。下記の通りご請求いたします。
+              </Text>
+            </View>
 
-            {/* 請求額ボックス（二重線） */}
+            {/* 請求額ボックス（double-border） */}
             <View style={styles.doubleBox}>
               <View style={styles.amountRow}>
                 <Text style={styles.amountLabel}>御請求額</Text>
@@ -66,23 +69,25 @@ const InvoiceDocument = ({
             </View>
           </View>
 
-          {/* 右カラム - 自社情報 */}
+          {/* 右カラム - 自社情報 (min-w-fit) */}
           <View style={styles.rightColumn}>
+            {/* 自社情報セクション (flex gap-2) */}
             <View style={styles.companySection}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.companyName}>
                   {plain_text(account.properties.会社名)}
                 </Text>
-                <Text style={styles.companyInfo}>
-                  {plain_text(account.properties.住所)}
-                </Text>
-                <Text style={styles.companyInfo}>
-                  {plain_text(account.properties.担当者名)}
-                </Text>
-                <Text style={styles.companyInfo}>
+                {/* AccountInfo - 会社情報 */}
+                {plain_text(account.properties['会社情報']) && (
+                  <Text style={styles.companyInfo}>
+                    {plain_text(account.properties['会社情報'])}
+                  </Text>
+                )}
+                <Text style={styles.registrationNumber}>
                   登録番号: {plain_text(account.properties.登録番号) || '(未登録)'}
                 </Text>
               </View>
+              {/* 印鑑画像 (w-20 h-auto) */}
               {account.properties.印鑑画像?.files?.[0]?.file?.url && (
                 <Image
                   src={account.properties.印鑑画像.files[0].file.url}
@@ -91,7 +96,7 @@ const InvoiceDocument = ({
               )}
             </View>
 
-            {/* 振込先ボックス（二重線） */}
+            {/* 振込先ボックス（double-border my-3 flex-1） */}
             <View style={styles.bankBox}>
               <Text style={styles.bankTitle}>振込先情報</Text>
               <Text style={styles.bankInfo}>
@@ -101,7 +106,7 @@ const InvoiceDocument = ({
           </View>
         </View>
 
-        {/* 請求明細 */}
+        {/* 請求明細 (pb-4 px-4) */}
         <View style={styles.detailSection}>
           <Text style={styles.sectionTitle}>請求明細</Text>
           <View style={styles.table}>
@@ -151,7 +156,7 @@ const InvoiceDocument = ({
           </View>
         </View>
 
-        {/* 消費税・源泉徴収セクション */}
+        {/* 消費税・源泉徴収セクション (py-4 mx-4 border-b-2) */}
         <View style={styles.taxSection}>
           {/* 消費税テーブル */}
           <View style={styles.taxTable}>
@@ -229,7 +234,7 @@ const InvoiceDocument = ({
           )}
         </View>
 
-        {/* 請求額・備考 */}
+        {/* 請求額・備考 (py-4 px-4 border-b-[5mm]) */}
         <View style={styles.footer}>
           {/* 請求額テーブル */}
           <View style={styles.footerLeft}>
@@ -276,7 +281,7 @@ const InvoiceDocument = ({
             </View>
           </View>
 
-          {/* 備考 */}
+          {/* 備考（double-border my-3 flex-1） */}
           <View style={styles.noteBox}>
             <Text style={styles.noteTitle}>備考</Text>
             <Text style={styles.noteText}>
