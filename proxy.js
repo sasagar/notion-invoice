@@ -9,14 +9,6 @@ export async function proxy(request) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const token = request.headers.get('bktsk_notion_invoice');
-
-  // Pupeteerのリクエストのため、トークンが一致する場合はリクエストを処理しない。
-  // if (token === process.env.NOTION_API_KEY) {
-  if (token === process.env.PUPPETEER_API_KEY) {
-    return response;
-  }
-
   // ログインしていない場合でもトップページは表示させる
   if (!session && request.nextUrl.pathname === '/') {
     return response;
