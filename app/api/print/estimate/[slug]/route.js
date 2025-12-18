@@ -1,15 +1,44 @@
 import { NextResponse } from 'next/server';
-import { generatePdf } from '@/app/api/_utils/pdfGenerator';
+import { renderToBuffer } from '@react-pdf/renderer';
+import { EstimateDocument } from '@/app/_shared/pdf';
+import getInvoiceItem from '@/app/(screen)/_utils/notion/getInvoiceItem';
+import invoiceSanitizer from '@/app/(screen)/_utils/notion/invoiceSanitizer';
+import getInvoiceRow from '@/app/(screen)/_utils/notion/getInvoiceRow';
+import dateFormat from '@/app/(screen)/_utils/properties/dateFormat';
+import { plain_text } from '@/app/(screen)/_utils/properties/plain_text';
 
 export const GET = async req => {
-  const host = req.nextUrl.host;
   const path = req.nextUrl.pathname.split('/');
   const slug = path[path.length - 1];
 
-  const pdf = await generatePdf(host, `estimate/${slug}`);
+  try {
+    // Notionからデータ取得
+    const { invoices, customer, account } = await getInvoiceItem(slug);
+    const sanitizedInvoice = await invoiceSanitizer(invoices[0]);
+    const rows = await getInvoiceRow(sanitizedInvoice.items);
 
-  const headers = new Headers();
-  headers.set('Content-Type', 'application/pdf');
+    // PDFを直接生成
+    const pdfBuffer = await renderToBuffer(
+      EstimateDocument({
+        sanitizedInvoice,
+        customer,
+        account,
+        rows,
+        dateFormat,
+        plain_text,
+      }),
+    );
 
-  return new NextResponse(pdf, { status: 200, statusText: 'OK', headers });
+    const headers = new Headers();
+    headers.set('Content-Type', 'application/pdf');
+    headers.set('Content-Length', pdfBuffer.length.toString());
+
+    return new NextResponse(pdfBuffer, { status: 200, statusText: 'OK', headers });
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    return new NextResponse(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 };
