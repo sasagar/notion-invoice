@@ -15,7 +15,7 @@ Font.register({
   ],
 });
 
-// Kent Blue カラーパレット
+// Kent Blue カラーパレット（元のCSSと同じ）
 export const colors = {
   kentBlue50: '#f0f6fa',
   kentBlue100: '#dce8f2',
@@ -30,126 +30,158 @@ export const colors = {
   kentBlue950: '#020526',
 };
 
-// 共通スタイル
+// 共通スタイル（元のHTML/CSSテンプレートを再現）
 export const styles = StyleSheet.create({
   page: {
     fontFamily: 'NotoSansJP',
-    fontSize: 10,
+    fontSize: 12,
     padding: 30,
     color: colors.kentBlue800,
   },
-  // ヘッダーセクション
+  // ヘッダーセクション（border-t-[5mm] border-b-[2mm]）
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopWidth: 5,
-    borderBottomWidth: 2,
-    borderColor: colors.kentBlue500,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    borderTopWidth: 14, // 5mm ≈ 14pt
+    borderBottomWidth: 6, // 2mm ≈ 6pt
+    borderTopColor: colors.kentBlue500,
+    borderBottomColor: colors.kentBlue500,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 700,
   },
   headerInfo: {
     textAlign: 'right',
-    fontSize: 9,
+    fontSize: 12,
   },
   // メインコンテンツエリア
   mainContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    gap: 32,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
   leftColumn: {
     flex: 1,
   },
   rightColumn: {
-    width: 200,
+    width: 180,
   },
   // 顧客情報
   customerName: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: 700,
-    marginBottom: 4,
-  },
-  customerInfo: {
-    fontSize: 9,
     marginBottom: 8,
   },
-  // 請求額ボックス
-  amountBox: {
+  customerInfo: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  greeting: {
+    fontSize: 12,
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  // 二重線ボックス（double-border）
+  doubleBox: {
+    position: 'relative',
+    padding: 16,
     borderWidth: 1,
     borderColor: colors.kentBlue400,
-    padding: 8,
-    marginTop: 16,
+    marginTop: 4,
   },
+  doubleBoxInner: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    right: -4,
+    bottom: -4,
+    borderWidth: 1,
+    borderColor: colors.kentBlue300,
+  },
+  // 請求額ボックス
   amountRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'baseline',
-    gap: 16,
+    gap: 40,
     borderBottomWidth: 2,
     borderBottomColor: colors.kentBlue500,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   amountLabel: {
-    fontSize: 14,
+    fontSize: 20,
   },
   amountValue: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 700,
   },
   dueRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'baseline',
-    gap: 16,
-    paddingVertical: 6,
+    gap: 40,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  dueLabel: {
+    fontSize: 18,
+  },
+  dueValue: {
+    fontSize: 18,
+    fontWeight: 700,
   },
   // 自社情報
+  companySection: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   companyName: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: 700,
     marginBottom: 4,
   },
   companyInfo: {
-    fontSize: 9,
+    fontSize: 12,
+    marginBottom: 2,
   },
   sealImage: {
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
   },
-  // 振込先
+  // 振込先ボックス
   bankBox: {
+    position: 'relative',
+    padding: 16,
     borderWidth: 1,
     borderColor: colors.kentBlue400,
-    padding: 8,
     marginTop: 12,
   },
   bankTitle: {
-    fontSize: 12,
+    fontSize: 18,
     fontWeight: 700,
     borderBottomWidth: 2,
     borderBottomColor: colors.kentBlue500,
-    marginBottom: 6,
+    marginBottom: 8,
     paddingBottom: 4,
   },
   bankInfo: {
-    fontSize: 9,
+    fontSize: 12,
   },
-  // セクションタイトル
+  // セクションタイトル（border-b-2）
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 24,
     fontWeight: 700,
     borderBottomWidth: 2,
     borderBottomColor: colors.kentBlue500,
-    paddingVertical: 8,
+    paddingVertical: 12,
     marginBottom: 12,
   },
   // テーブル
@@ -161,95 +193,108 @@ export const styles = StyleSheet.create({
     borderTopWidth: 2,
     borderBottomWidth: 2,
     borderColor: colors.kentBlue300,
-    backgroundColor: colors.kentBlue50,
   },
   tableHeaderCell: {
-    padding: 6,
-    fontSize: 9,
+    padding: 8,
+    fontSize: 12,
     fontWeight: 700,
     textAlign: 'center',
   },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
+  tableBody: {
+    borderBottomWidth: 2,
     borderBottomColor: colors.kentBlue300,
   },
+  tableRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.kentBlue300,
+  },
   tableCell: {
-    padding: 6,
-    fontSize: 9,
+    padding: 8,
+    fontSize: 12,
   },
   tableCellRight: {
-    padding: 6,
-    fontSize: 9,
+    padding: 8,
+    fontSize: 12,
     textAlign: 'right',
   },
   tableCellCenter: {
-    padding: 6,
-    fontSize: 9,
+    padding: 8,
+    fontSize: 12,
     textAlign: 'center',
   },
   tableFooter: {
     flexDirection: 'row',
-    borderTopWidth: 2,
     borderBottomWidth: 2,
-    borderColor: colors.kentBlue300,
-    backgroundColor: colors.kentBlue50,
+    borderBottomColor: colors.kentBlue300,
   },
   tableFooterCell: {
-    padding: 6,
-    fontSize: 9,
+    padding: 8,
+    fontSize: 12,
     fontWeight: 700,
   },
   tableFooterValue: {
-    padding: 6,
-    fontSize: 14,
+    padding: 8,
+    fontSize: 24,
     fontWeight: 700,
     textAlign: 'right',
   },
-  // 税金テーブル
+  // 税金セクション（border-b-2）
   taxSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    gap: 32,
+    paddingVertical: 16,
+    marginHorizontal: 16,
     borderBottomWidth: 2,
     borderBottomColor: colors.kentBlue500,
   },
   taxTable: {
     flex: 1,
   },
-  // 備考
-  noteBox: {
-    borderWidth: 1,
-    borderColor: colors.kentBlue400,
-    padding: 8,
-    flex: 1,
-  },
-  noteTitle: {
-    fontSize: 10,
+  taxTableTitle: {
+    fontSize: 16,
     fontWeight: 700,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.kentBlue500,
-    marginBottom: 6,
-    paddingBottom: 4,
+    marginBottom: 8,
   },
-  noteText: {
-    fontSize: 9,
-  },
-  // 下部ボーダー
-  bottomBorder: {
-    borderBottomWidth: 5,
-    borderBottomColor: colors.kentBlue500,
-    paddingBottom: 12,
-  },
-  // フッター
+  // フッターセクション（border-b-[5mm]）
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    gap: 32,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 14, // 5mm ≈ 14pt
+    borderBottomColor: colors.kentBlue500,
+  },
+  footerLeft: {
+    flex: 1,
+  },
+  // 備考ボックス
+  noteBox: {
+    position: 'relative',
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.kentBlue400,
+    flex: 1,
+    marginVertical: 12,
+  },
+  noteTitle: {
+    fontSize: 12,
+    fontWeight: 700,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.kentBlue500,
+    marginBottom: 8,
+    paddingBottom: 4,
+  },
+  noteText: {
+    fontSize: 12,
+  },
+  // 請求明細セクション
+  detailSection: {
+    paddingBottom: 16,
+    paddingHorizontal: 16,
   },
 });
 
