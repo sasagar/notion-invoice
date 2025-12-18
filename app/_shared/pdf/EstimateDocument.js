@@ -1,6 +1,32 @@
 import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
 import { styles } from './styles';
 
+// 二重線ボックスコンポーネント（::beforeと::afterを再現）
+const DoubleBorderBox = ({ children, style }) => (
+  <View style={[styles.doubleBoxWrapper, style]}>
+    {/* 外側の線（::before相当 - kent-blue-400） */}
+    <View style={styles.doubleBoxOuter} />
+    {/* 内側の線（::after相当 - kent-blue-300） */}
+    <View style={styles.doubleBoxInner} />
+    {/* コンテンツ */}
+    <View style={styles.doubleBoxContent}>{children}</View>
+  </View>
+);
+
+// 郵便番号の前に〒記号を追加するヘルパー関数
+const formatWithPostalMark = (text) => {
+  if (!text) return text;
+  // 郵便番号パターン（例：123-4567）を検出して〒を追加
+  // 既に〒がついている場合はスキップ
+  return text.replace(/(\d{3}-\d{4})/g, (match, p1, offset, str) => {
+    // 直前の文字が〒でなければ追加
+    if (offset > 0 && str[offset - 1] === '〒') {
+      return match;
+    }
+    return '〒' + match;
+  });
+};
+
 const EstimateDocument = ({
   sanitizedInvoice,
   customer,
@@ -9,6 +35,11 @@ const EstimateDocument = ({
   dateFormat,
   plain_text,
 }) => {
+  // 源泉徴収の対象額を計算
+  const withholdingBase = sanitizedInvoice.tax_incl
+    ? sanitizedInvoice.sum10 + sanitizedInvoice.sum8 - sanitizedInvoice.tax
+    : sanitizedInvoice.sum10 + sanitizedInvoice.sum8;
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -16,8 +47,8 @@ const EstimateDocument = ({
         <View style={styles.header}>
           <Text style={styles.headerTitle}>見積書</Text>
           <View style={styles.headerInfo}>
-            <Text>#ES-{sanitizedInvoice.id}</Text>
-            <Text>発行日: {dateFormat(sanitizedInvoice.created_at)}</Text>
+            <Text style={styles.headerInfoText}>#ES-{sanitizedInvoice.id}</Text>
+            <Text style={styles.headerInfoText}>発行日: {dateFormat(sanitizedInvoice.created_at)}</Text>
           </View>
         </View>
 
@@ -34,7 +65,7 @@ const EstimateDocument = ({
               {/* CustomerInfo - 会社情報 */}
               {plain_text(customer.properties['会社情報']) && (
                 <Text style={styles.customerInfo}>
-                  {plain_text(customer.properties['会社情報'])}
+                  {formatWithPostalMark(plain_text(customer.properties['会社情報']))}
                 </Text>
               )}
               {/* CustomerPerson - 担当者名 */}
@@ -52,20 +83,20 @@ const EstimateDocument = ({
               </Text>
             </View>
 
-            {/* 見積額ボックス（double-border） - 見積書は支払期限なし */}
-            <View style={styles.doubleBox}>
+            {/* 見積額ボックス（double-border） - 見積書では支払期限行がない */}
+            <DoubleBorderBox>
               <View style={styles.amountRow}>
                 <Text style={styles.amountLabel}>御見積額</Text>
                 <Text style={styles.amountValue}>
                   ¥ {sanitizedInvoice.invoice_sum.toLocaleString()}
                 </Text>
               </View>
-            </View>
+            </DoubleBorderBox>
           </View>
 
           {/* 右カラム - 自社情報 (min-w-fit) */}
           <View style={styles.rightColumn}>
-            {/* 自社情報セクション (flex gap-2) - 見積書は登録番号なし */}
+            {/* 自社情報セクション (flex gap-2) */}
             <View style={styles.companySection}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.companyName}>
@@ -74,7 +105,7 @@ const EstimateDocument = ({
                 {/* AccountInfo - 会社情報 */}
                 {plain_text(account.properties['会社情報']) && (
                   <Text style={styles.companyInfo}>
-                    {plain_text(account.properties['会社情報'])}
+                    {formatWithPostalMark(plain_text(account.properties['会社情報']))}
                   </Text>
                 )}
               </View>
@@ -86,6 +117,7 @@ const EstimateDocument = ({
                 />
               )}
             </View>
+            {/* 見積書には振込先情報は含まない */}
           </View>
         </View>
 
@@ -95,7 +127,7 @@ const EstimateDocument = ({
           <View style={styles.table}>
             {/* ヘッダー */}
             <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderCell, { flex: 3 }]}>項目</Text>
+              <Text style={[styles.tableHeaderCell, { flex: 3, textAlign: 'left' }]}>項目</Text>
               <Text style={[styles.tableHeaderCell, { flex: 1 }]}>
                 単価{sanitizedInvoice.tax_incl ? ' (税込)' : ''}
               </Text>
@@ -108,6 +140,9 @@ const EstimateDocument = ({
             {/* 行 */}
             <View style={styles.tableBody}>
               {rows.map((row, index) => {
+                const subtotal = row.properties.小計.formula.number;
+                const price = `¥ ${subtotal.toLocaleString()}`;
+
                 return (
                   <View style={styles.tableRow} key={index}>
                     <Text style={[styles.tableCell, { flex: 3 }]}>
@@ -121,7 +156,7 @@ const EstimateDocument = ({
                       {plain_text(row.properties.単位)}
                     </Text>
                     <Text style={[styles.tableCellRight, { flex: 1 }]}>
-                      ¥ {row.properties.小計.formula.number.toLocaleString()}
+                      {price}
                     </Text>
                     <Text style={[styles.tableCellCenter, { flex: 0.5 }]}>
                       {plain_text(row.properties.税率)}
@@ -136,56 +171,54 @@ const EstimateDocument = ({
         {/* 消費税・源泉徴収セクション (py-4 mx-4 border-b-2) */}
         <View style={styles.taxSection}>
           {/* 消費税テーブル */}
-          <View style={styles.taxTable}>
-            <Text style={styles.taxTableTitle}>消費税</Text>
-            <View style={styles.table}>
-              <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderCell, { flex: 2 }]}>項目</Text>
-                <Text style={[styles.tableHeaderCell, { flex: 1 }]}>
-                  対象額{sanitizedInvoice.tax_incl ? ' (税込)' : ''}
-                </Text>
-                <Text style={[styles.tableHeaderCell, { flex: 1 }]}>
-                  {sanitizedInvoice.tax_incl ? '内税額' : '税額'}
-                </Text>
-              </View>
-              <View style={styles.tableBody}>
-                {sanitizedInvoice.tax10 > 0 && (
-                  <View style={styles.tableRow}>
-                    <Text style={[styles.tableCell, { flex: 2 }]}>
-                      消費税（10%）
-                    </Text>
-                    <Text style={[styles.tableCellRight, { flex: 1 }]}>
-                      ¥ {sanitizedInvoice.tax10.toLocaleString()}
-                    </Text>
-                    <Text style={[styles.tableCellRight, { flex: 1 }]}>
-                      {sanitizedInvoice.tax_incl ? '(' : ''}¥{' '}
-                      {Math.round(
-                        sanitizedInvoice.tax10 - sanitizedInvoice.tax10 / 1.1
-                      ).toLocaleString()}
-                      {sanitizedInvoice.tax_incl ? ')' : ''}
-                    </Text>
-                  </View>
-                )}
-                {sanitizedInvoice.tax8 > 0 && (
-                  <View style={styles.tableRow}>
-                    <Text style={[styles.tableCell, { flex: 2 }]}>
-                      消費税（8%）
-                    </Text>
-                    <Text style={[styles.tableCellRight, { flex: 1 }]}>
-                      ¥ {sanitizedInvoice.tax8.toLocaleString()}
-                    </Text>
-                    <Text style={[styles.tableCellRight, { flex: 1 }]}>
-                      {sanitizedInvoice.tax_incl ? '(' : ''}¥{' '}
-                      {Math.round(
-                        sanitizedInvoice.tax8 - sanitizedInvoice.tax8 / 1.08
-                      ).toLocaleString()}
-                      {sanitizedInvoice.tax_incl ? ')' : ''}
-                    </Text>
-                  </View>
-                )}
+          {(sanitizedInvoice.tax10 + sanitizedInvoice.tax8 !== 0) && (
+            <View style={styles.taxTable}>
+              <Text style={styles.taxTableTitle}>消費税</Text>
+              <View style={styles.table}>
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.tableHeaderCell, { flex: 2, textAlign: 'left' }]}>項目</Text>
+                  <Text style={[styles.tableHeaderCell, { flex: 1 }]}>
+                    対象額{sanitizedInvoice.tax_incl ? '(税込)' : ''}
+                  </Text>
+                  <Text style={[styles.tableHeaderCell, { flex: 1 }]}>
+                    {sanitizedInvoice.tax_incl ? '内税額' : '税額'}
+                  </Text>
+                </View>
+                <View style={styles.tableBody}>
+                  {sanitizedInvoice.sum10 !== 0 && (
+                    <View style={styles.tableRow}>
+                      <Text style={[styles.tableCell, { flex: 2 }]}>
+                        消費税（10%）
+                      </Text>
+                      <Text style={[styles.tableCellRight, { flex: 1 }]}>
+                        ¥ {sanitizedInvoice.sum10.toLocaleString()}
+                      </Text>
+                      <Text style={[styles.tableCellRight, { flex: 1 }]}>
+                        {sanitizedInvoice.tax_incl ? '(' : ''}¥{' '}
+                        {sanitizedInvoice.tax10.toLocaleString()}
+                        {sanitizedInvoice.tax_incl ? ')' : ''}
+                      </Text>
+                    </View>
+                  )}
+                  {sanitizedInvoice.sum8 !== 0 && (
+                    <View style={styles.tableRow}>
+                      <Text style={[styles.tableCell, { flex: 2 }]}>
+                        消費税（8%）
+                      </Text>
+                      <Text style={[styles.tableCellRight, { flex: 1 }]}>
+                        ¥ {sanitizedInvoice.sum8.toLocaleString()}
+                      </Text>
+                      <Text style={[styles.tableCellRight, { flex: 1 }]}>
+                        {sanitizedInvoice.tax_incl ? '(' : ''}¥{' '}
+                        {sanitizedInvoice.tax8.toLocaleString()}
+                        {sanitizedInvoice.tax_incl ? ')' : ''}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </View>
             </View>
-          </View>
+          )}
 
           {/* 源泉徴収テーブル */}
           {sanitizedInvoice.withholding !== 0 && (
@@ -193,13 +226,17 @@ const EstimateDocument = ({
               <Text style={styles.taxTableTitle}>源泉徴収</Text>
               <View style={styles.table}>
                 <View style={styles.tableHeader}>
-                  <Text style={[styles.tableHeaderCell, { flex: 2 }]}>項目</Text>
-                  <Text style={[styles.tableHeaderCell, { flex: 1 }]}>金額</Text>
+                  <Text style={[styles.tableHeaderCell, { flex: 2, textAlign: 'left' }]}>項目</Text>
+                  <Text style={[styles.tableHeaderCell, { flex: 1 }]}>対象額(税抜)</Text>
+                  <Text style={[styles.tableHeaderCell, { flex: 1 }]}>税額</Text>
                 </View>
                 <View style={styles.tableBody}>
                   <View style={styles.tableRow}>
                     <Text style={[styles.tableCell, { flex: 2 }]}>
-                      源泉徴収額（10.21%）
+                      源泉徴収
+                    </Text>
+                    <Text style={[styles.tableCellRight, { flex: 1 }]}>
+                      ¥ {withholdingBase.toLocaleString()}
                     </Text>
                     <Text style={[styles.tableCellRight, { flex: 1 }]}>
                       ▲ ¥ {Math.abs(sanitizedInvoice.withholding).toLocaleString()}
@@ -218,7 +255,7 @@ const EstimateDocument = ({
             <Text style={styles.sectionTitle}>見積額</Text>
             <View style={styles.table}>
               <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderCell, { flex: 2 }]}>項目</Text>
+                <Text style={[styles.tableHeaderCell, { flex: 2, textAlign: 'left' }]}>項目</Text>
                 <Text style={[styles.tableHeaderCell, { flex: 1 }]}>小計</Text>
               </View>
               <View style={styles.tableBody}>
@@ -248,7 +285,7 @@ const EstimateDocument = ({
                 )}
               </View>
               <View style={styles.tableFooter}>
-                <Text style={[styles.tableFooterCell, { flex: 2 }]}>
+                <Text style={[styles.tableFooterCell, { flex: 2, textAlign: 'center' }]}>
                   見積額合計
                 </Text>
                 <Text style={[styles.tableFooterValue, { flex: 1 }]}>
@@ -259,15 +296,19 @@ const EstimateDocument = ({
           </View>
 
           {/* 備考（double-border my-3 flex-1） */}
-          <View style={styles.noteBox}>
-            <Text style={styles.noteTitle}>備考</Text>
-            <Text style={styles.noteText}>
-              {sanitizedInvoice.note}
-              {sanitizedInvoice.tax_incl
-                ? '\n\nこの見積書は内税にて計算をしております。'
-                : ''}
-              {'\nこの見積書の有効期限は、発行日より30日です。（期間内の発注を以て有効とするものです。）'}
-            </Text>
+          <View style={styles.noteBoxWrapper}>
+            <View style={styles.doubleBoxOuter} />
+            <View style={styles.doubleBoxInner} />
+            <View style={styles.noteBoxContent}>
+              <Text style={styles.noteTitle}>備考</Text>
+              <Text style={styles.noteText}>
+                {sanitizedInvoice.note}
+                {sanitizedInvoice.tax_incl
+                  ? '\n\nこの見積書は内税にて計算をしております。'
+                  : ''}
+                {'\n'}この見積書の有効期限は、発行日より30日です。（期間内の発注を以て有効とするものです。）
+              </Text>
+            </View>
           </View>
         </View>
       </Page>

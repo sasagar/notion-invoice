@@ -4,7 +4,8 @@ export const plain_text = props => {
   }
 
   if (props.type === 'title') {
-    return props.title?.[0]?.plain_text || '';
+    // 全てのtitle要素を結合
+    return props.title?.map(t => t.plain_text).join('') || '';
   }
 
   if (props.type === 'status') {
@@ -12,7 +13,8 @@ export const plain_text = props => {
   }
 
   if (props.type === 'rich_text') {
-    return props.rich_text?.[0]?.plain_text || '';
+    // 全てのrich_text要素を結合
+    return props.rich_text?.map(t => t.plain_text).join('') || '';
   }
 
   if (props.type === 'select') {
