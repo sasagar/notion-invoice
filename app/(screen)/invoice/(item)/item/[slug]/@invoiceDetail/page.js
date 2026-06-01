@@ -6,6 +6,7 @@ import { plain_text } from '@/app/(screen)/_utils/properties/plain_text';
 import invoiceSanitizer from '@/app/(screen)/_utils/notion/invoiceSanitizer';
 import getInvoiceItem from '@/app/(screen)/_utils/notion/getInvoiceItem';
 import getInvoiceRow from '@/app/(screen)/_utils/notion/getInvoiceRow';
+import { roundAmount } from '@/app/(screen)/_utils/properties/roundAmount';
 
 const InvoiceDetail = async props => {
   const params = await props.params;
@@ -32,14 +33,12 @@ const InvoiceDetail = async props => {
           </thead>
           <tbody>
             {rows.map(row => {
+              const subtotal = roundAmount(row.properties.小計.formula.number);
               let price;
-              if (row.properties.小計.formula.number >= 0) {
-                price =
-                  '¥ ' + row.properties.小計.formula.number.toLocaleString();
+              if (subtotal >= 0) {
+                price = '¥ ' + subtotal.toLocaleString();
               } else {
-                price =
-                  '▲ ¥ ' +
-                  Math.abs(row.properties.小計.formula.number).toLocaleString();
+                price = '▲ ¥ ' + Math.abs(subtotal).toLocaleString();
               }
 
               return (

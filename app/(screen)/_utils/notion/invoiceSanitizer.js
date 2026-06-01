@@ -1,4 +1,5 @@
 import { plain_text } from '../properties/plain_text';
+import { roundAmount } from '../properties/roundAmount';
 import getInvoiceRow from './getInvoiceRow';
 
 /**
@@ -39,15 +40,24 @@ const invoiceSanitizer = async invoice => {
 
   const sum10 = items
     .flatMap(item => item.properties)
-    .reduce((sum, current) => sum + current['10%対象額'].formula.number, 0);
+    .reduce(
+      (sum, current) => sum + roundAmount(current['10%対象額'].formula.number),
+      0,
+    );
 
   const sum8 = items
     .flatMap(item => item.properties)
-    .reduce((sum, current) => sum + current['8%対象額'].formula.number, 0);
+    .reduce(
+      (sum, current) => sum + roundAmount(current['8%対象額'].formula.number),
+      0,
+    );
 
   const sum0 = items
     .flatMap(item => item.properties)
-    .reduce((sum, current) => sum + current.非課税対象額.formula.number, 0);
+    .reduce(
+      (sum, current) => sum + roundAmount(current.非課税対象額.formula.number),
+      0,
+    );
 
   /**
    * Calculate the tax at 10% based on the value of sanitizedInvoice.tax_incl.
@@ -77,7 +87,7 @@ const invoiceSanitizer = async invoice => {
 
   const sum = items
     .flatMap(item => item.properties)
-    .reduce((sum, current) => sum + current.小計.formula.number, 0);
+    .reduce((sum, current) => sum + roundAmount(current.小計.formula.number), 0);
 
   /**
    * This function calculates and returns the withholding amount based on the sanitized invoice data.
