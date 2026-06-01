@@ -1,5 +1,6 @@
 import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
 import { styles } from './styles';
+import { roundAmount } from '@/app/(screen)/_utils/properties/roundAmount';
 
 // 二重線ボックスコンポーネント（::beforeと::afterを再現）
 const DoubleBorderBox = ({ children, style }) => (
@@ -188,7 +189,7 @@ const InvoiceDocument = ({
             {/* 行 */}
             <View style={styles.tableBody}>
               {rows.map((row, index) => {
-                const subtotal = row.properties.小計.formula.number;
+                const subtotal = roundAmount(row.properties.小計.formula.number);
                 const price =
                   subtotal >= 0
                     ? `¥ ${subtotal.toLocaleString()}`
