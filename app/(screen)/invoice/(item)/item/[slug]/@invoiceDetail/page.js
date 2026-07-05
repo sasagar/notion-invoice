@@ -7,6 +7,7 @@ import invoiceSanitizer from '@/app/(screen)/_utils/notion/invoiceSanitizer';
 import getInvoiceItem from '@/app/(screen)/_utils/notion/getInvoiceItem';
 import getInvoiceRow from '@/app/(screen)/_utils/notion/getInvoiceRow';
 import { roundAmount } from '@/app/(screen)/_utils/properties/roundAmount';
+import { number_value } from '@/app/(screen)/_utils/properties/number_value';
 
 const InvoiceDetail = async props => {
   const params = await props.params;
@@ -49,7 +50,7 @@ const InvoiceDetail = async props => {
                   </td>
                   <td className='text-right'>
                     &yen;{' '}
-                    {row.properties.単価.rollup.array[0].number.toLocaleString()}
+                    {number_value(row.properties.単価, 0).toLocaleString()}
                   </td>
                   <td className='text-right'>
                     {row.properties.数量.number.toLocaleString()}{' '}
