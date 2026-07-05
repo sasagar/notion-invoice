@@ -1,45 +1,36 @@
 import "../styles.css";
 
 import type { ReactNode } from "react";
-import { Footer } from "../components/footer";
-import { Header } from "../components/header";
+import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
 
-type RootLayoutProps = { children: ReactNode };
+// 初回描画前に localStorage / OS 設定から .dark を付与し、テーマ切替の
+// ちらつきを防ぐ。
+const themeInit = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();`;
 
-export default async function RootLayout({ children }: RootLayoutProps) {
-  const data = await getData();
-
+export default async function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="font-['Nunito']">
-      <meta name="description" content={data.description} />
-      <link rel="icon" type="image/png" href={data.icon} />
+    <div className="flex min-h-svh flex-col">
+      <title>BKTSK Notion Invoice</title>
+      <meta name="description" content="Notion 連携の請求書・見積書の管理と PDF 出力" />
+      <meta name="robots" content="noindex" />
+      <link rel="icon" type="image/png" href="/images/favicon.png" />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700&display=swap"
         precedence="font"
       />
+      <script
+        // biome-ignore lint: テーマ初期化スクリプト
+        dangerouslySetInnerHTML={{ __html: themeInit }}
+      />
       <Header />
-      <main className="m-6 flex items-center *:min-h-64 *:min-w-64 lg:m-0 lg:min-h-svh lg:justify-center">
-        {children}
-      </main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>
       <Footer />
     </div>
   );
 }
 
-const getData = async () => {
-  const data = {
-    description: "An internet website!",
-    icon: "/images/favicon.png",
-  };
-
-  return data;
-};
-
-export const getConfig = async () => {
-  return {
-    render: "static",
-  } as const;
-};
+export const getConfig = async () => ({ render: "static" as const });

@@ -1,0 +1,65 @@
+import process from "node:process";
+import { ErrorState } from "@/components/data-states";
+import { InvoiceCard } from "@/components/invoice-card";
+import { Pagination } from "@/components/pagination";
+import { getPage, listInvoices } from "@/lib/notion/fetchers";
+import { mapCustomer, mapInvoiceMeta } from "@/lib/notion/mapper";
+import { requireSession } from "@/lib/session";
+
+export default async function InvoiceListPage({ page }: { page: string }) {
+  const session = await requireSession();
+  const userId = session.user.id;
+  const perPage = Math.max(1, Number(process.env.PER_PAGE ?? 20));
+  const pageNum = Math.max(1, Number(page) || 1);
+
+  let raw;
+  try {
+    raw = await listInvoices(userId);
+  } catch (e) {
+    return <ErrorState message={e instanceof Error ? e.message : "取得に失敗しました"} />;
+  }
+
+  const metas = raw.map(mapInvoiceMeta);
+  const total = metas.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const start = (pageNum - 1) * perPage;
+  const pageItems = metas.slice(start, start + perPage);
+
+  const items = await Promise.all(
+    pageItems.map(async (meta) => {
+      let customerName = "";
+      if (meta.customerRelationId) {
+        try {
+          const c = mapCustomer(await getPage(userId, meta.customerRelationId));
+          customerName = c.companyName || c.name;
+        } catch {
+          // 顧客名の取得失敗は空のまま続行
+        }
+      }
+      return { meta, customerName };
+    }),
+  );
+
+  return (
+    <div>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">請求書</h1>
+        <span className="text-sm text-stone-500 dark:text-slate-400">全 {total} 件</span>
+      </div>
+      {items.length === 0 ? (
+        <p className="rounded-xl border border-stone-200 bg-white p-8 text-center text-stone-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+          請求書がありません。
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {items.map(({ meta, customerName }) => (
+            <InvoiceCard key={meta.id || meta.title} meta={meta} customerName={customerName} />
+          ))}
+        </ul>
+      )}
+      <Pagination current={pageNum} totalPages={totalPages} />
+    </div>
+  );
+}
+
+export const getConfig = async () => ({ render: "dynamic" as const });

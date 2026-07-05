@@ -1,21 +1,20 @@
-import { getServerSession } from "@/lib/session";
+import { Link } from "waku";
 
 export default async function HomePage() {
-  const session = await getServerSession();
   return (
-    <main className="mx-auto max-w-2xl p-8">
-      <h1 className="text-2xl font-bold mb-4">BKTSK Notion Invoice</h1>
-      {session ? (
-        <p>
-          ログイン中: <strong>{session.user.email}</strong>
-        </p>
-      ) : (
-        <a href="/login" className="text-kent-blue-500 underline">
-          ログイン
-        </a>
-      )}
-    </main>
+    <div className="mx-auto max-w-2xl py-16 text-center">
+      <h1 className="mb-4 text-3xl font-bold">BKTSK Notion Invoice</h1>
+      <p className="mb-8 text-stone-500 dark:text-slate-400">
+        Notion をデータソースにした請求書・見積書の管理と PDF 出力。
+      </p>
+      <Link
+        to="/login"
+        className="inline-block rounded-lg bg-kent-blue-500 px-6 py-3 text-white transition hover:bg-kent-blue-600"
+      >
+        ログイン
+      </Link>
+    </div>
   );
 }
 
-export const getConfig = async () => ({ render: "dynamic" as const });
+export const getConfig = async () => ({ render: "static" as const });
