@@ -7,11 +7,14 @@ import type { PathsForPages, GetConfigResponse, SearchCodecsForPages } from 'wak
 import type { getConfig as File_About_getConfig } from './pages/about';
 // prettier-ignore
 import type { getConfig as File_Index_getConfig } from './pages/index';
+// prettier-ignore
+import type { getConfig as File_Login_getConfig } from './pages/login';
 
 // prettier-ignore
 type Page =
 | ({ path: '/about' } & GetConfigResponse<typeof File_About_getConfig>)
-| ({ path: '/' } & GetConfigResponse<typeof File_Index_getConfig>);
+| ({ path: '/' } & GetConfigResponse<typeof File_Index_getConfig>)
+| ({ path: '/login' } & GetConfigResponse<typeof File_Login_getConfig>);
 
 // prettier-ignore
 type Layout =
