@@ -3,16 +3,17 @@ import { upsertCredentials } from "@/lib/credentials";
 
 // 現在のログインユーザーの Notion 資格情報を暗号化保存する。
 export const POST = async (req: Request): Promise<Response> => {
-  // CSRF 対策: Origin があれば同一オリジンのみ許可。
+  // CSRF 対策: 状態変更なので Origin を必須化し、同一オリジンのみ許可する。
   const origin = req.headers.get("origin");
-  if (origin) {
-    try {
-      if (new URL(origin).host !== req.headers.get("host")) {
-        return Response.json({ error: "forbidden" }, { status: 403 });
-      }
-    } catch {
+  if (!origin) {
+    return Response.json({ error: "forbidden" }, { status: 403 });
+  }
+  try {
+    if (new URL(origin).host !== req.headers.get("host")) {
       return Response.json({ error: "forbidden" }, { status: 403 });
     }
+  } catch {
+    return Response.json({ error: "forbidden" }, { status: 403 });
   }
 
   const session = await auth.api.getSession({ headers: req.headers });
