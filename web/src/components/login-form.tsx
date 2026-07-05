@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 import { authClient } from "@/lib/auth-client";
 
 const inputClass =
@@ -9,16 +10,20 @@ const inputClass =
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPending(true);
     setError(null);
     const form = new FormData(e.currentTarget);
-    const res = await authClient.signIn.email({
-      email: String(form.get("email") ?? ""),
-      password: String(form.get("password") ?? ""),
-    });
+    const res = await authClient.signIn.email(
+      {
+        email: String(form.get("email") ?? ""),
+        password: String(form.get("password") ?? ""),
+      },
+      captchaToken ? { headers: { "x-captcha-response": captchaToken } } : undefined,
+    );
     setPending(false);
     if (res.error) {
       setError("メールアドレスまたはパスワードが正しくありません");
@@ -37,6 +42,7 @@ export function LoginForm() {
         パスワード
         <input name="password" type="password" required className={inputClass} />
       </label>
+      <TurnstileWidget onToken={setCaptchaToken} />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         type="submit"
