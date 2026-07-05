@@ -1,4 +1,5 @@
 import { ErrorState } from "@/components/data-states";
+import { PdfDownload } from "@/components/pdf-download";
 import { StatusTag } from "@/components/status-tag";
 import { TaxTable } from "@/components/tax-table";
 import { WithholdingTable } from "@/components/withholding-table";
@@ -47,6 +48,8 @@ export default async function InvoiceDetailPage({ slug }: { slug: string }) {
         </div>
         <StatusTag status={meta.status} />
       </header>
+
+      <PdfDownload number={meta.id} customer={customer} account={account} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         {customer && (
