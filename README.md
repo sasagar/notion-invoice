@@ -1,36 +1,30 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# BKTSK Notion Invoice
 
-## Getting Started
+Notion をデータソースにした請求書・見積書の管理と PDF 出力ツール。
 
-First, run the development server:
+**アプリ本体は [`web/`](./web) にあります。** 旧 Next.js 実装からの移行が完了し、
+このカットオーバーで旧実装（`app/` ほか）を撤去しました。
+
+## スタック
+
+- **Waku**（Vite 上の React Server Components）＋ 内部 **Hono** サーバー
+- **TypeScript**
+- 認証: **better-auth** + **SQLite**（招待/管理者発行、Turnstile 任意）
+- Notion 資格情報: ユーザーごとに **AES-256-GCM** で暗号化して SQLite に保存
+- PDF: **@react-pdf/renderer**
+- スタイル: **Tailwind v4**
+- ツールチェーン: **Vite+（`vp`）**、ランタイム: **mise**
+
+## 使い方
+
+- 開発/コマンド: [`web/README.md`](./web/README.md)
+- 本番デプロイ（Proxmox / systemd）: [`web/deploy/README.md`](./web/deploy/README.md)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd web
+npm install
+npm run dev        # 開発サーバー（waku dev）
+npm run build      # 本番ビルド（waku build）
+npm run check      # vp check（整形+lint+型）
+npm run test       # vp test（Vitest）
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
