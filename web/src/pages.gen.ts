@@ -4,9 +4,11 @@
 import type { PathsForPages, GetConfigResponse, SearchCodecsForPages } from 'waku/router';
 
 // prettier-ignore
-import type { getConfig as File_About_getConfig } from './pages/about';
-// prettier-ignore
 import type { getConfig as File_Index_getConfig } from './pages/index';
+// prettier-ignore
+import type { getConfig as File_InvoiceItemSlug_getConfig } from './pages/invoice/item/[slug]';
+// prettier-ignore
+import type { getConfig as File_InvoiceListPage_getConfig } from './pages/invoice/list/[page]';
 // prettier-ignore
 import type { getConfig as File_Login_getConfig } from './pages/login';
 // prettier-ignore
@@ -14,8 +16,9 @@ import type { getConfig as File_User_getConfig } from './pages/user';
 
 // prettier-ignore
 type Page =
-| ({ path: '/about' } & GetConfigResponse<typeof File_About_getConfig>)
 | ({ path: '/' } & GetConfigResponse<typeof File_Index_getConfig>)
+| ({ path: '/invoice/item/[slug]' } & GetConfigResponse<typeof File_InvoiceItemSlug_getConfig>)
+| ({ path: '/invoice/list/[page]' } & GetConfigResponse<typeof File_InvoiceListPage_getConfig>)
 | ({ path: '/login' } & GetConfigResponse<typeof File_Login_getConfig>)
 | ({ path: '/user' } & GetConfigResponse<typeof File_User_getConfig>);
 

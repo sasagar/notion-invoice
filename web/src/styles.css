@@ -1,1 +1,47 @@
 @import "tailwindcss";
+
+/* ダークモードはクラス(.dark)ベース。OS 既定 + トグルで切替。 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-kent-blue-50: #f0f6fa;
+  --color-kent-blue-100: #dce8f2;
+  --color-kent-blue-200: #afc7e0;
+  --color-kent-blue-300: #85a2cc;
+  --color-kent-blue-400: #425fa8;
+  --color-kent-blue-500: #112382;
+  --color-kent-blue-600: #0e1f75;
+  --color-kent-blue-700: #0a1761;
+  --color-kent-blue-800: #06104f;
+  --color-kent-blue-900: #040a3b;
+  --color-kent-blue-950: #020526;
+
+  --font-sans: "M PLUS 1", ui-sans-serif, system-ui, sans-serif;
+
+  --animate-shimmer: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+body {
+  @apply bg-stone-50 text-stone-800 dark:bg-slate-950 dark:text-slate-100;
+}
+
+/* スケルトン（読み込み中） */
+.skeleton {
+  @apply relative overflow-hidden rounded bg-stone-200 dark:bg-slate-800;
+}
+.skeleton::after {
+  @apply absolute inset-0 -translate-x-full;
+  content: "";
+  background-image: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
+  animation: var(--animate-shimmer);
+}
