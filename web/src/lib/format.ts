@@ -18,3 +18,15 @@ export function formatYen(n: number): string {
   const abs = Math.abs(Math.round(n)).toLocaleString("ja-JP");
   return n < 0 ? `▲ ¥${abs}` : `¥${abs}`;
 }
+
+/** ISO 日付を「yyyy年M月do (eeeee)」で整形（PDF 用、旧 dateFormat 相当）。 */
+export function formatDateLong(iso: string | null): string {
+  if (!iso) {
+    return "";
+  }
+  try {
+    return format(parseISO(iso), "yyyy年MMMdo (eeeee)", { locale: ja });
+  } catch {
+    return iso;
+  }
+}
