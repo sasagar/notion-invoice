@@ -9,12 +9,15 @@ import type { getConfig as File_About_getConfig } from './pages/about';
 import type { getConfig as File_Index_getConfig } from './pages/index';
 // prettier-ignore
 import type { getConfig as File_Login_getConfig } from './pages/login';
+// prettier-ignore
+import type { getConfig as File_User_getConfig } from './pages/user';
 
 // prettier-ignore
 type Page =
 | ({ path: '/about' } & GetConfigResponse<typeof File_About_getConfig>)
 | ({ path: '/' } & GetConfigResponse<typeof File_Index_getConfig>)
-| ({ path: '/login' } & GetConfigResponse<typeof File_Login_getConfig>);
+| ({ path: '/login' } & GetConfigResponse<typeof File_Login_getConfig>)
+| ({ path: '/user' } & GetConfigResponse<typeof File_User_getConfig>);
 
 // prettier-ignore
 type Layout =

@@ -1,16 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
+import "@/lib/env";
 import process from "node:process";
-import Database from "better-sqlite3";
 import { betterAuth } from "better-auth";
 import { admin } from "better-auth/plugins";
-
-// .env があれば読み込む（開発・スクリプト用）。本番は実環境変数を使う。
-try {
-  process.loadEnvFile();
-} catch {
-  // .env が無い場合は無視
-}
+import { db } from "@/lib/db";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -24,20 +16,9 @@ if (isProduction && (!secret || secret.length < 32)) {
   );
 }
 
-const dbPath = process.env.DATABASE_PATH ?? "data/app.sqlite";
-fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-const db = new Database(dbPath);
-// 資格情報・セッションを含むDBファイルの権限をオーナーのみに制限。
-try {
-  fs.chmodSync(dbPath, 0o600);
-} catch {
-  // chmod 非対応環境は無視
-}
-
 export const auth = betterAuth({
   database: db,
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
-  // 本番未設定時は上で throw 済み。dev のみ弱いシークレットを許容。
   secret: secret ?? "dev-only-insecure-secret-not-for-production",
   basePath: "/api/auth",
   emailAndPassword: {
@@ -45,11 +26,9 @@ export const auth = betterAuth({
     // 自己サインアップは無効。ユーザーは管理者が admin プラグインで発行する。
     disableSignUp: true,
   },
-  // 本番は Secure クッキーを強制（公開HTTPS配下で安全側）。
   advanced: {
     useSecureCookies: isProduction,
   },
-  // レート制限を明示有効化（総当たり対策。sign-in は既定で厳しめ）。
   rateLimit: {
     enabled: true,
   },
