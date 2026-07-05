@@ -2,9 +2,21 @@ import "@/lib/env";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
 
-const dbPath = process.env.DATABASE_PATH ?? "data/app.sqlite";
+const isProduction = process.env.NODE_ENV === "production";
+const rawPath = process.env.DATABASE_PATH;
+
+// 本番は cwd 非依存の絶対パスを必須にする（起動場所違いで別DBを作り
+// データが消えたように見える事故を防ぐ）。
+if (isProduction && (!rawPath || !path.isAbsolute(rawPath))) {
+  throw new Error("DATABASE_PATH must be set to an absolute path in production");
+}
+
+// 開発デフォルトは cwd ではなく web ルート基準で解決（src/lib/db.ts -> web/）。
+const webRoot = fileURLToPath(new URL("../..", import.meta.url));
+const dbPath = rawPath ?? path.join(webRoot, "data/app.sqlite");
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 export const db = new Database(dbPath);
@@ -20,10 +32,10 @@ db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
 // Notion 資格情報（ユーザーごと、暗号化して保存）。
-// better-auth の user テーブルとは別に、アプリ側で作成・管理する。
+// user 削除時に孤児化しないよう FK(ON DELETE CASCADE)を張る。
 db.exec(`
   CREATE TABLE IF NOT EXISTS notion_credentials (
-    user_id     TEXT PRIMARY KEY,
+    user_id     TEXT PRIMARY KEY REFERENCES user(id) ON DELETE CASCADE,
     db_id_enc   TEXT NOT NULL,
     api_key_enc TEXT NOT NULL,
     created_at  TEXT NOT NULL DEFAULT (datetime('now')),
