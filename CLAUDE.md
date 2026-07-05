@@ -1,89 +1,48 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+このファイルは Claude Code (claude.ai/code) への本リポジトリでの指針。
 
-## Project Overview
+## 概要
 
-BKTSK Notion Invoice is a Japanese-language invoice management system built with Next.js 16 (App Router). It integrates with Notion as the data source and Supabase for authentication and credential storage. The app generates printable PDF invoices and estimates with Japanese formatting, tax calculations, and withholding tax computations.
+BKTSK Notion Invoice は、Notion をデータソースにした日本語の請求書・見積書管理
+ツール。旧 Next.js 実装から **Waku + Hono + TypeScript** へ移行済み。
+**アプリ本体は `web/` サブディレクトリ**にある（このディレクトリで作業する）。
 
-## Development Commands
+## スタック
+
+- Waku 1.x（Vite 上の RSC）／内部 Hono サーバー、TypeScript strict
+- 認証: better-auth + SQLite（better-sqlite3 直）。招待/管理者発行のみ・自己サインアップ無効。Turnstile captcha は任意（`TURNSTILE_SECRET_KEY` 設定時）
+- Notion 資格情報: ユーザーごとに AES-256-GCM 暗号化して SQLite に保存（`web/src/lib/crypto`, `web/src/lib/credentials.ts`）
+- Notion 取得: `web/src/lib/notion/`（client/fetchers/mapper/properties）。生ページ→ドメインモデル変換で null 非安全アクセスを集約
+- 金額計算: `web/src/lib/money/sanitizer.ts`（純粋関数＋Vitest でパリティ固定）
+- PDF: `web/src/pdf/`（@react-pdf/renderer）。`_api/api/print/{invoice,estimate}/[slug].ts` で出力
+- スタイル: Tailwind v4（`@tailwindcss/vite`）、kent-blue パレット、ライト/ダーク
+
+## コマンド（`web/` 内）
 
 ```bash
-pnpm dev          # Start dev server with Turbo (port 3000)
-pnpm build        # Production build
-pnpm start        # Start production server (port 3080)
-pnpm lint         # Run ESLint
+npm run dev            # waku dev
+npm run build          # waku build（dev/build は Waku CLI。vp dev/build は使わない）
+npm run start          # waku start（本番。--host/--port で待受指定）
+npm run check          # vp check（oxfmt + oxlint + 型）。vp check --fix で自動修正
+npm run test           # vp test（Vitest）
+npm run db:migrate     # better-auth テーブル + notion_credentials を作成/更新
+npm run db:seed        # 初期管理者作成（SEED_ADMIN_EMAIL/PASSWORD）
 ```
 
-## Architecture
+## ルーティング（Waku fs-router, `web/src/pages/`）
 
-### Route Groups (App Router)
+- `_layout.tsx`（ヘッダ/フッタ/テーマ）、`index.tsx`（ランディング）、`login.tsx`、`user.tsx`（設定）
+- `invoice/list/[page].tsx`（一覧）、`invoice/item/[slug].tsx`（詳細）
+- `_api/api/auth/[...all].ts`（better-auth）、`_api/api/print/*`（PDF）、`_api/api/notion-credentials.ts`（資格情報保存）
+- 保護ページは `requireSession()`（未ログインは `/login` へ）
 
-- `app/(screen)/` - Main authenticated application routes
-- `app/(print)/` - Print-only routes for PDF generation (invoice/estimate)
-- `app/(callback)/` - OAuth callback handler for Supabase auth
-- `app/api/` - API routes for Puppeteer PDF generation
+## 環境変数（本番）
 
-### Parallel Routes Pattern
+`BETTER_AUTH_SECRET`(32+), `BETTER_AUTH_URL`, `DATABASE_PATH`(絶対パス), `CRYPTO_KEY`(32+),
+`TURNSTILE_SECRET_KEY` / `VITE_TURNSTILE_SITE_KEY`（任意・VITE_ はビルド時必要）, `PER_PAGE`。
+詳細は `web/deploy/README.md`。
 
-The app uses Next.js parallel routes (`@segment`) extensively:
+## 言語
 
-- `invoice/@sidebar` - Dynamic sidebar navigation
-- `invoice/(item)/@invoiceHeader`, `@invoiceDetail`, `@invoiceInfo` - Invoice detail segments
-- `user/@notion`, `@profile` - User settings segments
-
-### Key Utilities (`app/(screen)/_utils/`)
-
-- `crypto/` - AES-256-CFB encryption for Notion credentials (uses `CRYPTO_KEY`, `CRYPTO_IV` env vars)
-- `notion/` - Notion API integration and data fetching
-- `supabase/` - Supabase client setup (SSR pattern)
-- `properties/` - Notion property extractors and formatters
-
-### Data Flow
-
-1. User authenticates via Supabase (email/password + Turnstile CAPTCHA)
-2. Encrypted Notion credentials stored in Supabase `notion` table
-3. Credentials decrypted server-side for Notion API calls
-4. Invoice data fetched from Notion, processed through `invoiceSanitizer()`
-5. Print routes render invoice HTML, Puppeteer generates PDF via `/api/print/`
-
-### Invoice Calculations (`invoiceSanitizer.js`)
-
-- Tax modes: 10%, 8%, or non-taxable per line item
-- Tax inclusion logic for both included and excluded pricing
-- Withholding tax: 10.21% deduction for non-exempt invoices
-- Formula: `invoice_sum = sum + tax + withholding`
-
-## Environment Variables
-
-Required:
-
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase
-- `CRYPTO_KEY`, `CRYPTO_IV` - Credential encryption (AES-256-CFB)
-- `PUPPETEER_API_KEY` - PDF API route security
-- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` - Cloudflare CAPTCHA
-
-Optional:
-
-- `NEXT_PUBLIC_PER_PAGE` - Pagination size (default in code)
-
-## Configuration Notes
-
-- Revalidation: 30 seconds for invoice pages (ISR)
-- Remote images: AWS S3 and Gravatar patterns allowed
-- Server Actions: Allowed from localhost:3000 and invoice.bktsk.com
-- Production port: 3080
-
-## Styling
-
-Uses Tailwind CSS v4 with CSS-based configuration:
-
-- Custom colors defined in `@theme` blocks (e.g., `kent-blue-*`)
-- `@reference "tailwindcss"` required in CSS files using `@apply`
-- Print styles in separate `print.css` files
-
-## Language
-
-- UI and code comments are in Japanese
-- Uses `M_PLUS_1` Google font for Japanese typography
-- Date formatting with `date-fns` Japanese locale
+UI・コメントは日本語。日本語フォントは M PLUS 1。日付は date-fns の ja ロケール。
