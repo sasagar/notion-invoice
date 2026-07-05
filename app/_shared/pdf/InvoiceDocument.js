@@ -1,6 +1,7 @@
 import { Document, Page, View, Text, Image } from '@react-pdf/renderer';
 import { styles } from './styles';
 import { roundAmount } from '@/app/(screen)/_utils/properties/roundAmount';
+import { number_value } from '@/app/(screen)/_utils/properties/number_value';
 
 // 二重線ボックスコンポーネント（::beforeと::afterを再現）
 const DoubleBorderBox = ({ children, style }) => (
@@ -201,7 +202,7 @@ const InvoiceDocument = ({
                       {plain_text(row.properties.名前)}
                     </Text>
                     <Text style={[styles.tableCellRight, { flex: 1 }]}>
-                      ¥ {row.properties.単価.rollup.array[0].number.toLocaleString()}
+                      ¥ {number_value(row.properties.単価, 0).toLocaleString()}
                     </Text>
                     <Text style={[styles.tableCellRight, { flex: 1 }]}>
                       {row.properties.数量.number.toLocaleString()}{' '}
