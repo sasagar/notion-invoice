@@ -8,6 +8,7 @@ import getInvoiceItem from '@/app/(screen)/_utils/notion/getInvoiceItem';
 import getInvoiceRow from '@/app/(screen)/_utils/notion/getInvoiceRow';
 import { roundAmount } from '@/app/(screen)/_utils/properties/roundAmount';
 import { number_value } from '@/app/(screen)/_utils/properties/number_value';
+import { rollup_text_list } from '@/app/(screen)/_utils/properties/rollup_text_list';
 
 const InvoiceDetail = async props => {
   const params = await props.params;
@@ -46,7 +47,11 @@ const InvoiceDetail = async props => {
                 <tr key={row.id}>
                   <td>{plain_text(row.properties.名前)}</td>
                   <td className='text-stone-600 dark:text-slate-400'>
-                    {row.properties.項目名.rollup.array[0].title[0].plain_text}
+                    {rollup_text_list(row.properties.項目名).map((name, i) => (
+                      <span key={i} className='block'>
+                        {name}
+                      </span>
+                    ))}
                   </td>
                   <td className='text-right'>
                     &yen;{' '}
