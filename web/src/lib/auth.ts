@@ -1,7 +1,7 @@
 import "@/lib/env";
 import process from "node:process";
 import { betterAuth } from "better-auth";
-import { admin } from "better-auth/plugins";
+import { admin, captcha } from "better-auth/plugins";
 import { db } from "@/lib/db";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -32,5 +32,18 @@ export const auth = betterAuth({
   rateLimit: {
     enabled: true,
   },
-  plugins: [admin()],
+  // Turnstile captcha は TURNSTILE_SECRET_KEY がある時のみ有効化。
+  // 保護対象は better-auth 既定(/sign-in/email 等)。トークンは
+  // クライアントが x-captcha-response ヘッダで送る。
+  plugins: [
+    admin(),
+    ...(process.env.TURNSTILE_SECRET_KEY
+      ? [
+          captcha({
+            provider: "cloudflare-turnstile",
+            secretKey: process.env.TURNSTILE_SECRET_KEY,
+          }),
+        ]
+      : []),
+  ],
 });
