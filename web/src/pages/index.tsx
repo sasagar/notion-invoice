@@ -1,34 +1,21 @@
-import { Link } from "waku";
-import { Counter } from "../components/counter";
+import { getServerSession } from "@/lib/session";
 
 export default async function HomePage() {
-  const data = await getData();
-
+  const session = await getServerSession();
   return (
-    <div>
-      <title>{data.title}</title>
-      <h1 className="text-4xl font-bold tracking-tight">{data.headline}</h1>
-      <p>{data.body}</p>
-      <Counter />
-      <Link to="/about" className="mt-4 inline-block underline">
-        About page
-      </Link>
-    </div>
+    <main className="mx-auto max-w-2xl p-8">
+      <h1 className="text-2xl font-bold mb-4">BKTSK Notion Invoice</h1>
+      {session ? (
+        <p>
+          ログイン中: <strong>{session.user.email}</strong>
+        </p>
+      ) : (
+        <a href="/login" className="text-kent-blue-500 underline">
+          ログイン
+        </a>
+      )}
+    </main>
   );
 }
 
-const getData = async () => {
-  const data = {
-    title: "Waku",
-    headline: "Waku",
-    body: "Hello world!",
-  };
-
-  return data;
-};
-
-export const getConfig = async () => {
-  return {
-    render: "static",
-  } as const;
-};
+export const getConfig = async () => ({ render: "dynamic" as const });
