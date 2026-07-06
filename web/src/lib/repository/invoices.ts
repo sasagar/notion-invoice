@@ -515,3 +515,17 @@ export function invoiceNumberExists(
     .get(ownerId, invoiceNumber);
   return row !== undefined;
 }
+
+/**
+ * 複製時の空き番号を返す。「元番号-copy」から始め、既存なら -copy2, -copy3 … と
+ * 空きが見つかるまで番号を進める（同じ元の再複製でも UNIQUE 衝突しない）。
+ */
+export function nextCopyNumber(db: AppDatabase, ownerId: string, base: string): string {
+  let candidate = `${base}-copy`;
+  let n = 2;
+  while (invoiceNumberExists(db, ownerId, candidate)) {
+    candidate = `${base}-copy${n}`;
+    n += 1;
+  }
+  return candidate;
+}
