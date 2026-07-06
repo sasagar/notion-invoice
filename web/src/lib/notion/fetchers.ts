@@ -62,7 +62,8 @@ export async function getRows(userId: string, ids: string[]): Promise<unknown[]>
 export type InvoiceListItem = {
   meta: InvoiceMeta;
   customerName: string;
-  totalAmount: number;
+  /** 明細行の取得/計算に失敗した場合は null（1件の異常データで一覧全体を落とさない）。 */
+  totalAmount: number | null;
 };
 
 /**
@@ -88,9 +89,14 @@ export async function listInvoicesWithTotals(
             // 顧客名の取得失敗は空のまま続行
           }
         }
-        const rawRows = await getRows(userId, meta.itemRelationIds);
-        const { totals } = buildInvoice(rawInvoice, rawRows);
-        return { meta, customerName, totalAmount: totals.invoiceSum };
+        let totalAmount: number | null = null;
+        try {
+          const rawRows = await getRows(userId, meta.itemRelationIds);
+          totalAmount = buildInvoice(rawInvoice, rawRows).totals.invoiceSum;
+        } catch {
+          // 明細行が削除/アーカイブ済み等で取得できない場合は金額不明のまま続行
+        }
+        return { meta, customerName, totalAmount };
       }),
     );
   });

@@ -34,10 +34,21 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
   }
 
   const meta0 = mapInvoiceMeta(rawInvoice);
-  const [rawRows, rawCustomer, rawAccount] = await Promise.all([
-    getRows(userId, meta0.itemRelationIds),
-    meta0.customerRelationId ? getPage(userId, meta0.customerRelationId) : Promise.resolve(null),
-    meta0.accountRelationId ? getPage(userId, meta0.accountRelationId) : Promise.resolve(null),
+
+  let rawRows: unknown[];
+  try {
+    rawRows = await getRows(userId, meta0.itemRelationIds);
+  } catch (e) {
+    return <ErrorState message={e instanceof Error ? e.message : "明細行の取得に失敗しました"} />;
+  }
+
+  const [rawCustomer, rawAccount] = await Promise.all([
+    meta0.customerRelationId
+      ? getPage(userId, meta0.customerRelationId).catch(() => null)
+      : Promise.resolve(null),
+    meta0.accountRelationId
+      ? getPage(userId, meta0.accountRelationId).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   const { meta, rows, totals } = buildInvoice(rawInvoice, rawRows);
