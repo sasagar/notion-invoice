@@ -14,7 +14,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <title>BKTSK Notion Invoice</title>
       <meta name="description" content="Notion 連携の請求書・見積書の管理と PDF 出力" />
       <meta name="robots" content="noindex" />
-      <link rel="icon" type="image/png" href="/images/favicon.png" />
+      <link rel="icon" type="image/jpeg" href="/icon.jpg" />
+      <link rel="apple-touch-icon" href="/apple-icon.jpg" />
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
