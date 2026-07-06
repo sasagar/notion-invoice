@@ -3,7 +3,7 @@ import "../styles.css";
 import type { ReactNode } from "react";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
-import { NavigationProgress } from "@/components/navigation-progress";
+import { NavigationPending, NavigationProgress } from "@/components/navigation-progress";
 
 // 初回描画前に localStorage / OS 設定から .dark を付与し、テーマ切替の
 // ちらつきを防ぐ。
@@ -30,7 +30,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         dangerouslySetInnerHTML={{ __html: themeInit }}
       />
       <Header />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+        <NavigationPending>{children}</NavigationPending>
+      </main>
       <Footer />
     </div>
   );
