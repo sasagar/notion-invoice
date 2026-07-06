@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Card, SectionHeading } from "@/components/card";
 import { ErrorState } from "@/components/data-states";
 import { PdfDownload } from "@/components/pdf-download";
@@ -9,7 +10,15 @@ import { getInvoiceByNumber, getPage, getRows } from "@/lib/notion/fetchers";
 import { buildInvoice, mapAccount, mapCustomer, mapInvoiceMeta } from "@/lib/notion/mapper";
 import { requireSession } from "@/lib/session";
 
-export default async function InvoiceDetailPage({ slug }: { slug: string }) {
+export default function InvoiceDetailPage({ slug }: { slug: string }) {
+  return (
+    <Suspense fallback={<InvoiceDetailSkeleton />}>
+      <InvoiceDetailBody slug={slug} />
+    </Suspense>
+  );
+}
+
+async function InvoiceDetailBody({ slug }: { slug: string }) {
   const session = await requireSession();
   const userId = session.user.id;
 
@@ -140,7 +149,7 @@ export default async function InvoiceDetailPage({ slug }: { slug: string }) {
             <thead className="bg-stone-50 text-stone-500 dark:bg-slate-800/50 dark:text-slate-400">
               <tr>
                 <th className="p-3 text-left font-medium">表示名</th>
-                <th className="p-3 text-left font-medium">項目名</th>
+                <th className="p-3 text-left text-xs font-medium">項目名</th>
                 <th className="p-3 text-right font-medium">単価{incl ? "(税込)" : ""}</th>
                 <th className="p-3 text-right font-medium">数量</th>
                 <th className="p-3 text-right font-medium">小計{incl ? "(税込)" : ""}</th>
@@ -151,7 +160,7 @@ export default async function InvoiceDetailPage({ slug }: { slug: string }) {
               {rows.map((r) => (
                 <tr key={r.id} className="border-t border-stone-100 dark:border-slate-800">
                   <td className="p-3">{r.name}</td>
-                  <td className="p-3 text-stone-500 dark:text-slate-400">
+                  <td className="p-3 text-xs text-stone-400 dark:text-slate-500">
                     {r.itemNames.map((n, i) => (
                       <span key={i} className="block">
                         {n}
@@ -228,6 +237,52 @@ export default async function InvoiceDetailPage({ slug }: { slug: string }) {
           </p>
         </Card>
       )}
+    </div>
+  );
+}
+
+function InvoiceDetailSkeleton() {
+  return (
+    <div className="flex flex-col gap-5">
+      <section className="rounded-3xl bg-stone-200/50 p-6 dark:bg-slate-800/40 sm:p-8">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0 flex-1 space-y-3">
+            <div className="skeleton h-5 w-24 rounded-full" />
+            <div className="skeleton h-8 w-2/3 rounded" />
+            <div className="skeleton h-4 w-1/2 rounded" />
+          </div>
+          <div className="space-y-2 sm:text-right">
+            <div className="skeleton ml-auto h-3 w-20 rounded" />
+            <div className="skeleton ml-auto h-10 w-40 rounded" />
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {["customer", "account"].map((k) => (
+          <Card key={k}>
+            <div className="skeleton h-3 w-16 rounded" />
+            <div className="skeleton mt-3 h-4 w-1/2 rounded" />
+            <div className="skeleton mt-2 h-3 w-3/4 rounded" />
+          </Card>
+        ))}
+      </div>
+
+      <Card className="overflow-hidden p-0">
+        <div className="px-5 pt-5">
+          <div className="skeleton h-3 w-20 rounded" />
+        </div>
+        <div className="flex flex-col gap-3 p-5">
+          {["a", "b", "c"].map((k) => (
+            <div key={k} className="skeleton h-8 w-full rounded" />
+          ))}
+        </div>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="skeleton h-32 rounded-2xl" />
+        <div className="skeleton h-32 rounded-2xl" />
+      </div>
     </div>
   );
 }

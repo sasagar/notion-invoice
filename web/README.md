@@ -13,15 +13,15 @@ pnpm install            # 依存関係
 
 ## コマンド
 
-| 目的         | コマンド                                                   |
-| ------------ | ---------------------------------------------------------- |
-| 開発サーバ   | `pnpm run dev`（`waku dev`）                                |
-| 本番ビルド   | `pnpm run build`（`waku build`）                            |
+| 目的         | コマンド                                                                                 |
+| ------------ | ---------------------------------------------------------------------------------------- |
+| 開発サーバ   | `pnpm run dev`（`waku dev`）                                                             |
+| 本番ビルド   | `pnpm run build`（`waku build`）                                                         |
 | 本番起動     | `pnpm run start`（`waku start --host 0.0.0.0 --port <PORT>`。PORT 環境変数は無視される） |
-| ルート型生成 | `pnpm run typegen`（`waku router typegen`）                 |
-| 整形+lint    | `pnpm run check`（`vp check`。`vp check --fix` で自動修正） |
-| 型チェック   | `pnpm run typecheck`（`tsc --noEmit`）                      |
-| テスト       | `pnpm run test`（`vp test` / Vitest）                       |
+| ルート型生成 | `pnpm run typegen`（`waku router typegen`）                                              |
+| 整形+lint    | `pnpm run check`（`vp check`。`vp check --fix` で自動修正）                              |
+| 型チェック   | `pnpm run typecheck`（`tsc --noEmit`）                                                   |
+| テスト       | `pnpm run test`（`vp test` / Vitest）                                                    |
 
 ツールチェーンは **Vite+（`vp`）**（check/test/lint/fmt）、ランタイムは **mise**。
 `waku dev/build` は Waku CLI を使う（`vp dev/build` は Waku の3環境ビルドと競合するため使わない）。
