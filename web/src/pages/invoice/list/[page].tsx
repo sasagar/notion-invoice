@@ -24,7 +24,7 @@ export default function InvoiceListPage({ page }: { page: string }) {
 async function InvoiceListBody({ page }: { page: string }) {
   const session = await requireSession();
   const userId = session.user.id;
-  const perPage = Math.max(1, Number(process.env.PER_PAGE ?? 20));
+  const perPage = Math.max(1, Number(process.env.PER_PAGE ?? 10));
   const pageNum = Math.max(1, Number(page) || 1);
 
   let raw;
