@@ -1,12 +1,14 @@
 import type { CSSProperties } from "react";
 
-type Tier = "unstamped" | "transit" | "sealed";
+type Tier = "unstamped" | "transit" | "sealed" | "void";
 
-/** ドラフト＝未捺印、送付済み＝青インク(処理中)、それ以外(支払済み等)＝朱肉(確定)。 */
+/** ドラフト＝未捺印、送付済み＝青インク(処理中)、キャンセル＝取消(打ち消し線)、
+ *  それ以外(支払い済み等)＝朱肉(確定)。 */
 const STATUS_TIER: Record<string, Tier> = {
   ドラフト: "unstamped",
   見積送付済み: "transit",
   請求書送付済み: "transit",
+  キャンセル: "void",
 };
 
 const TIER_STYLE: Record<Tier, string> = {
@@ -16,6 +18,7 @@ const TIER_STYLE: Record<Tier, string> = {
     "stamp-mark border-[3px] border-double border-kent-blue-500 text-kent-blue-600 dark:border-kent-blue-300 dark:text-kent-blue-200",
   sealed:
     "stamp-mark border-[3px] border-double border-shuiro-500 text-shuiro-600 dark:border-shuiro-400 dark:text-shuiro-400",
+  void: "border-2 border-stone-300 text-stone-400 line-through decoration-2 opacity-80 dark:border-slate-700 dark:text-slate-500",
 };
 
 // よくある語尾（意味の区切り）の直前で改行できるようにする。
