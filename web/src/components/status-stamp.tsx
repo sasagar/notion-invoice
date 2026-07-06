@@ -30,7 +30,7 @@ export function StatusStamp({ status, className = "" }: { status: string; classN
   const tier: Tier = STATUS_TIER[status] ?? "sealed";
   return (
     <span
-      className={`inline-flex h-10 w-16 shrink-0 items-center justify-center whitespace-normal break-keep rounded-[2px] text-center font-sans text-[9px] font-bold leading-[1.15] tracking-wide ${TIER_STYLE[tier]} ${className}`}
+      className={`inline-flex h-10 w-16 shrink-0 items-center justify-center whitespace-normal break-words rounded-[2px] text-center font-sans text-[9px] font-bold leading-[1.15] tracking-wide ${TIER_STYLE[tier]} ${className}`}
       style={{ "--stamp-rotate": "-6deg" } as CSSProperties}
     >
       {status || "—"}
