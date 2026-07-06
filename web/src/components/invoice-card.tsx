@@ -11,7 +11,7 @@ export function InvoiceCard({ item }: { item: InvoiceListItem }) {
         to={`/invoice/item/${meta.id}`}
         className="flex items-center gap-4 px-4 py-3.5 transition hover:bg-kent-blue-500/5 dark:hover:bg-kent-blue-400/5"
       >
-        <StatusStamp status={meta.status} className="text-[10px]" />
+        <StatusStamp status={meta.status} />
         <div className="min-w-0 flex-1">
           <div className="truncate font-medium text-stone-800 dark:text-slate-100">
             {meta.title || "(件名なし)"}
