@@ -4,7 +4,7 @@ import { ErrorState } from "@/components/data-states";
 import { PdfDownload } from "@/components/pdf-download";
 import { TaxTable } from "@/components/tax-table";
 import { WithholdingTable } from "@/components/withholding-table";
-import { formatDate, formatYen } from "@/lib/format";
+import { formatDate, formatDateTime, formatYen } from "@/lib/format";
 import { roundAmount } from "@/lib/money/sanitizer";
 import { getInvoiceByNumber, getPage, getRows } from "@/lib/notion/fetchers";
 import { buildInvoice, mapAccount, mapCustomer, mapInvoiceMeta } from "@/lib/notion/mapper";
@@ -73,7 +73,7 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
               <span className="font-medium text-white/90">#{meta.id}</span>
               {meta.publishedAt && `　発行日 ${formatDate(meta.publishedAt)}`}
               {meta.dueTo && `　支払期限 ${formatDate(meta.dueTo)}`}
-              {`　最終更新 ${formatDate(meta.updatedAt)}`}
+              {`　最終更新 ${formatDateTime(meta.updatedAt)}`}
             </p>
           </div>
           <div className="shrink-0 sm:text-right">
