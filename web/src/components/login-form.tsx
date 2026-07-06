@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { TurnstileWidget } from "@/components/turnstile-widget";
+import { useRouter } from "waku/router/client";
 import { authClient } from "@/lib/auth-client";
 
 const inputClass =
@@ -11,6 +12,7 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
+  const router = useRouter();
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,7 +31,7 @@ export function LoginForm() {
       setError("メールアドレスまたはパスワードが正しくありません");
       return;
     }
-    window.location.href = "/invoice/list/1";
+    router.push("/invoice/list/1");
   };
 
   return (
