@@ -44,6 +44,37 @@ export type InvoiceInput = {
   rows: InvoiceRowInput[];
 };
 
+/** エディタ（手動作成/編集）の請求書入力。notion_page_id は扱わない。 */
+export type InvoiceEditorInput = Omit<InvoiceInput, "notionPageId">;
+
+/** エディタが復元する明細行（itemIds 込み。表示名/単価は行スナップショット）。 */
+export type InvoiceRowData = {
+  name: string;
+  itemNames: string[];
+  unitPrice: number;
+  quantity: number;
+  unit: string;
+  taxRate: string;
+  itemIds: string[];
+};
+
+/** エディタの初期値（DB id・メモ・行の itemIds を含む完全な編集用データ）。 */
+export type InvoiceEditorData = {
+  id: string;
+  invoiceNumber: string;
+  title: string;
+  status: string;
+  customerId: string | null;
+  accountId: string | null;
+  publishedAt: string | null;
+  dueTo: string | null;
+  taxIncluded: boolean;
+  withholdingExempt: boolean;
+  note: string;
+  memo: string;
+  rows: InvoiceRowData[];
+};
+
 // getFullInvoiceByNumber の戻り値。Notion 版と共通の型（notion/types.ts）を再エクスポートし、
 // `@/lib/repository` からも従来どおり参照できるようにする。
 export type { FullInvoice };
@@ -116,6 +147,40 @@ function totalsOf(rows: InvoiceRow[], meta: InvoiceMeta): Invoice["totals"] {
     rows: rows.map((x) => x.amounts),
     taxIncluded: meta.taxIncluded,
     withholdingExempt: meta.withholdingExempt,
+  });
+}
+
+/**
+ * 明細行を全置換で書き込む（saveInvoice / createInvoice / updateInvoiceById 共通）。
+ * invoice_row_items は行の ON DELETE CASCADE で消えるため、先に行を全削除する。
+ * 呼び出し側のトランザクション内で使う前提。
+ */
+function writeRows(db: AppDatabase, invoiceId: string, rows: InvoiceRowInput[]): void {
+  db.prepare("DELETE FROM invoice_rows WHERE invoice_id = ?").run(invoiceId);
+  const insertRow = db.prepare(`
+    INSERT INTO invoice_rows
+      (id, invoice_id, sort_order, name, item_names, unit_price, quantity, unit, tax_rate)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const insertRowItem = db.prepare(
+    "INSERT OR IGNORE INTO invoice_row_items (row_id, item_id) VALUES (?, ?)",
+  );
+  rows.forEach((row, index) => {
+    const rowId = randomUUID();
+    insertRow.run(
+      rowId,
+      invoiceId,
+      row.sortOrder ?? index,
+      row.name,
+      JSON.stringify(row.itemNames),
+      row.unitPrice,
+      row.quantity,
+      row.unit,
+      row.taxRate,
+    );
+    for (const itemId of row.itemIds ?? []) {
+      insertRowItem.run(rowId, itemId);
+    }
   });
 }
 
@@ -276,35 +341,177 @@ export function saveInvoice(db: AppDatabase, ownerId: string, input: InvoiceInpu
       );
     }
 
-    // 明細行を全置換（invoice_row_items は行の ON DELETE CASCADE で消える）。
-    db.prepare("DELETE FROM invoice_rows WHERE invoice_id = ?").run(id);
-    const insertRow = db.prepare(`
-      INSERT INTO invoice_rows
-        (id, invoice_id, sort_order, name, item_names, unit_price, quantity, unit, tax_rate)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    const insertRowItem = db.prepare(
-      "INSERT OR IGNORE INTO invoice_row_items (row_id, item_id) VALUES (?, ?)",
-    );
-    input.rows.forEach((row, index) => {
-      const rowId = randomUUID();
-      insertRow.run(
-        rowId,
-        id,
-        row.sortOrder ?? index,
-        row.name,
-        JSON.stringify(row.itemNames),
-        row.unitPrice,
-        row.quantity,
-        row.unit,
-        row.taxRate,
-      );
-      for (const itemId of row.itemIds ?? []) {
-        insertRowItem.run(rowId, itemId);
-      }
-    });
-
+    writeRows(db, id, input.rows);
     return id;
   });
   return tx();
+}
+
+/**
+ * 手動作成: 新規請求書を INSERT する（notion_page_id は NULL）。生成した id を返す。
+ * (owner, invoice_number) が重複する場合は UNIQUE 制約違反で例外を投げる
+ * （呼び出し側は isDuplicateNumberError で 409 に変換する）。
+ */
+export function createInvoice(db: AppDatabase, ownerId: string, input: InvoiceEditorInput): string {
+  const tx = db.transaction((): string => {
+    const id = randomUUID();
+    db.prepare(`
+      INSERT INTO invoices
+        (id, owner_id, invoice_number, title, status, customer_id, account_id,
+         published_at, due_to, tax_included, withholding_exempt, note, memo, notion_page_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+    `).run(
+      id,
+      ownerId,
+      input.invoiceNumber,
+      input.title,
+      input.status,
+      input.customerId,
+      input.accountId,
+      input.publishedAt,
+      input.dueTo,
+      input.taxIncluded ? 1 : 0,
+      input.withholdingExempt ? 1 : 0,
+      input.note,
+      input.memo,
+    );
+    writeRows(db, id, input.rows);
+    return id;
+  });
+  return tx();
+}
+
+/**
+ * 手動編集: id 指定で更新（番号変更も可。notion_page_id は変更しない）。
+ * 更新できたら true、id が無ければ false。番号が他行と衝突すると UNIQUE 例外を投げる。
+ */
+export function updateInvoiceById(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+  input: InvoiceEditorInput,
+): boolean {
+  const tx = db.transaction((): boolean => {
+    const res = db
+      .prepare(`
+        UPDATE invoices SET
+          invoice_number = ?, title = ?, status = ?, customer_id = ?, account_id = ?,
+          published_at = ?, due_to = ?, tax_included = ?, withholding_exempt = ?,
+          note = ?, memo = ?, updated_at = datetime('now')
+        WHERE owner_id = ? AND id = ?
+      `)
+      .run(
+        input.invoiceNumber,
+        input.title,
+        input.status,
+        input.customerId,
+        input.accountId,
+        input.publishedAt,
+        input.dueTo,
+        input.taxIncluded ? 1 : 0,
+        input.withholdingExempt ? 1 : 0,
+        input.note,
+        input.memo,
+        ownerId,
+        id,
+      );
+    if (res.changes === 0) {
+      return false;
+    }
+    writeRows(db, id, input.rows);
+    return true;
+  });
+  return tx();
+}
+
+/** 手動削除: id 指定で削除（invoice_rows は ON DELETE CASCADE）。削除できたら true。 */
+export function deleteInvoice(db: AppDatabase, ownerId: string, id: string): boolean {
+  const res = db.prepare("DELETE FROM invoices WHERE owner_id = ? AND id = ?").run(ownerId, id);
+  return res.changes > 0;
+}
+
+/** 明細行を itemIds 込みで復元（エディタ初期値用）。 */
+function loadEditorRows(db: AppDatabase, invoiceId: string): InvoiceRowData[] {
+  const rows = db
+    .prepare("SELECT * FROM invoice_rows WHERE invoice_id = ? ORDER BY sort_order")
+    .all(invoiceId);
+  const itemStmt = db.prepare("SELECT item_id FROM invoice_row_items WHERE row_id = ?");
+  return rows.map((raw) => {
+    const r = asRow(raw);
+    const itemIds = itemStmt.all(str(r["id"])).map((x) => str(asRow(x)["item_id"]));
+    return {
+      name: str(r["name"]),
+      itemNames: parseItemNames(r["item_names"]),
+      unitPrice: num(r["unit_price"]),
+      quantity: num(r["quantity"]),
+      unit: str(r["unit"]),
+      taxRate: str(r["tax_rate"]),
+      itemIds,
+    };
+  });
+}
+
+function mapEditor(db: AppDatabase, r: Record<string, unknown>): InvoiceEditorData {
+  const id = str(r["id"]);
+  return {
+    id,
+    invoiceNumber: str(r["invoice_number"]),
+    title: str(r["title"]),
+    status: str(r["status"]),
+    customerId: strOrNull(r["customer_id"]),
+    accountId: strOrNull(r["account_id"]),
+    publishedAt: strOrNull(r["published_at"]),
+    dueTo: strOrNull(r["due_to"]),
+    taxIncluded: boolFromInt(r["tax_included"]),
+    withholdingExempt: boolFromInt(r["withholding_exempt"]),
+    note: str(r["note"]),
+    memo: str(r["memo"]),
+    rows: loadEditorRows(db, id),
+  };
+}
+
+/** id 指定でエディタ初期値を取得（無ければ null）。 */
+export function getInvoiceEditorById(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+): InvoiceEditorData | null {
+  const raw = db.prepare("SELECT * FROM invoices WHERE owner_id = ? AND id = ?").get(ownerId, id);
+  return raw === undefined ? null : mapEditor(db, asRow(raw));
+}
+
+/** 請求書番号でエディタ初期値を取得（編集ページ用・無ければ null）。 */
+export function getInvoiceEditorByNumber(
+  db: AppDatabase,
+  ownerId: string,
+  invoiceNumber: string,
+): InvoiceEditorData | null {
+  const raw = db
+    .prepare(
+      "SELECT * FROM invoices WHERE owner_id = ? AND invoice_number = ? ORDER BY updated_at DESC LIMIT 1",
+    )
+    .get(ownerId, invoiceNumber);
+  return raw === undefined ? null : mapEditor(db, asRow(raw));
+}
+
+/** better-sqlite3 の (owner, invoice_number) UNIQUE 違反かどうか（番号重複の 409 判定用）。 */
+export function isDuplicateNumberError(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "code" in e &&
+    (e as { code?: unknown }).code === "SQLITE_CONSTRAINT_UNIQUE"
+  );
+}
+
+/** (owner, invoice_number) が既に存在するか（複製時の空き番号探索用）。 */
+export function invoiceNumberExists(
+  db: AppDatabase,
+  ownerId: string,
+  invoiceNumber: string,
+): boolean {
+  const row = db
+    .prepare("SELECT 1 FROM invoices WHERE owner_id = ? AND invoice_number = ?")
+    .get(ownerId, invoiceNumber);
+  return row !== undefined;
 }
