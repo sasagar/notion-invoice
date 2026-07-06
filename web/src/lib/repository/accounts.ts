@@ -112,3 +112,45 @@ export function upsertAccount(db: AppDatabase, ownerId: string, input: AccountIn
     );
   return str(asRow(row)["id"]);
 }
+
+/** 手動編集の入力（notion_page_id を持たないフィールドのみ。sealFileId は含む）。 */
+export type AccountFields = Omit<AccountInput, "notionPageId">;
+
+/** 手動作成: notion_page_id を持たない新規行を作成し、id を返す。 */
+export function createAccount(db: AppDatabase, ownerId: string, input: AccountFields): string {
+  return upsertAccount(db, ownerId, { notionPageId: null, ...input });
+}
+
+/** 手動編集: id 指定で更新（notion_page_id は変更しない）。更新できたら true。 */
+export function updateAccount(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+  input: AccountFields,
+): boolean {
+  const res = db
+    .prepare(`
+      UPDATE accounts SET
+        slug = ?, company_name = ?, contact_name = ?, company_info = ?,
+        bank_info = ?, registration_number = ?, seal_file_id = ?, updated_at = datetime('now')
+      WHERE owner_id = ? AND id = ?
+    `)
+    .run(
+      input.slug,
+      input.companyName,
+      input.contactName,
+      input.companyInfo,
+      input.bankInfo,
+      input.registrationNumber,
+      input.sealFileId,
+      ownerId,
+      id,
+    );
+  return res.changes > 0;
+}
+
+/** 手動編集: id 指定で削除（invoices.account_id は ON DELETE SET NULL）。削除できたら true。 */
+export function deleteAccount(db: AppDatabase, ownerId: string, id: string): boolean {
+  const res = db.prepare("DELETE FROM accounts WHERE owner_id = ? AND id = ?").run(ownerId, id);
+  return res.changes > 0;
+}

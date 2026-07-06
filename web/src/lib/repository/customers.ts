@@ -70,3 +70,43 @@ export function upsertCustomer(db: AppDatabase, ownerId: string, input: Customer
     );
   return str(asRow(row)["id"]);
 }
+
+/** 手動編集の入力（notion_page_id を持たないフィールドのみ）。 */
+export type CustomerFields = Omit<CustomerInput, "notionPageId">;
+
+/** 手動作成: notion_page_id を持たない新規行を作成し、id を返す。 */
+export function createCustomer(db: AppDatabase, ownerId: string, input: CustomerFields): string {
+  return upsertCustomer(db, ownerId, { notionPageId: null, ...input });
+}
+
+/** 手動編集: id 指定で更新（notion_page_id は変更しない）。更新できたら true。 */
+export function updateCustomer(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+  input: CustomerFields,
+): boolean {
+  const res = db
+    .prepare(`
+      UPDATE customers SET
+        name = ?, company_name = ?, honorific = ?, company_info = ?, contact_name = ?,
+        updated_at = datetime('now')
+      WHERE owner_id = ? AND id = ?
+    `)
+    .run(
+      input.name,
+      input.companyName,
+      input.honorific,
+      input.companyInfo,
+      input.contactName,
+      ownerId,
+      id,
+    );
+  return res.changes > 0;
+}
+
+/** 手動編集: id 指定で削除（invoices.customer_id は ON DELETE SET NULL）。削除できたら true。 */
+export function deleteCustomer(db: AppDatabase, ownerId: string, id: string): boolean {
+  const res = db.prepare("DELETE FROM customers WHERE owner_id = ? AND id = ?").run(ownerId, id);
+  return res.changes > 0;
+}
