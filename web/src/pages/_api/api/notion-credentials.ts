@@ -3,13 +3,27 @@ import { upsertCredentials } from "@/lib/credentials";
 
 // 現在のログインユーザーの Notion 資格情報を暗号化保存する。
 export const POST = async (req: Request): Promise<Response> => {
-  // CSRF 対策: 状態変更なので Origin を必須化し、同一オリジンのみ許可する。
+  // CSRF 対策: 状態変更なので Origin を必須化し、許可オリジンのみ受け付ける。
+  // 許可 = リクエストの Host、または BETTER_AUTH_URL のホスト
+  // （Cloudflare Tunnel 等で Host がどう転送されても資格情報保存を弾かない）。
   const origin = req.headers.get("origin");
   if (!origin) {
     return Response.json({ error: "forbidden" }, { status: 403 });
   }
+  const allowedHosts = new Set<string>();
+  const reqHost = req.headers.get("host");
+  if (reqHost) {
+    allowedHosts.add(reqHost);
+  }
   try {
-    if (new URL(origin).host !== req.headers.get("host")) {
+    if (process.env.BETTER_AUTH_URL) {
+      allowedHosts.add(new URL(process.env.BETTER_AUTH_URL).host);
+    }
+  } catch {
+    // BETTER_AUTH_URL が不正でも Host 側で判定する
+  }
+  try {
+    if (!allowedHosts.has(new URL(origin).host)) {
       return Response.json({ error: "forbidden" }, { status: 403 });
     }
   } catch {
