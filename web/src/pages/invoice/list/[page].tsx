@@ -3,7 +3,8 @@ import { Suspense } from "react";
 import { ErrorState } from "@/components/data-states";
 import { InvoiceCard } from "@/components/invoice-card";
 import { Pagination } from "@/components/pagination";
-import { type InvoiceListPage, listInvoicePage } from "@/lib/data/backend";
+import { Link } from "waku";
+import { type InvoiceListPage, isSqliteBackend, listInvoicePage } from "@/lib/data/backend";
 import { requireSession } from "@/lib/session";
 
 export default function InvoiceListPage({ page }: { page: string }) {
@@ -13,6 +14,14 @@ export default function InvoiceListPage({ page }: { page: string }) {
         <h1 className="font-display text-2xl font-bold text-kent-blue-500 dark:text-kent-blue-200">
           請求書
         </h1>
+        {isSqliteBackend() && (
+          <Link
+            to="/invoice/new"
+            className="rounded-sm bg-kent-blue-500 px-4 py-2 text-sm text-white transition hover:bg-kent-blue-600"
+          >
+            + 新規作成
+          </Link>
+        )}
       </div>
       <Suspense fallback={<InvoiceListSkeleton />}>
         <InvoiceListBody page={page} />
