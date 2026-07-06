@@ -1,4 +1,5 @@
 import { cached } from "@/lib/cache";
+import { mapWithConcurrency } from "@/lib/concurrency";
 import { getNotionClient } from "@/lib/notion/client";
 import { buildInvoice, mapCustomer, mapInvoiceMeta } from "@/lib/notion/mapper";
 import { asNotionPage, type NotionPage } from "@/lib/notion/properties";
@@ -7,6 +8,9 @@ import type { InvoiceMeta } from "@/lib/notion/types";
 // 旧 ISR(30s) 相当。一覧/請求書クエリは 30s、リレーション先ページは 60s。
 const LIST_TTL = 30_000;
 const PAGE_TTL = 60_000;
+// Notion API の同時リクエスト数上限（平均3req/sのレート制限を一度のバーストで
+// 超えないようにする）。
+const FETCH_CONCURRENCY = 3;
 
 /** 全請求書を発行日降順で取得（ページネーション対応・30s キャッシュ）。 */
 export async function listInvoices(userId: string): Promise<NotionPage[]> {
@@ -56,7 +60,7 @@ export async function getPage(userId: string, pageId: string): Promise<unknown> 
 
 /** 明細行（請求内容リレーション）をまとめて取得（各行 60s キャッシュ）。 */
 export async function getRows(userId: string, ids: string[]): Promise<unknown[]> {
-  return Promise.all(ids.map((id) => getPage(userId, id)));
+  return mapWithConcurrency(ids, FETCH_CONCURRENCY, (id) => getPage(userId, id));
 }
 
 export type InvoiceListItem = {
@@ -77,27 +81,25 @@ export async function listInvoicesWithTotals(
   rawPageItems: unknown[],
 ): Promise<InvoiceListItem[]> {
   return cached(`list-totals:${userId}:${pageNum}`, LIST_TTL, async () => {
-    return Promise.all(
-      rawPageItems.map(async (rawInvoice) => {
-        const meta = mapInvoiceMeta(rawInvoice);
-        let customerName = "";
-        if (meta.customerRelationId) {
-          try {
-            const c = mapCustomer(await getPage(userId, meta.customerRelationId));
-            customerName = c.companyName || c.name;
-          } catch {
-            // 顧客名の取得失敗は空のまま続行
-          }
-        }
-        let totalAmount: number | null = null;
+    return mapWithConcurrency(rawPageItems, FETCH_CONCURRENCY, async (rawInvoice) => {
+      const meta = mapInvoiceMeta(rawInvoice);
+      let customerName = "";
+      if (meta.customerRelationId) {
         try {
-          const rawRows = await getRows(userId, meta.itemRelationIds);
-          totalAmount = buildInvoice(rawInvoice, rawRows).totals.invoiceSum;
+          const c = mapCustomer(await getPage(userId, meta.customerRelationId));
+          customerName = c.companyName || c.name;
         } catch {
-          // 明細行が削除/アーカイブ済み等で取得できない場合は金額不明のまま続行
+          // 顧客名の取得失敗は空のまま続行
         }
-        return { meta, customerName, totalAmount };
-      }),
-    );
+      }
+      let totalAmount: number | null = null;
+      try {
+        const rawRows = await getRows(userId, meta.itemRelationIds);
+        totalAmount = buildInvoice(rawInvoice, rawRows).totals.invoiceSum;
+      } catch {
+        // 明細行が削除/アーカイブ済み等で取得できない場合は金額不明のまま続行
+      }
+      return { meta, customerName, totalAmount };
+    });
   });
 }
