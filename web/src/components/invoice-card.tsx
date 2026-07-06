@@ -27,7 +27,7 @@ export function InvoiceCard({ item }: { item: InvoiceListItem }) {
         </div>
         <div className="shrink-0 text-right">
           <div className="font-mono text-base font-semibold tabular-nums text-stone-800 dark:text-slate-100">
-            {formatYen(totalAmount)}
+            {totalAmount === null ? "—" : formatYen(totalAmount)}
           </div>
           <div className="hidden font-mono text-xs text-stone-400 dark:text-slate-500 sm:block">
             {meta.dueTo && <span>期限 {formatDate(meta.dueTo)} ・ </span>}
