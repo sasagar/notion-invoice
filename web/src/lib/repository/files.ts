@@ -1,6 +1,6 @@
 /**
- * ファイル（印影画像等）を DB の BLOB として保存/取得する（files 表）。
- * 配信ルート `/api/files/{id}` は Phase 2 で実装する。
+ * ファイル（印影画像等）を DB の BLOB として保存/取得/削除する（files 表）。
+ * 配信ルート `/api/files/{id}` は getFileForOwner を使って owner 一致のみ返す。
  */
 import { randomUUID } from "node:crypto";
 import { asRow, num, str } from "@/lib/repository/row";
@@ -23,6 +23,19 @@ export type FileRecord = {
   data: Buffer;
 };
 
+/** SELECT * の行を FileRecord へ写す（data は必ず Buffer 化）。 */
+function mapFileRow(row: unknown): FileRecord {
+  const r = asRow(row);
+  const data = r["data"];
+  return {
+    id: str(r["id"]),
+    kind: str(r["kind"]),
+    mimeType: str(r["mime_type"]),
+    byteSize: num(r["byte_size"]),
+    data: Buffer.isBuffer(data) ? data : Buffer.from([]),
+  };
+}
+
 /** ファイルを 1 件保存し、生成した id を返す。 */
 export function insertFile(db: AppDatabase, ownerId: string, input: FileInput): string {
   const id = randomUUID();
@@ -36,16 +49,17 @@ export function insertFile(db: AppDatabase, ownerId: string, input: FileInput): 
 /** id 指定でファイルを取得（無ければ null）。 */
 export function getFile(db: AppDatabase, id: string): FileRecord | null {
   const row = db.prepare("SELECT * FROM files WHERE id = ?").get(id);
-  if (row === undefined) {
-    return null;
-  }
-  const r = asRow(row);
-  const data = r["data"];
-  return {
-    id: str(r["id"]),
-    kind: str(r["kind"]),
-    mimeType: str(r["mime_type"]),
-    byteSize: num(r["byte_size"]),
-    data: Buffer.isBuffer(data) ? data : Buffer.from([]),
-  };
+  return row === undefined ? null : mapFileRow(row);
+}
+
+/** owner 一致のファイルを取得（配信ルートの owner スコープ確認用。無ければ null）。 */
+export function getFileForOwner(db: AppDatabase, ownerId: string, id: string): FileRecord | null {
+  const row = db.prepare("SELECT * FROM files WHERE owner_id = ? AND id = ?").get(ownerId, id);
+  return row === undefined ? null : mapFileRow(row);
+}
+
+/** id 指定で削除（owner 一致のみ。accounts.seal_file_id は ON DELETE SET NULL）。 */
+export function deleteFile(db: AppDatabase, ownerId: string, id: string): boolean {
+  const res = db.prepare("DELETE FROM files WHERE owner_id = ? AND id = ?").run(ownerId, id);
+  return res.changes > 0;
 }

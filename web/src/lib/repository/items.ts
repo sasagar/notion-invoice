@@ -61,3 +61,33 @@ export function upsertItem(db: AppDatabase, ownerId: string, input: ItemInput): 
     .get(id, ownerId, input.name, input.unitPrice, input.notionPageId);
   return str(asRow(row)["id"]);
 }
+
+/** 手動編集の入力（notion_page_id を持たないフィールドのみ）。 */
+export type ItemFields = Omit<ItemInput, "notionPageId">;
+
+/** 手動作成: notion_page_id を持たない新規行を作成し、id を返す。 */
+export function createItem(db: AppDatabase, ownerId: string, input: ItemFields): string {
+  return upsertItem(db, ownerId, { notionPageId: null, ...input });
+}
+
+/** 手動編集: id 指定で更新（notion_page_id は変更しない）。更新できたら true。 */
+export function updateItem(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+  input: ItemFields,
+): boolean {
+  const res = db
+    .prepare(`
+      UPDATE items SET name = ?, unit_price = ?, updated_at = datetime('now')
+      WHERE owner_id = ? AND id = ?
+    `)
+    .run(input.name, input.unitPrice, ownerId, id);
+  return res.changes > 0;
+}
+
+/** 手動編集: id 指定で削除（invoice_row_items は ON DELETE CASCADE。行スナップショットは不変）。 */
+export function deleteItem(db: AppDatabase, ownerId: string, id: string): boolean {
+  const res = db.prepare("DELETE FROM items WHERE owner_id = ? AND id = ?").run(ownerId, id);
+  return res.changes > 0;
+}
