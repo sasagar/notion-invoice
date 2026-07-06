@@ -62,14 +62,16 @@ const InvoiceInfo = async props => {
           <h3 className='text-xl font-bold'>会社名</h3>
           <div className='flex items-center justify-start gap-2'>
             <span>{plain_text(account.properties.会社名)}</span>
-            <Image
-              src={account.properties.印鑑画像.files[0].file.url}
-              alt={account.properties.印鑑画像.files[0].name}
-              className='w-10 h-10 object-contain'
-              width='1024'
-              height='1024'
-              priority='true'
-            />
+            {account.properties.印鑑画像?.files?.[0]?.file?.url && (
+              <Image
+                src={account.properties.印鑑画像.files[0].file.url}
+                alt={account.properties.印鑑画像.files[0].name ?? ''}
+                className='w-10 h-10 object-contain'
+                width='1024'
+                height='1024'
+                priority='true'
+              />
+            )}
           </div>
         </div>
         <div className='mb-2'>
