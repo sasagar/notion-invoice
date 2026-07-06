@@ -23,6 +23,8 @@ export type InvoiceRowInput = {
   quantity: number;
   unit: string;
   taxRate: string;
+  /** 行の丸め上書き（null/undefined = 請求書の既定を継承）。zod nullish 出力をそのまま受ける。 */
+  rounding?: RoundingMode | null | undefined;
   /** 行の由来となる項目マスタ id 群（invoice_row_items へ記録）。 */
   itemIds?: string[];
 };
@@ -56,6 +58,7 @@ export type InvoiceRowData = {
   quantity: number;
   unit: string;
   taxRate: string;
+  rounding?: RoundingMode; // 行の丸め上書き（省略 = 請求書既定を継承）
   itemIds: string[];
 };
 
@@ -103,6 +106,7 @@ function mapInvoiceRow(raw: unknown): InvoiceRow {
   const unitPrice = num(r["unit_price"]);
   const quantity = num(r["quantity"]);
   const taxRate = str(r["tax_rate"]);
+  const rounding = rowRoundingFrom(r["rounding"]);
   return {
     id: str(r["id"]),
     order: num(r["sort_order"]),
@@ -112,6 +116,7 @@ function mapInvoiceRow(raw: unknown): InvoiceRow {
     quantity,
     unit: str(r["unit"]),
     taxRate,
+    ...(rounding ? { rounding } : {}),
     amounts: deriveLineAmounts(unitPrice, quantity, taxRate),
   };
 }
@@ -119,6 +124,11 @@ function mapInvoiceRow(raw: unknown): InvoiceRow {
 /** DB の rounding 値を RoundingMode に正規化（未知値は従来挙動の四捨五入）。 */
 function roundingFrom(v: unknown): RoundingMode {
   return v === "floor" || v === "ceil" ? v : "round";
+}
+
+/** 行の rounding 値（NULL 許容）を正規化。値が無ければ undefined（請求書既定を継承）。 */
+function rowRoundingFrom(v: unknown): RoundingMode | undefined {
+  return v === "round" || v === "floor" || v === "ceil" ? v : undefined;
 }
 
 /** InvoiceMeta の id には invoice_number を入れる（既存の意味論に合わせる）。 */
@@ -152,7 +162,8 @@ function loadRows(db: AppDatabase, invoiceId: string): InvoiceRow[] {
 /** 行スナップショットから請求額の内訳を導出する。 */
 function totalsOf(rows: InvoiceRow[], meta: InvoiceMeta): Invoice["totals"] {
   return computeTotals({
-    rows: rows.map((x) => x.amounts),
+    // 行に上書きがあれば付与（無ければ請求書既定 meta.rounding を継承）。
+    rows: rows.map((x) => (x.rounding ? { ...x.amounts, rounding: x.rounding } : x.amounts)),
     taxIncluded: meta.taxIncluded,
     withholdingExempt: meta.withholdingExempt,
     rounding: meta.rounding,
@@ -168,8 +179,8 @@ function writeRows(db: AppDatabase, invoiceId: string, rows: InvoiceRowInput[]):
   db.prepare("DELETE FROM invoice_rows WHERE invoice_id = ?").run(invoiceId);
   const insertRow = db.prepare(`
     INSERT INTO invoice_rows
-      (id, invoice_id, sort_order, name, item_names, unit_price, quantity, unit, tax_rate)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, invoice_id, sort_order, name, item_names, unit_price, quantity, unit, tax_rate, rounding)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const insertRowItem = db.prepare(
     "INSERT OR IGNORE INTO invoice_row_items (row_id, item_id) VALUES (?, ?)",
@@ -186,6 +197,8 @@ function writeRows(db: AppDatabase, invoiceId: string, rows: InvoiceRowInput[]):
       row.quantity,
       row.unit,
       row.taxRate,
+      // NULL = 請求書の既定を継承。undefined は better-sqlite3 が拒否するため null に正規化。
+      row.rounding ?? null,
     );
     for (const itemId of row.itemIds ?? []) {
       insertRowItem.run(rowId, itemId);
@@ -443,6 +456,24 @@ export function deleteInvoice(db: AppDatabase, ownerId: string, id: string): boo
   return res.changes > 0;
 }
 
+/**
+ * ステータスだけを即時更新する（詳細画面から編集画面に入らずに変えるための軽量更新）。
+ * updated_at も進める。id が無い/他 owner なら false。呼び出し側は zod で status を検証済み。
+ */
+export function updateInvoiceStatus(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+  status: string,
+): boolean {
+  const res = db
+    .prepare(
+      "UPDATE invoices SET status = ?, updated_at = datetime('now') WHERE owner_id = ? AND id = ?",
+    )
+    .run(status, ownerId, id);
+  return res.changes > 0;
+}
+
 /** 明細行を itemIds 込みで復元（エディタ初期値用）。 */
 function loadEditorRows(db: AppDatabase, invoiceId: string): InvoiceRowData[] {
   const rows = db
@@ -452,6 +483,7 @@ function loadEditorRows(db: AppDatabase, invoiceId: string): InvoiceRowData[] {
   return rows.map((raw) => {
     const r = asRow(raw);
     const itemIds = itemStmt.all(str(r["id"])).map((x) => str(asRow(x)["item_id"]));
+    const rounding = rowRoundingFrom(r["rounding"]);
     return {
       name: str(r["name"]),
       itemNames: parseItemNames(r["item_names"]),
@@ -459,6 +491,7 @@ function loadEditorRows(db: AppDatabase, invoiceId: string): InvoiceRowData[] {
       quantity: num(r["quantity"]),
       unit: str(r["unit"]),
       taxRate: str(r["tax_rate"]),
+      ...(rounding ? { rounding } : {}),
       itemIds,
     };
   });

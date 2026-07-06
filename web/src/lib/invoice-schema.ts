@@ -41,6 +41,8 @@ export const invoiceRowSchema = z.object({
   quantity: z.coerce.number({ error: "数量は数値で入力してください" }),
   unit: z.string().default(""),
   taxRate: z.enum(TAX_RATES),
+  // 行の丸め上書き。省略/null は「請求書の既定を継承」を意味する。
+  rounding: z.enum(ROUNDING_MODES).nullish(),
   itemIds: z.array(z.string()).default([]),
 });
 
@@ -62,6 +64,11 @@ export const invoiceSchema = z.object({
 });
 
 export type InvoiceFormValues = z.infer<typeof invoiceSchema>;
+
+/** ステータス即時変更 API のボディ検証（詳細画面からの軽量更新）。 */
+export const invoiceStatusSchema = z.object({
+  status: z.enum(INVOICE_STATUSES),
+});
 
 /** safeParse の結果から先頭のエラーメッセージを取り出す。 */
 export function firstInvoiceIssue(error: z.ZodError): string {

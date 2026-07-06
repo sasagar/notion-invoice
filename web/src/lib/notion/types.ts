@@ -9,6 +9,7 @@ export type InvoiceRow = {
   quantity: number; // 数量
   unit: string; // 単位
   taxRate: string; // 税率
+  rounding?: RoundingMode; // 行の丸め上書き（省略時は請求書既定を継承）
   amounts: LineAmounts;
 };
 

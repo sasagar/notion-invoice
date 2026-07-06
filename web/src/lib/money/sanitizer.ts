@@ -13,11 +13,17 @@ export type LineAmounts = {
 /** 行金額（小計・対象額）の丸め方式。負数（値引き行）は絶対値で丸めて符号を戻す。 */
 export type RoundingMode = "round" | "floor" | "ceil";
 
+/**
+ * 計算に渡す 1 行分の金額。行ごとに丸め方式を上書きできる（`rounding` 省略時は
+ * 請求書の既定 = input.rounding を継承）。LineAmounts 単体もそのまま受かる（後方互換）。
+ */
+export type SanitizerRow = LineAmounts & { rounding?: RoundingMode };
+
 export type SanitizerInput = {
-  rows: LineAmounts[];
+  rows: SanitizerRow[];
   taxIncluded: boolean; // 内税
   withholdingExempt: boolean; // 源泉徴収非対象
-  rounding?: RoundingMode; // 行金額の丸め方式（省略時は四捨五入=従来挙動）
+  rounding?: RoundingMode; // 請求書既定の丸め方式（省略時は四捨五入=従来挙動）
 };
 
 export type InvoiceTotals = {
@@ -55,10 +61,12 @@ export function roundAmount(value: number, mode: RoundingMode = "round"): number
 export function computeTotals(input: SanitizerInput): InvoiceTotals {
   const { rows, taxIncluded, withholdingExempt, rounding = "round" } = input;
 
-  const sum10 = rows.reduce((a, r) => a + roundAmount(r.amount10, rounding), 0);
-  const sum8 = rows.reduce((a, r) => a + roundAmount(r.amount8, rounding), 0);
-  const sum0 = rows.reduce((a, r) => a + roundAmount(r.amount0, rounding), 0);
-  const sum = rows.reduce((a, r) => a + roundAmount(r.subtotal, rounding), 0);
+  // 有効な丸め = 行の上書き（r.rounding）→ 請求書既定（rounding）の順で解決する。
+  const eff = (r: SanitizerRow): RoundingMode => r.rounding ?? rounding;
+  const sum10 = rows.reduce((a, r) => a + roundAmount(r.amount10, eff(r)), 0);
+  const sum8 = rows.reduce((a, r) => a + roundAmount(r.amount8, eff(r)), 0);
+  const sum0 = rows.reduce((a, r) => a + roundAmount(r.amount0, eff(r)), 0);
+  const sum = rows.reduce((a, r) => a + roundAmount(r.subtotal, eff(r)), 0);
 
   const tax10 = taxIncluded ? sum10 - Math.floor(sum10 / 1.1) : Math.floor(sum10 * 0.1);
   const tax8 = taxIncluded ? sum8 - Math.floor(sum8 / 1.08) : Math.floor(sum8 * 0.08);

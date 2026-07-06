@@ -9,7 +9,7 @@ export default async function InvoiceNewPage() {
   const session = await requireSession();
   const userId = session.user.id;
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto w-full max-w-5xl xl:-mx-16 xl:w-auto xl:max-w-none">
       <h1 className="mb-6 font-display text-2xl font-bold text-kent-blue-500 dark:text-kent-blue-200">
         請求書の新規作成
       </h1>

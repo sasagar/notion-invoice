@@ -9,7 +9,7 @@ import type Database from "better-sqlite3";
 export type AppDatabase = Database.Database;
 
 /** 現在のアプリスキーマ版数。DDL を足すたびに +1 し、下に `if (current < N)` を追加する。 */
-const APP_SCHEMA_VERSION = 2;
+const APP_SCHEMA_VERSION = 3;
 
 // version 0 -> 1: 顧客/自社/項目マスタ・請求書・明細・ファイルの各表を作成。
 // FK の親表を先に作る（SQLite の FK は行挿入時に検証されるが、CREATE 順は
@@ -113,6 +113,12 @@ const SCHEMA_V2 = `
   ALTER TABLE invoices ADD COLUMN rounding TEXT NOT NULL DEFAULT 'round';
 `;
 
+// version 2 -> 3: 明細行ごとに丸め方式を上書きできるようにする。
+// NULL 許容 = 請求書の既定（invoices.rounding）を継承する（値がある行のみ上書き）。
+const SCHEMA_V3 = `
+  ALTER TABLE invoice_rows ADD COLUMN rounding TEXT;
+`;
+
 /**
  * 未適用のアプリスキーマ DDL を順に流し、`user_version` を最新へ進める。
  * 既に最新なら何もしない（起動ごと・スクリプトからの多重呼び出しに対して冪等）。
@@ -129,6 +135,9 @@ export function applyAppSchema(db: AppDatabase): void {
     }
     if (current < 2) {
       db.exec(SCHEMA_V2);
+    }
+    if (current < 3) {
+      db.exec(SCHEMA_V3);
     }
     db.pragma(`user_version = ${APP_SCHEMA_VERSION}`);
   });
