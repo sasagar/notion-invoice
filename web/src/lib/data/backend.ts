@@ -8,7 +8,7 @@
  */
 import process from "node:process";
 import { db } from "@/lib/db";
-import { buildFullInvoice } from "@/lib/notion/build-full-invoice";
+import { type BuildFullInvoiceOptions, buildFullInvoice } from "@/lib/notion/build-full-invoice";
 import {
   getInvoiceByNumber,
   type InvoiceListItem,
@@ -44,12 +44,13 @@ async function notionListInvoicePage(
 async function notionGetFullInvoice(
   userId: string,
   invoiceNumber: string,
+  opts?: BuildFullInvoiceOptions,
 ): Promise<FullInvoice | null> {
   const rawInvoice = await getInvoiceByNumber(userId, invoiceNumber);
   if (!rawInvoice) {
     return null;
   }
-  return buildFullInvoice(userId, rawInvoice);
+  return buildFullInvoice(userId, rawInvoice, opts);
 }
 
 // --- 公開 API（DATA_BACKEND で分岐） ---
@@ -66,10 +67,19 @@ export function listInvoicePage(
   return notionListInvoicePage(userId, pageNum, perPage);
 }
 
-/** 請求書番号で完全なデータ（明細・顧客・自社）を取得する（無ければ null）。 */
-export function getFullInvoice(userId: string, invoiceNumber: string): Promise<FullInvoice | null> {
+/**
+ * 請求書番号で完全なデータ（明細・顧客・自社）を取得する（無ければ null）。
+ * opts.lenientRelations=true で顧客/自社の取得失敗を null として続行（画面の部分表示用。
+ * PDF 出力は指定なし＝厳格のまま）。SQLite バックエンドでは参照切れが自然に null に
+ * なるため opts は notion パスのみで意味を持つ。
+ */
+export function getFullInvoice(
+  userId: string,
+  invoiceNumber: string,
+  opts?: BuildFullInvoiceOptions,
+): Promise<FullInvoice | null> {
   if (isSqliteBackend()) {
     return Promise.resolve(getFullInvoiceByNumber(db, userId, invoiceNumber));
   }
-  return notionGetFullInvoice(userId, invoiceNumber);
+  return notionGetFullInvoice(userId, invoiceNumber, opts);
 }

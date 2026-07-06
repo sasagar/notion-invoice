@@ -25,7 +25,7 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
 
   let full: FullInvoice | null;
   try {
-    full = await getFullInvoice(userId, slug);
+    full = await getFullInvoice(userId, slug, { lenientRelations: true });
   } catch (e) {
     return <ErrorState message={e instanceof Error ? e.message : "取得に失敗しました"} />;
   }
