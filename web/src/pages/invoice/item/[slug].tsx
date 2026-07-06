@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Card, SectionHeading } from "@/components/card";
 import { ErrorState } from "@/components/data-states";
 import { PdfDownload } from "@/components/pdf-download";
+import { StatusChanger } from "@/components/status-changer";
 import { StatusStamp } from "@/components/status-stamp";
 import { TaxTable } from "@/components/tax-table";
 import { WithholdingTable } from "@/components/withholding-table";
@@ -56,6 +57,7 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
                 #{meta.id}
               </span>
               <StatusStamp status={meta.status} />
+              {sqlite && editorData && <StatusChanger id={editorData.id} status={meta.status} />}
             </div>
             <h1 className="mt-2 font-display text-2xl font-bold leading-tight text-stone-800 dark:text-slate-100 sm:text-3xl">
               {meta.title || "(件名なし)"}
@@ -183,7 +185,7 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
                     {r.quantity.toLocaleString()} <span className="font-sans">{r.unit}</span>
                   </td>
                   <td className="p-3 text-right tabular-nums">
-                    {formatYen(roundAmount(r.amounts.subtotal, meta.rounding))}
+                    {formatYen(roundAmount(r.amounts.subtotal, r.rounding ?? meta.rounding))}
                   </td>
                   <td className="p-3 text-center font-sans">{r.taxRate}</td>
                 </tr>

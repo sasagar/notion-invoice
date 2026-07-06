@@ -159,3 +159,47 @@ describe("computeTotals の丸め方式", () => {
     expect(t.invoiceSum).toBe(3002 + 300); // +floor(3002*0.1)
   });
 });
+
+describe("computeTotals の行別丸め（行の上書き→請求書既定の順で解決）", () => {
+  test("行に rounding があれば請求書既定より優先される", () => {
+    const t = computeTotals({
+      rows: [
+        { ...row({ amount10: 1000.9, subtotal: 1000.9 }), rounding: "floor" },
+        { ...row({ amount10: 2000.1, subtotal: 2000.1 }), rounding: "ceil" },
+      ],
+      taxIncluded: false,
+      withholdingExempt: true,
+      rounding: "round", // 既定は四捨五入だが行の上書きが勝つ
+    });
+    expect(t.sum10).toBe(1000 + 2001); // floor(1000.9)+ceil(2000.1)
+    expect(t.sum).toBe(3001);
+  });
+
+  test("行に rounding が無ければ請求書既定（input.rounding）を継承", () => {
+    const t = computeTotals({
+      rows: [
+        row({ amount10: 1000.9, subtotal: 1000.9 }), // 継承 → floor
+        { ...row({ amount10: 2000.9, subtotal: 2000.9 }), rounding: "round" }, // 上書き
+      ],
+      taxIncluded: false,
+      withholdingExempt: true,
+      rounding: "floor",
+    });
+    expect(t.sum10).toBe(1000 + 2001); // floor(1000.9)+round(2000.9)
+  });
+
+  test("行別丸めが混在しても行ごとに丸めてから合算する（手計算と一致）", () => {
+    const t = computeTotals({
+      rows: [
+        { ...row({ amount8: 100.4, subtotal: 100.4 }), rounding: "floor" }, // 100
+        { ...row({ amount8: 100.4, subtotal: 100.4 }), rounding: "ceil" }, // 101
+        row({ amount8: 100.4, subtotal: 100.4 }), // 継承(round) → 100
+      ],
+      taxIncluded: false,
+      withholdingExempt: true,
+      rounding: "round",
+    });
+    expect(t.sum8).toBe(301); // 100+101+100
+    expect(t.tax8).toBe(24); // floor(301*0.08)=24
+  });
+});

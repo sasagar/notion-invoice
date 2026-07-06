@@ -11,6 +11,7 @@ import {
   nextCopyNumber,
   saveInvoice,
   updateInvoiceById,
+  updateInvoiceStatus,
   upsertItem,
 } from "@/lib/repository";
 import { applyAppSchema } from "@/lib/schema";
@@ -230,5 +231,117 @@ describe("丸め方式の永続化", () => {
     );
     expect(ok).toBe(true);
     expect(getInvoiceEditorById(db, OWNER, id)?.rounding).toBe("ceil");
+  });
+});
+
+describe("行別丸めの永続化と合計への反映", () => {
+  test("行の rounding が保存され getInvoiceEditorById で復元される（未指定行は undefined=継承）", () => {
+    const db = makeDb();
+    const id = createInvoice(
+      db,
+      OWNER,
+      editorInput({
+        invoiceNumber: "ROW-RND-1",
+        rounding: "round",
+        rows: [
+          {
+            name: "切り捨て行",
+            itemNames: [],
+            unitPrice: 100.9,
+            quantity: 1,
+            unit: "式",
+            taxRate: "10%",
+            rounding: "floor",
+            itemIds: [],
+          },
+          {
+            name: "継承行",
+            itemNames: [],
+            unitPrice: 100.9,
+            quantity: 1,
+            unit: "式",
+            taxRate: "10%",
+            itemIds: [],
+          },
+        ],
+      }),
+    );
+    const data = getInvoiceEditorById(db, OWNER, id);
+    expect(data?.rows[0]?.rounding).toBe("floor");
+    expect(data?.rows[1]?.rounding).toBeUndefined();
+  });
+
+  test("getFullInvoiceByNumber の合計は行別丸めを反映する（floor行+継承round行）", () => {
+    const db = makeDb();
+    createInvoice(
+      db,
+      OWNER,
+      editorInput({
+        invoiceNumber: "ROW-RND-2",
+        rounding: "round", // 請求書既定=四捨五入
+        withholdingExempt: true,
+        taxIncluded: false,
+        rows: [
+          {
+            name: "floor",
+            itemNames: [],
+            unitPrice: 100.9, // floor → 100
+            quantity: 1,
+            unit: "式",
+            taxRate: "10%",
+            rounding: "floor",
+            itemIds: [],
+          },
+          {
+            name: "inherit-round",
+            itemNames: [],
+            unitPrice: 100.9, // 継承=round → 101
+            quantity: 1,
+            unit: "式",
+            taxRate: "10%",
+            itemIds: [],
+          },
+        ],
+      }),
+    );
+    const full = getFullInvoiceByNumber(db, OWNER, "ROW-RND-2");
+    expect(full?.invoice.totals.sum10).toBe(201); // 100 + 101
+    expect(full?.invoice.totals.sum).toBe(201);
+    expect(full?.invoice.totals.tax10).toBe(20); // floor(201*0.1)
+    expect(full?.invoice.totals.invoiceSum).toBe(221);
+  });
+});
+
+describe("updateInvoiceStatus（詳細画面からの即時変更）", () => {
+  test("ステータスを更新し updated_at を進める・未知idや他ownerはfalse", () => {
+    const db = makeDb();
+    const id = createInvoice(db, OWNER, editorInput({ invoiceNumber: "ST-1" }));
+    const before = db.prepare("SELECT status, updated_at FROM invoices WHERE id = ?").get(id) as {
+      status: string;
+      updated_at: string;
+    };
+    expect(before.status).toBe("ドラフト");
+    // updated_at は datetime('now')（秒精度）なので 1 秒進めてから更新し、単調増加を確認する
+    db.prepare("UPDATE invoices SET updated_at = datetime('now', '-1 second') WHERE id = ?").run(
+      id,
+    );
+    const prev = db.prepare("SELECT updated_at FROM invoices WHERE id = ?").get(id) as {
+      updated_at: string;
+    };
+
+    expect(updateInvoiceStatus(db, OWNER, id, "支払い済み")).toBe(true);
+    const after = db.prepare("SELECT status, updated_at FROM invoices WHERE id = ?").get(id) as {
+      status: string;
+      updated_at: string;
+    };
+    expect(after.status).toBe("支払い済み");
+    expect(after.updated_at >= prev.updated_at).toBe(true);
+
+    // 未知 id / 他 owner は false（状態変えない）
+    expect(updateInvoiceStatus(db, OWNER, "no-such-id", "キャンセル")).toBe(false);
+    expect(updateInvoiceStatus(db, OTHER, id, "キャンセル")).toBe(false);
+    expect(
+      (db.prepare("SELECT status FROM invoices WHERE id = ?").get(id) as { status: string }).status,
+    ).toBe("支払い済み");
   });
 });
