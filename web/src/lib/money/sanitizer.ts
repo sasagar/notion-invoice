@@ -10,10 +10,14 @@ export type LineAmounts = {
   subtotal: number; // 小計
 };
 
+/** 行金額（小計・対象額）の丸め方式。負数（値引き行）は絶対値で丸めて符号を戻す。 */
+export type RoundingMode = "round" | "floor" | "ceil";
+
 export type SanitizerInput = {
   rows: LineAmounts[];
   taxIncluded: boolean; // 内税
   withholdingExempt: boolean; // 源泉徴収非対象
+  rounding?: RoundingMode; // 行金額の丸め方式（省略時は四捨五入=従来挙動）
 };
 
 export type InvoiceTotals = {
@@ -28,27 +32,33 @@ export type InvoiceTotals = {
   invoiceSum: number; // 請求額合計
 };
 
+const ROUNDERS: Record<RoundingMode, (v: number) => number> = {
+  round: Math.round,
+  floor: Math.floor,
+  ceil: Math.ceil,
+};
+
 /**
- * 金額を四捨五入して整数に丸める。負数は絶対値で丸めてから符号を戻す
- * （0 からの距離で四捨五入する）。
+ * 金額を整数に丸める（既定は四捨五入）。負数は絶対値で丸めてから符号を戻す
+ * （0 からの距離で丸める。値引き行の切り捨て/切り上げも金額の大きさ基準で対称）。
  */
-export function roundAmount(value: number): number {
+export function roundAmount(value: number, mode: RoundingMode = "round"): number {
   if (typeof value !== "number" || Number.isNaN(value)) {
     return 0;
   }
-  return Math.sign(value) * Math.round(Math.abs(value));
+  return Math.sign(value) * ROUNDERS[mode](Math.abs(value));
 }
 
 /**
  * 行ごとの対象額と内税/源泉フラグから請求額の内訳を計算する。
  */
 export function computeTotals(input: SanitizerInput): InvoiceTotals {
-  const { rows, taxIncluded, withholdingExempt } = input;
+  const { rows, taxIncluded, withholdingExempt, rounding = "round" } = input;
 
-  const sum10 = rows.reduce((a, r) => a + roundAmount(r.amount10), 0);
-  const sum8 = rows.reduce((a, r) => a + roundAmount(r.amount8), 0);
-  const sum0 = rows.reduce((a, r) => a + roundAmount(r.amount0), 0);
-  const sum = rows.reduce((a, r) => a + roundAmount(r.subtotal), 0);
+  const sum10 = rows.reduce((a, r) => a + roundAmount(r.amount10, rounding), 0);
+  const sum8 = rows.reduce((a, r) => a + roundAmount(r.amount8, rounding), 0);
+  const sum0 = rows.reduce((a, r) => a + roundAmount(r.amount0, rounding), 0);
+  const sum = rows.reduce((a, r) => a + roundAmount(r.subtotal, rounding), 0);
 
   const tax10 = taxIncluded ? sum10 - Math.floor(sum10 / 1.1) : Math.floor(sum10 * 0.1);
   const tax8 = taxIncluded ? sum8 - Math.floor(sum8 / 1.08) : Math.floor(sum8 * 0.08);

@@ -106,7 +106,7 @@ export function InvoiceDocument({ invoice, customer, account }: Props) {
             </View>
             <View style={styles.tableBody}>
               {rows.map((row, index) => {
-                const subtotal = roundAmount(row.amounts.subtotal);
+                const subtotal = roundAmount(row.amounts.subtotal, invoice.meta.rounding);
                 const price =
                   subtotal >= 0 ? `¥ ${yen(subtotal)}` : `▲ ¥ ${yen(Math.abs(subtotal))}`;
                 return (

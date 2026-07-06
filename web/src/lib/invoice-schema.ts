@@ -16,6 +16,14 @@ export const INVOICE_STATUSES = [
 /** 税率選択肢。 */
 export const TAX_RATES = ["10%", "8%", "非課税"] as const;
 
+/** 行金額の丸め方式（DB/計算は英語トークン、表示は日本語ラベル）。 */
+export const ROUNDING_MODES = ["round", "floor", "ceil"] as const;
+export const ROUNDING_LABELS: Record<(typeof ROUNDING_MODES)[number], string> = {
+  round: "四捨五入",
+  floor: "切り捨て",
+  ceil: "切り上げ",
+};
+
 /** 単位の候補（自由入力も可のため UI では datalist として使う）。 */
 export const UNITS = ["時間", "件", "式", "回", "日", "人"] as const;
 
@@ -47,6 +55,7 @@ export const invoiceSchema = z.object({
   dueTo: nullableString,
   taxIncluded: z.boolean().default(false),
   withholdingExempt: z.boolean().default(false),
+  rounding: z.enum(ROUNDING_MODES).default("round"),
   note: z.string().default(""),
   memo: z.string().default(""),
   rows: z.array(invoiceRowSchema).default([]),
