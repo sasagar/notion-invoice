@@ -442,15 +442,6 @@ export function InvoiceEditor({
                   className={`${inputClass} resize-y`}
                 />
               </label>
-              <label className={`${labelClass} sm:col-span-2`}>
-                メモ（内部用・請求書には載りません）
-                <textarea
-                  value={memo}
-                  onChange={(e) => setMemo(e.target.value)}
-                  rows={2}
-                  className={`${inputClass} resize-y`}
-                />
-              </label>
             </div>
           </Card>
 
@@ -727,6 +718,21 @@ export function InvoiceEditor({
               <WithholdingTable totals={totals} />
             </Card>
           )}
+
+          {/* メモは備考と物理的に離す（内部用を誤って請求書側に書かないように） */}
+          <Card className="border-dashed">
+            <SectionHeading>メモ（内部用）</SectionHeading>
+            <p className="mb-2 text-xs text-stone-400 dark:text-slate-500">
+              請求書・見積書には載りません。
+            </p>
+            <textarea
+              value={memo}
+              onChange={(e) => setMemo(e.target.value)}
+              rows={3}
+              className={`${inputClass} resize-y`}
+              aria-label="メモ（内部用）"
+            />
+          </Card>
 
           <div className="hidden items-center gap-3 lg:flex">
             <button type="submit" disabled={busy} className={primaryBtn}>

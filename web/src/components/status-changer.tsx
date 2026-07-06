@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useRouter } from "waku/router/client";
 import { INVOICE_STATUSES } from "@/lib/invoice-schema";
 
@@ -11,6 +11,7 @@ import { INVOICE_STATUSES } from "@/lib/invoice-schema";
  */
 export function StatusChanger({ id, status }: { id: string; status: string }) {
   const router = useRouter();
+  const selectId = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,11 +38,11 @@ export function StatusChanger({ id, status }: { id: string; status: string }) {
 
   return (
     <span className="inline-flex items-center gap-1.5">
-      <label className="sr-only" htmlFor="status-changer">
+      <label className="sr-only" htmlFor={selectId}>
         ステータスを変更
       </label>
       <select
-        id="status-changer"
+        id={selectId}
         value={status}
         disabled={busy}
         onChange={(e) => onChange(e.target.value)}
