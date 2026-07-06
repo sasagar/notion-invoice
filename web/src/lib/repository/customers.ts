@@ -3,7 +3,7 @@
  */
 import { randomUUID } from "node:crypto";
 import type { Customer } from "@/lib/notion/types";
-import { asRow, str } from "@/lib/repository/row";
+import { asRow, str, strOrNull } from "@/lib/repository/row";
 import type { AppDatabase } from "@/lib/schema";
 
 /** upsert の入力。notion_page_id は import では必須、手動作成時は null。 */
@@ -109,4 +109,35 @@ export function updateCustomer(
 export function deleteCustomer(db: AppDatabase, ownerId: string, id: string): boolean {
   const res = db.prepare("DELETE FROM customers WHERE owner_id = ? AND id = ?").run(ownerId, id);
   return res.changes > 0;
+}
+
+/** 管理画面用の顧客レコード（id + 由来 notion_page_id を含む）。 */
+export type CustomerRecord = CustomerFields & { id: string; notionPageId: string | null };
+
+function mapCustomerRecord(row: Record<string, unknown>): CustomerRecord {
+  return {
+    id: str(row["id"]),
+    name: str(row["name"]),
+    companyName: str(row["company_name"]),
+    honorific: str(row["honorific"]),
+    companyInfo: str(row["company_info"]),
+    contactName: str(row["contact_name"]),
+    notionPageId: strOrNull(row["notion_page_id"]),
+  };
+}
+
+/** オーナーの顧客を id 付きで一覧（管理画面用・顧客名昇順）。 */
+export function listCustomerRecords(db: AppDatabase, ownerId: string): CustomerRecord[] {
+  const rows = db.prepare("SELECT * FROM customers WHERE owner_id = ? ORDER BY name").all(ownerId);
+  return rows.map((r) => mapCustomerRecord(asRow(r)));
+}
+
+/** id 指定で顧客レコードを 1 件取得（編集画面の初期値用・無ければ null）。 */
+export function getCustomerRecord(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+): CustomerRecord | null {
+  const row = db.prepare("SELECT * FROM customers WHERE owner_id = ? AND id = ?").get(ownerId, id);
+  return row === undefined ? null : mapCustomerRecord(asRow(row));
 }
