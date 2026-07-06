@@ -19,8 +19,9 @@ const TIER_STYLE: Record<Tier, string> = {
 };
 
 // よくある語尾（意味の区切り）の直前で改行できるようにする。
-// 例: 見積送付済み → 見積送付 / 済み、請求書送付済み → 請求書送付 / 済み
-const BREAK_SUFFIXES = ["済み", "済", "予定", "中"];
+// 「送付済み」のような複合語は語幹ごと末尾側に残す(長い方から順に判定)。
+// 例: 見積送付済み → 見積 / 送付済み、請求書送付済み → 請求書 / 送付済み
+const BREAK_SUFFIXES = ["送付済み", "済み", "済", "予定", "中"];
 
 /** 改行を入れるべき位置で [先頭, 末尾] に分割する（無ければ末尾は null）。 */
 export function splitForWrap(text: string): [string, string | null] {
