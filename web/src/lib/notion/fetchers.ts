@@ -1,6 +1,8 @@
 import { cached } from "@/lib/cache";
 import { getNotionClient } from "@/lib/notion/client";
+import { buildInvoice, mapCustomer, mapInvoiceMeta } from "@/lib/notion/mapper";
 import { asNotionPage, type NotionPage } from "@/lib/notion/properties";
+import type { InvoiceMeta } from "@/lib/notion/types";
 
 // 旧 ISR(30s) 相当。一覧/請求書クエリは 30s、リレーション先ページは 60s。
 const LIST_TTL = 30_000;
@@ -55,4 +57,41 @@ export async function getPage(userId: string, pageId: string): Promise<unknown> 
 /** 明細行（請求内容リレーション）をまとめて取得（各行 60s キャッシュ）。 */
 export async function getRows(userId: string, ids: string[]): Promise<unknown[]> {
   return Promise.all(ids.map((id) => getPage(userId, id)));
+}
+
+export type InvoiceListItem = {
+  meta: InvoiceMeta;
+  customerName: string;
+  totalAmount: number;
+};
+
+/**
+ * 表示中のページ分だけ、顧客名+請求額込みで組み立てる（30s キャッシュ）。
+ * 明細行の再取得(getRows)が必要になるため、表示ページ単位でキャッシュして
+ * 全件分の再計算バーストが起きないようにする（getRows/getPage 自体も60s キャッシュ済み）。
+ */
+export async function listInvoicesWithTotals(
+  userId: string,
+  pageNum: number,
+  rawPageItems: unknown[],
+): Promise<InvoiceListItem[]> {
+  return cached(`list-totals:${userId}:${pageNum}`, LIST_TTL, async () => {
+    return Promise.all(
+      rawPageItems.map(async (rawInvoice) => {
+        const meta = mapInvoiceMeta(rawInvoice);
+        let customerName = "";
+        if (meta.customerRelationId) {
+          try {
+            const c = mapCustomer(await getPage(userId, meta.customerRelationId));
+            customerName = c.companyName || c.name;
+          } catch {
+            // 顧客名の取得失敗は空のまま続行
+          }
+        }
+        const rawRows = await getRows(userId, meta.itemRelationIds);
+        const { totals } = buildInvoice(rawInvoice, rawRows);
+        return { meta, customerName, totalAmount: totals.invoiceSum };
+      }),
+    );
+  });
 }

@@ -22,7 +22,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link
         rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=BIZ+UDPGothic:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
         precedence="font"
       />
       <script

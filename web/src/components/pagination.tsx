@@ -5,7 +5,8 @@ export function Pagination({ current, totalPages }: { current: number; totalPage
     return null;
   }
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-  const linkBase = "rounded px-3 py-1.5 text-sm border border-stone-200 dark:border-slate-700";
+  const linkBase =
+    "rounded-sm border border-paper-line px-3 py-1.5 font-mono text-sm dark:border-slate-700";
   return (
     <nav className="mt-6 flex flex-wrap items-center justify-center gap-1">
       {pages.map((n) => (
@@ -14,8 +15,8 @@ export function Pagination({ current, totalPages }: { current: number; totalPage
           to={`/invoice/list/${n}`}
           className={
             n === current
-              ? `${linkBase} bg-kent-blue-500 text-white border-kent-blue-500`
-              : `${linkBase} hover:bg-stone-100 dark:hover:bg-slate-800`
+              ? `${linkBase} border-kent-blue-500 bg-kent-blue-500 text-white`
+              : `${linkBase} hover:border-kent-blue-300 hover:text-kent-blue-600 dark:hover:border-kent-blue-700 dark:hover:text-kent-blue-200`
           }
         >
           {n}

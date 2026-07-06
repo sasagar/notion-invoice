@@ -8,15 +8,15 @@ export function WithholdingTable({ totals }: { totals: InvoiceTotals }) {
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="text-stone-500 dark:text-slate-400">
-          <th className="py-1 text-left font-normal">源泉徴収</th>
-          <th className="py-1 text-right font-normal">税額</th>
+        <tr className="border-b border-paper-line text-xs uppercase tracking-wider text-stone-400 dark:border-slate-800 dark:text-slate-500">
+          <th className="py-1.5 text-left font-medium">源泉徴収</th>
+          <th className="py-1.5 text-right font-medium">税額</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody className="font-mono">
         <tr>
-          <td className="py-1">源泉徴収税（10.21%）</td>
-          <td className="py-1 text-right">{formatYen(totals.withholding)}</td>
+          <td className="py-1.5 font-sans">源泉徴収税（10.21%）</td>
+          <td className="py-1.5 text-right tabular-nums">{formatYen(totals.withholding)}</td>
         </tr>
       </tbody>
     </table>
