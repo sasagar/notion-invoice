@@ -154,3 +154,55 @@ export function deleteAccount(db: AppDatabase, ownerId: string, id: string): boo
   const res = db.prepare("DELETE FROM accounts WHERE owner_id = ? AND id = ?").run(ownerId, id);
   return res.changes > 0;
 }
+
+/** 管理画面用の自社レコード（id + sealFileId + 表示用 data URI + 由来を含む）。 */
+export type AccountRecord = AccountFields & {
+  id: string;
+  sealImageUrl: string | null;
+  notionPageId: string | null;
+};
+
+function mapAccountRecord(row: Record<string, unknown>): AccountRecord {
+  return {
+    id: str(row["id"]),
+    slug: str(row["slug"]),
+    companyName: str(row["company_name"]),
+    contactName: str(row["contact_name"]),
+    companyInfo: str(row["company_info"]),
+    bankInfo: str(row["bank_info"]),
+    registrationNumber: str(row["registration_number"]),
+    sealFileId: strOrNull(row["seal_file_id"]),
+    sealImageUrl: sealDataUri(row["seal_mime_type"], row["seal_data"]),
+    notionPageId: strOrNull(row["notion_page_id"]),
+  };
+}
+
+/** オーナーの自社情報を id 付きで一覧（管理画面用・会社名昇順）。 */
+export function listAccountRecords(db: AppDatabase, ownerId: string): AccountRecord[] {
+  const rows = db
+    .prepare(`${ACCOUNT_SELECT} WHERE a.owner_id = ? ORDER BY a.company_name`)
+    .all(ownerId);
+  return rows.map((r) => mapAccountRecord(asRow(r)));
+}
+
+/** id 指定で自社レコードを 1 件取得（編集画面の初期値用・無ければ null）。 */
+export function getAccountRecord(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+): AccountRecord | null {
+  const row = db.prepare(`${ACCOUNT_SELECT} WHERE a.owner_id = ? AND a.id = ?`).get(ownerId, id);
+  return row === undefined ? null : mapAccountRecord(asRow(row));
+}
+
+/** id 指定で既存の印影ファイル id を返す（印影差し替え時の旧BLOB削除用。未設定なら null）。 */
+export function getAccountSealFileIdById(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+): string | null {
+  const row = db
+    .prepare("SELECT seal_file_id FROM accounts WHERE owner_id = ? AND id = ?")
+    .get(ownerId, id);
+  return row === undefined ? null : strOrNull(asRow(row)["seal_file_id"]);
+}
