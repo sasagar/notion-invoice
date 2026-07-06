@@ -6,7 +6,13 @@ function toPlainDate(iso: string): Temporal.PlainDate | null {
   try {
     return Temporal.PlainDate.from(iso);
   } catch {
-    return null;
+    // last_edited_time 等、UTC(Z)瞬間時刻は Instant としてパースし、
+    // 業務時間帯(Asia/Tokyo)のカレンダー日付に変換する。
+    try {
+      return Temporal.Instant.from(iso).toZonedDateTimeISO("Asia/Tokyo").toPlainDate();
+    } catch {
+      return null;
+    }
   }
 }
 

@@ -11,6 +11,13 @@ describe("formatDate", () => {
     expect(formatDate("2026-07-05T00:00:00.000+09:00")).toBe("2026年7月5日");
   });
 
+  test("UTC(Z)瞬間時刻はAsia/Tokyoのカレンダー日付に変換する(last_edited_time相当)", () => {
+    // 13:17 JST 同日
+    expect(formatDate("2026-07-05T04:17:00.000Z")).toBe("2026年7月5日");
+    // 01:00 JST に日付が繰り上がるケース
+    expect(formatDate("2026-07-04T16:00:00.000Z")).toBe("2026年7月5日");
+  });
+
   test("null/空文字は空文字を返す", () => {
     expect(formatDate(null)).toBe("");
     expect(formatDate("")).toBe("");
