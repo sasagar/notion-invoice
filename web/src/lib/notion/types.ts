@@ -51,3 +51,14 @@ export type Invoice = {
   rows: InvoiceRow[];
   totals: InvoiceTotals;
 };
+
+/**
+ * 請求書の完全なデータ（明細込みの Invoice + 顧客 + 自社）。
+ * Notion 版（build-full-invoice.ts）と SQLite 版（repository/invoices.ts）が
+ * 同じ形を返すための共通型。読み取りバックエンド切替（data/backend.ts）の戻り値。
+ */
+export type FullInvoice = {
+  invoice: Invoice;
+  customer: Customer | null;
+  account: Account | null;
+};

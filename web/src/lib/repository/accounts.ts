@@ -1,7 +1,8 @@
 /**
  * 自社（請求元）マスタ（accounts 表）の読み書き。既存ドメイン型 Account を返す。
- * 印影は files 表に格納し、sealImageUrl は配信ルートの URL 形式で返す
- * （配信ルート自体は Phase 2 で実装。ここでは URL 形式だけ確定させる）。
+ * 印影は files 表に BLOB として格納し、sealImageUrl は
+ * `data:<mime>;base64,<...>` の data URI で返す（Web の <img> と @react-pdf の
+ * <Image> の両方が追加実装なしに表示できる。印影は数十KBなので inline で問題ない）。
  */
 import { randomUUID } from "node:crypto";
 import type { Account } from "@/lib/notion/types";
@@ -20,12 +21,27 @@ export type AccountInput = {
   sealFileId: string | null;
 };
 
+// 印影の BLOB を JOIN で同時に取得し、data URI 化できるようにする。
+// accounts 側の列と衝突しないよう別名（seal_mime_type / seal_data）で受ける。
+const ACCOUNT_SELECT = `
+  SELECT a.*, f.mime_type AS seal_mime_type, f.data AS seal_data
+  FROM accounts a
+  LEFT JOIN files f ON f.id = a.seal_file_id
+`;
+
+/** 印影の mime と BLOB から data URI を組み立てる（欠損時は null）。 */
+function sealDataUri(mime: unknown, data: unknown): string | null {
+  if (typeof mime !== "string" || mime.length === 0 || !Buffer.isBuffer(data)) {
+    return null;
+  }
+  return `data:${mime};base64,${data.toString("base64")}`;
+}
+
 function mapAccountRow(row: Record<string, unknown>): Account {
-  const sealFileId = strOrNull(row["seal_file_id"]);
   return {
     contactName: str(row["contact_name"]),
     companyName: str(row["company_name"]),
-    sealImageUrl: sealFileId ? `/api/files/${sealFileId}` : null,
+    sealImageUrl: sealDataUri(row["seal_mime_type"], row["seal_data"]),
     companyInfo: str(row["company_info"]),
     bankInfo: str(row["bank_info"]),
     registrationNumber: str(row["registration_number"]),
@@ -36,15 +52,27 @@ function mapAccountRow(row: Record<string, unknown>): Account {
 /** オーナーの自社情報一覧（会社名昇順）。 */
 export function listAccounts(db: AppDatabase, ownerId: string): Account[] {
   const rows = db
-    .prepare("SELECT * FROM accounts WHERE owner_id = ? ORDER BY company_name")
+    .prepare(`${ACCOUNT_SELECT} WHERE a.owner_id = ? ORDER BY a.company_name`)
     .all(ownerId);
   return rows.map((r) => mapAccountRow(asRow(r)));
 }
 
 /** id 指定で 1 件取得（無ければ null）。 */
 export function getAccount(db: AppDatabase, ownerId: string, id: string): Account | null {
-  const row = db.prepare("SELECT * FROM accounts WHERE owner_id = ? AND id = ?").get(ownerId, id);
+  const row = db.prepare(`${ACCOUNT_SELECT} WHERE a.owner_id = ? AND a.id = ?`).get(ownerId, id);
   return row === undefined ? null : mapAccountRow(asRow(row));
+}
+
+/** notion_page_id 指定で既存の印影ファイル id を返す（未登録/未設定なら null）。 */
+export function getAccountSealFileId(
+  db: AppDatabase,
+  ownerId: string,
+  notionPageId: string,
+): string | null {
+  const row = db
+    .prepare("SELECT seal_file_id FROM accounts WHERE owner_id = ? AND notion_page_id = ?")
+    .get(ownerId, notionPageId);
+  return row === undefined ? null : strOrNull(asRow(row)["seal_file_id"]);
 }
 
 /**

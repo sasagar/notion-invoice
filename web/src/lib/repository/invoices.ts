@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 import { deriveLineAmounts } from "@/lib/money/line-amounts";
 import { computeTotals } from "@/lib/money/sanitizer";
 import type { InvoiceListItem } from "@/lib/notion/fetchers";
-import type { Account, Customer, Invoice, InvoiceMeta, InvoiceRow } from "@/lib/notion/types";
+import type { FullInvoice, Invoice, InvoiceMeta, InvoiceRow } from "@/lib/notion/types";
 import { getAccount } from "@/lib/repository/accounts";
 import { getCustomer } from "@/lib/repository/customers";
 import { asRow, boolFromInt, num, str, strOrNull } from "@/lib/repository/row";
@@ -44,12 +44,9 @@ export type InvoiceInput = {
   rows: InvoiceRowInput[];
 };
 
-/** getFullInvoiceByNumber の戻り値（build-full-invoice.ts と同形）。 */
-export type FullInvoice = {
-  invoice: Invoice;
-  customer: Customer | null;
-  account: Account | null;
-};
+// getFullInvoiceByNumber の戻り値。Notion 版と共通の型（notion/types.ts）を再エクスポートし、
+// `@/lib/repository` からも従来どおり参照できるようにする。
+export type { FullInvoice };
 
 // 一覧の並び順は Notion 版（発行日降順→最終更新降順）に合わせる。
 // SQLite では NULL が最小のため published_at DESC で未発行が末尾に来る。

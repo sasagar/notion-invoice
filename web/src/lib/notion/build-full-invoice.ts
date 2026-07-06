@@ -1,16 +1,9 @@
 import { getPage, getRows } from "@/lib/notion/fetchers";
 import { buildInvoice, mapAccount, mapCustomer, mapInvoiceMeta } from "@/lib/notion/mapper";
-import type { Account, Customer, Invoice } from "@/lib/notion/types";
+import type { FullInvoice } from "@/lib/notion/types";
 
 /** 生の請求書ページから、明細・顧客・自社を含む完全なデータを組み立てる。 */
-export async function buildFullInvoice(
-  userId: string,
-  rawInvoice: unknown,
-): Promise<{
-  invoice: Invoice;
-  customer: Customer | null;
-  account: Account | null;
-}> {
+export async function buildFullInvoice(userId: string, rawInvoice: unknown): Promise<FullInvoice> {
   const meta = mapInvoiceMeta(rawInvoice);
   const [rawRows, rawCustomer, rawAccount] = await Promise.all([
     getRows(userId, meta.itemRelationIds),

@@ -5,10 +5,10 @@ import { PdfDownload } from "@/components/pdf-download";
 import { StatusStamp } from "@/components/status-stamp";
 import { TaxTable } from "@/components/tax-table";
 import { WithholdingTable } from "@/components/withholding-table";
+import { getFullInvoice } from "@/lib/data/backend";
 import { formatDate, formatDateTime, formatYen } from "@/lib/format";
 import { roundAmount } from "@/lib/money/sanitizer";
-import { getInvoiceByNumber, getPage, getRows } from "@/lib/notion/fetchers";
-import { buildInvoice, mapAccount, mapCustomer, mapInvoiceMeta } from "@/lib/notion/mapper";
+import type { FullInvoice } from "@/lib/notion/types";
 import { requireSession } from "@/lib/session";
 
 export default function InvoiceDetailPage({ slug }: { slug: string }) {
@@ -23,37 +23,18 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
   const session = await requireSession();
   const userId = session.user.id;
 
-  let rawInvoice: unknown;
+  let full: FullInvoice | null;
   try {
-    rawInvoice = await getInvoiceByNumber(userId, slug);
+    full = await getFullInvoice(userId, slug);
   } catch (e) {
     return <ErrorState message={e instanceof Error ? e.message : "取得に失敗しました"} />;
   }
-  if (!rawInvoice) {
+  if (!full) {
     return <ErrorState message={`請求書 #${slug} が見つかりませんでした。`} />;
   }
 
-  const meta0 = mapInvoiceMeta(rawInvoice);
-
-  let rawRows: unknown[];
-  try {
-    rawRows = await getRows(userId, meta0.itemRelationIds);
-  } catch (e) {
-    return <ErrorState message={e instanceof Error ? e.message : "明細行の取得に失敗しました"} />;
-  }
-
-  const [rawCustomer, rawAccount] = await Promise.all([
-    meta0.customerRelationId
-      ? getPage(userId, meta0.customerRelationId).catch(() => null)
-      : Promise.resolve(null),
-    meta0.accountRelationId
-      ? getPage(userId, meta0.accountRelationId).catch(() => null)
-      : Promise.resolve(null),
-  ]);
-
-  const { meta, rows, totals } = buildInvoice(rawInvoice, rawRows);
-  const customer = rawCustomer ? mapCustomer(rawCustomer) : null;
-  const account = rawAccount ? mapAccount(rawAccount) : null;
+  const { invoice, customer, account } = full;
+  const { meta, rows, totals } = invoice;
   const incl = meta.taxIncluded;
 
   return (
