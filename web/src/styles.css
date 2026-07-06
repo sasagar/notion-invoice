@@ -16,9 +16,24 @@
   --color-kent-blue-900: #040a3b;
   --color-kent-blue-950: #020526;
 
-  --font-sans: "M PLUS 1", ui-sans-serif, system-ui, sans-serif;
+  /* 朱色: 検収印(スタンプ)専用アクセント。他用途には使わない。 */
+  --color-shuiro-50: #fdf1ef;
+  --color-shuiro-300: #e2917f;
+  --color-shuiro-400: #d46952;
+  --color-shuiro-500: #c1392b;
+  --color-shuiro-600: #a32e22;
+  --color-shuiro-700: #7f2519;
+
+  /* 台帳紙: 暖色クリームではなく寒色寄りの背景。 */
+  --color-paper: #f3f5f4;
+  --color-paper-line: #d7dce1;
+
+  --font-sans: "BIZ UDPGothic", "M PLUS 1", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Zen Kaku Gothic New", "BIZ UDPGothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   --animate-shimmer: shimmer 2s infinite;
+  --animate-stamp-in: stamp-in 0.24s cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
 
 @keyframes shimmer {
@@ -27,12 +42,27 @@
   }
 }
 
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.5) rotate(var(--stamp-rotate, -6deg));
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.94) rotate(var(--stamp-rotate, -6deg));
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(var(--stamp-rotate, -6deg));
+  }
+}
+
 html {
   font-family: var(--font-sans);
 }
 
 body {
-  @apply bg-stone-50 text-stone-800 dark:bg-slate-950 dark:text-slate-100;
+  @apply bg-paper text-stone-800 dark:bg-slate-950 dark:text-slate-100;
 }
 
 /* スケルトン（読み込み中） */
@@ -55,5 +85,29 @@ body {
   }
   100% {
     transform: translateX(100%) scaleX(0.3);
+  }
+}
+
+/* 台帳の締め線（合計金額の下）: 簿記の慣習である二重線。 */
+.ledger-total-rule {
+  border-bottom: 3px double var(--color-kent-blue-500);
+}
+.dark .ledger-total-rule {
+  border-bottom-color: var(--color-kent-blue-300);
+}
+
+/* 検収印: 表示時に一度だけ「捺印」される。 */
+.stamp-mark {
+  animation: var(--animate-stamp-in);
+  transform: rotate(var(--stamp-rotate, -6deg));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+  .stamp-mark {
+    animation: none;
+    opacity: 1;
   }
 }

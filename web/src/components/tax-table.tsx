@@ -15,18 +15,21 @@ export function TaxTable({ totals, taxIncluded }: { totals: InvoiceTotals; taxIn
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="text-stone-500 dark:text-slate-400">
-          <th className="py-1 text-left font-normal">対象</th>
-          <th className="py-1 text-right font-normal">対象額</th>
-          <th className="py-1 text-right font-normal">{taxIncluded ? "内税額" : "税額"}</th>
+        <tr className="border-b border-paper-line text-xs uppercase tracking-wider text-stone-400 dark:border-slate-800 dark:text-slate-500">
+          <th className="py-1.5 text-left font-medium">対象</th>
+          <th className="py-1.5 text-right font-medium">対象額</th>
+          <th className="py-1.5 text-right font-medium">{taxIncluded ? "内税額" : "税額"}</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody className="font-mono">
         {rows.map((r) => (
-          <tr key={r.label}>
-            <td className="py-1">{r.label}</td>
-            <td className="py-1 text-right">{formatYen(r.base)}</td>
-            <td className="py-1 text-right">
+          <tr
+            key={r.label}
+            className="border-b border-paper-line/60 last:border-0 dark:border-slate-800/60"
+          >
+            <td className="py-1.5 font-sans">{r.label}</td>
+            <td className="py-1.5 text-right tabular-nums">{formatYen(r.base)}</td>
+            <td className="py-1.5 text-right tabular-nums">
               {taxIncluded ? `(${formatYen(r.tax)})` : formatYen(r.tax)}
             </td>
           </tr>

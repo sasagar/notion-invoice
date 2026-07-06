@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Card, SectionHeading } from "@/components/card";
 import { ErrorState } from "@/components/data-states";
 import { PdfDownload } from "@/components/pdf-download";
+import { StatusStamp } from "@/components/status-stamp";
 import { TaxTable } from "@/components/tax-table";
 import { WithholdingTable } from "@/components/withholding-table";
 import { formatDate, formatDateTime, formatYen } from "@/lib/format";
@@ -46,44 +47,52 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* ヒーロー：御請求額を最上部に特大表示 */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-kent-blue-500 via-kent-blue-600 to-kent-blue-800 p-6 text-white shadow-lg sm:p-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-white/10 blur-2xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-28 -left-16 h-56 w-56 rounded-full bg-kent-blue-300/20 blur-2xl"
-        />
-        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+      {/* 台帳の見出し：請求書番号・状態・日付と御請求額を同じ帯で示す */}
+      <section className="rounded-lg border border-paper-line bg-white/70 p-6 dark:border-slate-800 dark:bg-slate-900/40 sm:p-8">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium tracking-wider backdrop-blur">
-                請求書
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="font-mono text-xs text-stone-400 dark:text-slate-500">
+                #{meta.id}
               </span>
-              <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium backdrop-blur">
-                {meta.status || "—"}
-              </span>
+              <StatusStamp status={meta.status} />
             </div>
-            <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
+            <h1 className="mt-2 font-display text-2xl font-bold leading-tight text-stone-800 dark:text-slate-100 sm:text-3xl">
               {meta.title || "(件名なし)"}
             </h1>
-            <p className="mt-2 text-sm text-white/70">
-              <span className="font-medium text-white/90">#{meta.id}</span>
-              {meta.publishedAt && `　発行日 ${formatDate(meta.publishedAt)}`}
-              {meta.dueTo && `　支払期限 ${formatDate(meta.dueTo)}`}
-              {`　最終更新 ${formatDateTime(meta.updatedAt)}`}
-            </p>
+            <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-stone-400 dark:text-slate-500">
+              {meta.publishedAt && (
+                <div className="flex gap-1.5">
+                  <dt>発行日</dt>
+                  <dd className="text-stone-600 dark:text-slate-300">
+                    {formatDate(meta.publishedAt)}
+                  </dd>
+                </div>
+              )}
+              {meta.dueTo && (
+                <div className="flex gap-1.5">
+                  <dt>支払期限</dt>
+                  <dd className="text-stone-600 dark:text-slate-300">{formatDate(meta.dueTo)}</dd>
+                </div>
+              )}
+              <div className="flex gap-1.5">
+                <dt>最終更新</dt>
+                <dd className="text-stone-600 dark:text-slate-300">
+                  {formatDateTime(meta.updatedAt)}
+                </dd>
+              </div>
+            </dl>
           </div>
-          <div className="shrink-0 sm:text-right">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/60">御請求額</p>
-            <p className="mt-1 text-4xl font-black tabular-nums sm:text-5xl">
+          <div className="shrink-0 border-t border-paper-line pt-4 dark:border-slate-800 sm:border-t-0 sm:border-l sm:pl-8 sm:pt-0 sm:text-right">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-stone-400 dark:text-slate-500">
+              御請求額
+            </p>
+            <p className="mt-1 font-display text-4xl font-bold tabular-nums text-kent-blue-500 dark:text-kent-blue-200 sm:text-5xl">
               {formatYen(totals.invoiceSum)}
             </p>
           </div>
         </div>
-        <div className="relative mt-6">
+        <div className="mt-6 border-t border-paper-line pt-5 dark:border-slate-800">
           <PdfDownload number={meta.id} customer={customer} account={account} />
         </div>
       </section>
@@ -147,21 +156,21 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-stone-50 text-stone-500 dark:bg-slate-800/50 dark:text-slate-400">
+            <thead className="border-b border-paper-line text-xs uppercase tracking-wider text-stone-400 dark:border-slate-800 dark:text-slate-500">
               <tr>
                 <th className="p-3 text-left font-medium">表示名</th>
-                <th className="p-3 text-left text-xs font-medium">項目名</th>
+                <th className="p-3 text-left text-[10px] font-medium">項目名</th>
                 <th className="p-3 text-right font-medium">単価{incl ? "(税込)" : ""}</th>
                 <th className="p-3 text-right font-medium">数量</th>
                 <th className="p-3 text-right font-medium">小計{incl ? "(税込)" : ""}</th>
                 <th className="p-3 text-center font-medium">税率</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="font-mono">
               {rows.map((r) => (
-                <tr key={r.id} className="border-t border-stone-100 dark:border-slate-800">
-                  <td className="p-3">{r.name}</td>
-                  <td className="p-3 text-xs text-stone-400 dark:text-slate-500">
+                <tr key={r.id} className="border-t border-paper-line/60 dark:border-slate-800/60">
+                  <td className="p-3 font-sans">{r.name}</td>
+                  <td className="p-3 font-sans text-xs text-stone-400 dark:text-slate-500">
                     {r.itemNames.map((n, i) => (
                       <span key={i} className="block">
                         {n}
@@ -170,12 +179,12 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
                   </td>
                   <td className="p-3 text-right tabular-nums">{formatYen(r.unitPrice)}</td>
                   <td className="p-3 text-right tabular-nums">
-                    {r.quantity.toLocaleString()} {r.unit}
+                    {r.quantity.toLocaleString()} <span className="font-sans">{r.unit}</span>
                   </td>
                   <td className="p-3 text-right tabular-nums">
                     {formatYen(roundAmount(r.amounts.subtotal))}
                   </td>
-                  <td className="p-3 text-center">{r.taxRate}</td>
+                  <td className="p-3 text-center font-sans">{r.taxRate}</td>
                 </tr>
               ))}
             </tbody>
@@ -202,26 +211,30 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
 
         <Card className="self-start">
           <SectionHeading>請求額の内訳</SectionHeading>
-          <dl className="flex flex-col gap-2 text-sm">
+          <dl className="flex flex-col gap-2 font-mono text-sm">
             <div className="flex justify-between">
-              <dt className="text-stone-500 dark:text-slate-400">請求額</dt>
+              <dt className="font-sans text-stone-500 dark:text-slate-400">請求額</dt>
               <dd className="tabular-nums">{formatYen(totals.sum)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-stone-500 dark:text-slate-400">消費税{incl ? "(内税額)" : ""}</dt>
+              <dt className="font-sans text-stone-500 dark:text-slate-400">
+                消費税{incl ? "(内税額)" : ""}
+              </dt>
               <dd className="tabular-nums">
                 {incl ? `(${formatYen(totals.tax)})` : formatYen(totals.tax)}
               </dd>
             </div>
             {totals.withholding !== 0 && (
               <div className="flex justify-between">
-                <dt className="text-stone-500 dark:text-slate-400">源泉徴収</dt>
+                <dt className="font-sans text-stone-500 dark:text-slate-400">源泉徴収</dt>
                 <dd className="tabular-nums">{formatYen(totals.withholding)}</dd>
               </div>
             )}
-            <div className="mt-1 flex items-baseline justify-between border-t border-stone-200 pt-3 dark:border-slate-700">
-              <dt className="font-semibold">請求額合計</dt>
-              <dd className="text-xl font-bold tabular-nums text-kent-blue-500 dark:text-kent-blue-200">
+            <div className="ledger-total-rule mt-1 flex items-baseline justify-between border-t border-paper-line pb-2 pt-3 dark:border-slate-700">
+              <dt className="font-sans text-sm font-semibold text-stone-700 dark:text-slate-200">
+                御請求額合計
+              </dt>
+              <dd className="font-display text-xl font-bold tabular-nums text-kent-blue-600 dark:text-kent-blue-200">
                 {formatYen(totals.invoiceSum)}
               </dd>
             </div>
@@ -245,10 +258,10 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
 function InvoiceDetailSkeleton() {
   return (
     <div className="flex flex-col gap-5">
-      <section className="rounded-3xl bg-stone-200/50 p-6 dark:bg-slate-800/40 sm:p-8">
+      <section className="rounded-lg border border-paper-line bg-white/70 p-6 dark:border-slate-800 dark:bg-slate-900/40 sm:p-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0 flex-1 space-y-3">
-            <div className="skeleton h-5 w-24 rounded-full" />
+            <div className="skeleton h-5 w-24 rounded-[2px]" />
             <div className="skeleton h-8 w-2/3 rounded" />
             <div className="skeleton h-4 w-1/2 rounded" />
           </div>
@@ -281,8 +294,8 @@ function InvoiceDetailSkeleton() {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="skeleton h-32 rounded-2xl" />
-        <div className="skeleton h-32 rounded-2xl" />
+        <div className="skeleton h-32 rounded-lg" />
+        <div className="skeleton h-32 rounded-lg" />
       </div>
     </div>
   );

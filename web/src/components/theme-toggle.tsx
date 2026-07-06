@@ -31,7 +31,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label="テーマ切替"
-      className="rounded p-2 text-stone-600 hover:bg-stone-200 dark:text-slate-300 dark:hover:bg-slate-800"
+      className="rounded p-2 text-stone-500 transition hover:bg-stone-900/5 hover:text-stone-700 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-slate-200"
     >
       <SlBulb aria-hidden />
     </button>

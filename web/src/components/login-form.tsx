@@ -6,7 +6,7 @@ import { useRouter } from "waku/router/client";
 import { authClient } from "@/lib/auth-client";
 
 const inputClass =
-  "w-full rounded-lg border border-stone-300 bg-white px-3 py-2 outline-none focus:border-kent-blue-400 focus:ring-2 focus:ring-kent-blue-200 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-kent-blue-900";
+  "w-full border-b-2 border-paper-line bg-transparent px-0.5 py-2 outline-none transition focus:border-kent-blue-500 dark:border-slate-700 dark:focus:border-kent-blue-300";
 
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
@@ -35,21 +35,21 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm">
+    <form onSubmit={onSubmit} className="flex flex-col gap-5">
+      <label className="flex flex-col gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-slate-400">
         メールアドレス
         <input name="email" type="email" required className={inputClass} />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-slate-400">
         パスワード
         <input name="password" type="password" required className={inputClass} />
       </label>
       <TurnstileWidget onToken={setCaptchaToken} />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-shuiro-600 dark:text-shuiro-400">{error}</p>}
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-kent-blue-500 py-2.5 font-medium text-white transition hover:bg-kent-blue-600 disabled:opacity-50"
+        className="rounded-sm bg-kent-blue-500 py-2.5 font-medium text-white transition hover:bg-kent-blue-600 disabled:opacity-50"
       >
         {pending ? "ログイン中…" : "ログイン"}
       </button>
