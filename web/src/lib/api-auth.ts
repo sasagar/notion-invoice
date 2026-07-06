@@ -6,7 +6,6 @@
 import process from "node:process";
 import { auth } from "@/lib/auth";
 import { isSqliteBackend } from "@/lib/data/backend";
-import { isSqliteBackend } from "@/lib/data/backend";
 
 /**
  * 状態変更リクエストの Origin を検査（CSRF 対策）。
@@ -70,20 +69,4 @@ export async function guardMutation(req: Request): Promise<MutationGuard> {
     };
   }
   return { ok: true, userId: session.user.id };
-}
-
-/**
- * マスタ編集系 mutation は SQLite バックエンドのときのみ許可する。
- * notion 読み取り中の手編集は表示に反映されず、再 import(notion_page_id upsert)が
- * 手編集を黙って上書きするため、UI ゲートに加えて API 側でも 409 で拒否する
- * （UI を迂回した直接 POST/PUT/DELETE を防ぐ）。許可なら null を返す。
- */
-export function requireSqliteBackend(): Response | null {
-  if (!isSqliteBackend()) {
-    return Response.json(
-      { error: "編集は DATA_BACKEND=sqlite のときに利用できます（現在は Notion 読み取りモード）" },
-      { status: 409 },
-    );
-  }
-  return null;
 }
