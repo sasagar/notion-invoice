@@ -28,6 +28,29 @@ export function formatDate(iso: string | null): string {
   return `${d.year}年${d.month}月${d.day}日`;
 }
 
+function toZonedDateTime(iso: string): Temporal.ZonedDateTime | null {
+  try {
+    return Temporal.Instant.from(iso).toZonedDateTimeISO("Asia/Tokyo");
+  } catch {
+    return null;
+  }
+}
+
+/** ISO 瞬間時刻を「yyyy年M月d日 HH:mm:ss」で整形(Asia/Tokyo)。last_edited_time 用。 */
+export function formatDateTime(iso: string | null): string {
+  if (!iso) {
+    return "";
+  }
+  const zdt = toZonedDateTime(iso);
+  if (!zdt) {
+    return iso;
+  }
+  const hh = String(zdt.hour).padStart(2, "0");
+  const mm = String(zdt.minute).padStart(2, "0");
+  const ss = String(zdt.second).padStart(2, "0");
+  return `${zdt.year}年${zdt.month}月${zdt.day}日 ${hh}:${mm}:${ss}`;
+}
+
 /** 金額を円表記に整形。負数は ▲ 付き。 */
 export function formatYen(n: number): string {
   const abs = Math.abs(Math.round(n)).toLocaleString("ja-JP");

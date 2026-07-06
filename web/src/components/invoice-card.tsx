@@ -1,6 +1,6 @@
 import { Link } from "waku";
 import { StatusTag } from "@/components/status-tag";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import type { InvoiceMeta } from "@/lib/notion/types";
 
 export function InvoiceCard({ meta, customerName }: { meta: InvoiceMeta; customerName: string }) {
@@ -29,7 +29,7 @@ export function InvoiceCard({ meta, customerName }: { meta: InvoiceMeta; custome
                 <span>#{meta.id}</span>
                 {meta.dueTo && <span>支払期限 {formatDate(meta.dueTo)}</span>}
               </span>
-              <span>更新 {formatDate(meta.updatedAt)}</span>
+              <span>更新 {formatDateTime(meta.updatedAt)}</span>
             </div>
           </div>
         </div>
