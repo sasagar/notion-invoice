@@ -2,9 +2,12 @@ import { describe, expect, test } from "vitest";
 import { splitForWrap } from "@/components/status-stamp";
 
 describe("splitForWrap", () => {
+  test("複合語(送付済み)は語幹ごと末尾側に残して区切る", () => {
+    expect(splitForWrap("見積送付済み")).toEqual(["見積", "送付済み"]);
+    expect(splitForWrap("請求書送付済み")).toEqual(["請求書", "送付済み"]);
+  });
+
   test("既知の語尾(済み/済/予定/中)の直前で区切る", () => {
-    expect(splitForWrap("見積送付済み")).toEqual(["見積送付", "済み"]);
-    expect(splitForWrap("請求書送付済み")).toEqual(["請求書送付", "済み"]);
     expect(splitForWrap("支払済み")).toEqual(["支払", "済み"]);
     expect(splitForWrap("入金確認中")).toEqual(["入金確認", "中"]);
   });
