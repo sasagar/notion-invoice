@@ -45,4 +45,4 @@ pnpm run db:seed        # 初期管理者作成（SEED_ADMIN_EMAIL/PASSWORD）
 
 ## 言語
 
-UI・コメントは日本語。日本語フォントは M PLUS 1。日付は date-fns の ja ロケール。
+UI・コメントは日本語。日本語フォントは M PLUS 1。日付は Temporal(temporal-polyfill) で扱う。

@@ -1,16 +1,25 @@
-import { format, parseISO } from "date-fns";
-import { ja } from "date-fns/locale";
+import { Temporal } from "temporal-polyfill";
 
-/** ISO 日付を「yyyy年M月d日」で整形（無効/空なら空文字）。 */
+const WEEKDAY_KANJI = ["月", "火", "水", "木", "金", "土", "日"];
+
+function toPlainDate(iso: string): Temporal.PlainDate | null {
+  try {
+    return Temporal.PlainDate.from(iso);
+  } catch {
+    return null;
+  }
+}
+
+/** ISO 日付を「yyyy年M月d日」で整形（無効/空なら空文字、パース不能なら原文字列）。 */
 export function formatDate(iso: string | null): string {
   if (!iso) {
     return "";
   }
-  try {
-    return format(parseISO(iso), "yyyy年M月d日", { locale: ja });
-  } catch {
+  const d = toPlainDate(iso);
+  if (!d) {
     return iso;
   }
+  return `${d.year}年${d.month}月${d.day}日`;
 }
 
 /** 金額を円表記に整形。負数は ▲ 付き。 */
@@ -19,14 +28,14 @@ export function formatYen(n: number): string {
   return n < 0 ? `▲ ¥${abs}` : `¥${abs}`;
 }
 
-/** ISO 日付を「yyyy年M月do (eeeee)」で整形（PDF 用、旧 dateFormat 相当）。 */
+/** ISO 日付を「yyyy年M月d日 (曜)」で整形（PDF 用、旧 dateFormat 相当）。 */
 export function formatDateLong(iso: string | null): string {
   if (!iso) {
     return "";
   }
-  try {
-    return format(parseISO(iso), "yyyy年MMMdo (eeeee)", { locale: ja });
-  } catch {
+  const d = toPlainDate(iso);
+  if (!d) {
     return iso;
   }
+  return `${d.year}年${d.month}月${d.day}日 (${WEEKDAY_KANJI[d.dayOfWeek - 1]})`;
 }
