@@ -68,6 +68,8 @@ export type InvoiceListItem = {
   customerName: string;
   /** 明細行の取得/計算に失敗した場合は null（1件の異常データで一覧全体を落とさない）。 */
   totalAmount: number | null;
+  /** SQLite バックエンドのときのみ DB の invoices.id（一覧からのステータス変更に使用）。 */
+  editorId: string | null;
 };
 
 /**
@@ -99,7 +101,7 @@ export async function listInvoicesWithTotals(
       } catch {
         // 明細行が削除/アーカイブ済み等で取得できない場合は金額不明のまま続行
       }
-      return { meta, customerName, totalAmount };
+      return { meta, customerName, totalAmount, editorId: null };
     });
   });
 }

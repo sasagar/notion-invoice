@@ -1,17 +1,20 @@
 import { Link } from "waku";
 import { StatusStamp } from "@/components/status-stamp";
+import { StatusStampSelect } from "@/components/status-stamp-select";
 import { formatDate, formatDateTime, formatYen } from "@/lib/format";
 import type { InvoiceListItem } from "@/lib/notion/fetchers";
 
 export function InvoiceCard({ item }: { item: InvoiceListItem }) {
-  const { meta, customerName, totalAmount } = item;
+  const { meta, customerName, totalAmount, editorId } = item;
   return (
-    <li>
-      <Link
-        to={`/invoice/item/${meta.id}`}
-        className="flex items-center gap-4 px-4 py-3.5 transition hover:bg-kent-blue-500/5 dark:hover:bg-kent-blue-400/5"
-      >
+    <li className="flex items-center gap-4 px-4 py-3.5 transition hover:bg-kent-blue-500/5 dark:hover:bg-kent-blue-400/5">
+      {/* SQLiteモードではスタンプ自体がステータス変更のトリガーになる（Link の外） */}
+      {editorId ? (
+        <StatusStampSelect id={editorId} status={meta.status} />
+      ) : (
         <StatusStamp status={meta.status} />
+      )}
+      <Link to={`/invoice/item/${meta.id}`} className="flex min-w-0 flex-1 items-center gap-4">
         <div className="min-w-0 flex-1">
           <div className="truncate font-medium text-stone-800 dark:text-slate-100">
             {meta.title || "(件名なし)"}

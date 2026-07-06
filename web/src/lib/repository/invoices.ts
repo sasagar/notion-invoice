@@ -252,7 +252,7 @@ export function listInvoiceItemsPage(
       }
     }
     const totalAmount: number | null = totalsOf(rows, meta).invoiceSum;
-    return { meta, customerName, totalAmount };
+    return { meta, customerName, totalAmount, editorId: str(r["id"]) };
   });
 
   return { items, total };
