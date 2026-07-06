@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed-admin.ts",
+    "db:import": "tsx scripts/import-notion.ts",
     "notion:schema": "tsx scripts/dump-notion-schema.ts"
   },
   "dependencies": {

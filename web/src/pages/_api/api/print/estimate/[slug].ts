@@ -1,7 +1,6 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { auth } from "@/lib/auth";
-import { buildFullInvoice } from "@/lib/notion/build-full-invoice";
-import { getInvoiceByNumber } from "@/lib/notion/fetchers";
+import { getFullInvoice } from "@/lib/data/backend";
 import { EstimateDocument } from "@/pdf";
 
 export const GET = async (
@@ -14,11 +13,11 @@ export const GET = async (
   }
   const slug = String(ctx.params.slug ?? "");
   try {
-    const rawInvoice = await getInvoiceByNumber(session.user.id, slug);
-    if (!rawInvoice) {
+    const full = await getFullInvoice(session.user.id, slug);
+    if (!full) {
       return Response.json({ error: "not found" }, { status: 404 });
     }
-    const { invoice, customer, account } = await buildFullInvoice(session.user.id, rawInvoice);
+    const { invoice, customer, account } = full;
     const buffer = await renderToBuffer(EstimateDocument({ invoice, customer, account }));
     return new Response(new Uint8Array(buffer), {
       headers: {

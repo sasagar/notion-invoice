@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { ErrorState } from "@/components/data-states";
 import { InvoiceCard } from "@/components/invoice-card";
 import { Pagination } from "@/components/pagination";
-import { listInvoices, listInvoicesWithTotals } from "@/lib/notion/fetchers";
+import { type InvoiceListPage, listInvoicePage } from "@/lib/data/backend";
 import { requireSession } from "@/lib/session";
 
 export default function InvoiceListPage({ page }: { page: string }) {
@@ -27,18 +27,15 @@ async function InvoiceListBody({ page }: { page: string }) {
   const perPage = Math.max(1, Number(process.env.PER_PAGE ?? 10));
   const pageNum = Math.max(1, Number(page) || 1);
 
-  let raw;
+  let pageData: InvoiceListPage;
   try {
-    raw = await listInvoices(userId);
+    pageData = await listInvoicePage(userId, pageNum, perPage);
   } catch (e) {
     return <ErrorState message={e instanceof Error ? e.message : "取得に失敗しました"} />;
   }
 
-  const total = raw.length;
+  const { items, total } = pageData;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
-  const start = (pageNum - 1) * perPage;
-  const rawPageItems = raw.slice(start, start + perPage);
-  const items = await listInvoicesWithTotals(userId, pageNum, rawPageItems);
 
   return (
     <>

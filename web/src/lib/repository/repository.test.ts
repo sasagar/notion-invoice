@@ -260,11 +260,12 @@ describe("repository（SQLite 読み書き）", () => {
     expect(full?.invoice.meta.title).toBe("新");
   });
 
-  test("印影ファイルを保存すると Account.sealImageUrl が配信 URL を返す", () => {
+  test("印影ファイルを保存すると Account.sealImageUrl が data URI を返す", () => {
+    const data = Buffer.from([1, 2, 3]);
     const fileId = insertFile(db, OWNER, {
       mimeType: "image/png",
-      byteSize: 3,
-      data: Buffer.from([1, 2, 3]),
+      byteSize: data.length,
+      data,
     });
     const accountId = upsertAccount(db, OWNER, {
       notionPageId: null,
@@ -277,7 +278,8 @@ describe("repository（SQLite 読み書き）", () => {
       sealFileId: fileId,
     });
     const account = getAccount(db, OWNER, accountId);
-    expect(account?.sealImageUrl).toBe(`/api/files/${fileId}`);
+    // <img> と @react-pdf の <Image> の両方が表示できる data URI（配信ルートは Phase 2）。
+    expect(account?.sealImageUrl).toBe(`data:image/png;base64,${data.toString("base64")}`);
   });
 
   test("upsertItem は id を返し listInvoiceItemsPage の行由来に使える", () => {
