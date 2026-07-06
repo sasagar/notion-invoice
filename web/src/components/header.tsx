@@ -28,6 +28,9 @@ export function Header() {
               <Link to="/invoice/list/1" className={navLink}>
                 請求書
               </Link>
+              <Link to="/masters" className={navLink}>
+                マスタ
+              </Link>
               <Link to="/user" className={navLink}>
                 設定
               </Link>
