@@ -5,6 +5,8 @@
  */
 import process from "node:process";
 import { auth } from "@/lib/auth";
+import { isSqliteBackend } from "@/lib/data/backend";
+import { isSqliteBackend } from "@/lib/data/backend";
 
 /**
  * 状態変更リクエストの Origin を検査（CSRF 対策）。
@@ -39,8 +41,13 @@ export function isAllowedOrigin(req: Request): boolean {
 export type MutationGuard = { ok: true; userId: string } | { ok: false; res: Response };
 
 /**
- * 状態変更 API の共通ガード。Origin(403) → session(401) の順で検査し、
- * 通れば userId を返す。呼び出し側は `if (!g.ok) return g.res;` で短絡する。
+ * 状態変更 API の共通ガード。Origin(403) → session(401) → バックエンド(409) の順で
+ * 検査し、通れば userId を返す。呼び出し側は `if (!g.ok) return g.res;` で短絡する。
+ *
+ * バックエンド検査: この API 群は SQLite への書き込み専用のため、読み取り元が
+ * Notion のとき(DATA_BACKEND != sqlite)は 409 で拒否する。Notion 読み取り中の
+ * 手編集は画面に反映されない上、再 import(notion_page_id upsert)が SQLite 側の
+ * 手編集を黙って上書きするため、UI ゲートに加えて API でも防波堤を張る。
  */
 export async function guardMutation(req: Request): Promise<MutationGuard> {
   if (!isAllowedOrigin(req)) {
@@ -50,5 +57,33 @@ export async function guardMutation(req: Request): Promise<MutationGuard> {
   if (!session) {
     return { ok: false, res: Response.json({ error: "unauthorized" }, { status: 401 }) };
   }
+  if (!isSqliteBackend()) {
+    return {
+      ok: false,
+      res: Response.json(
+        {
+          error:
+            "編集は DATA_BACKEND=sqlite のときのみ利用できます（現在は Notion 読み取りモード）",
+        },
+        { status: 409 },
+      ),
+    };
+  }
   return { ok: true, userId: session.user.id };
+}
+
+/**
+ * マスタ編集系 mutation は SQLite バックエンドのときのみ許可する。
+ * notion 読み取り中の手編集は表示に反映されず、再 import(notion_page_id upsert)が
+ * 手編集を黙って上書きするため、UI ゲートに加えて API 側でも 409 で拒否する
+ * （UI を迂回した直接 POST/PUT/DELETE を防ぐ）。許可なら null を返す。
+ */
+export function requireSqliteBackend(): Response | null {
+  if (!isSqliteBackend()) {
+    return Response.json(
+      { error: "編集は DATA_BACKEND=sqlite のときに利用できます（現在は Notion 読み取りモード）" },
+      { status: 409 },
+    );
+  }
+  return null;
 }
