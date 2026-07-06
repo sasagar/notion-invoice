@@ -1,7 +1,7 @@
 # デプロイ手順（Proxmox 上の Node サーバー）
 
 移行後アプリ（`web/`）を Proxmox の VM/LXC で `waku start`（ポート 3080）として常駐させる。
-ランタイムは **mise**、パッケージ/ツールは **vp（Vite+）**。
+ランタイムは **mise**（node + pnpm）、パッケージ/ツールは **pnpm** + **vp（Vite+）**。
 
 ## 1. 前提
 
@@ -30,13 +30,13 @@
 cd /opt/notion-invoice
 git pull origin master
 cd web
-mise install                 # node をピン留めに合わせる
-npm ci                       # 依存（vp/pnpm 運用に切替可）
+mise install                 # node + pnpm をピン留めに合わせる（web/mise.toml）
+pnpm install --frozen-lockfile
 set -a; . /etc/notion-invoice.env; set +a   # ビルドに VITE_ 変数を渡す
-npm run build                # waku build（本番は NODE_ENV=production）
-npm run db:migrate           # better-auth テーブル + notion_credentials を作成/更新
+pnpm run build                # waku build（本番は NODE_ENV=production）
+pnpm run db:migrate           # better-auth テーブル + notion_credentials を作成/更新
 # 初回のみ: SEED_ADMIN_EMAIL/PASSWORD を環境に入れて管理者作成
-#   SEED_ADMIN_EMAIL=you@example.com SEED_ADMIN_PASSWORD=... npm run db:seed
+#   SEED_ADMIN_EMAIL=you@example.com SEED_ADMIN_PASSWORD=... pnpm run db:seed
 sudo systemctl restart notion-invoice
 ```
 
