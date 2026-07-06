@@ -1,18 +1,7 @@
 import { guardMutation } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import type { InvoiceEditorInput } from "@/lib/repository";
-import { createInvoice, getInvoiceEditorById, invoiceNumberExists } from "@/lib/repository";
-
-/** 「元番号-copy」から始めて、空いている複製番号を返す。 */
-function freeCopyNumber(ownerId: string, base: string): string {
-  let candidate = `${base}-copy`;
-  let n = 2;
-  while (invoiceNumberExists(db, ownerId, candidate)) {
-    candidate = `${base}-copy${n}`;
-    n += 1;
-  }
-  return candidate;
-}
+import { createInvoice, getInvoiceEditorById, nextCopyNumber } from "@/lib/repository";
 
 // 請求書を複製する（番号=元番号-copy、ステータス=ドラフト、発行日/期限=null）。
 export const POST = async (
@@ -28,7 +17,7 @@ export const POST = async (
   if (!src) {
     return Response.json({ error: "not found" }, { status: 404 });
   }
-  const invoiceNumber = freeCopyNumber(g.userId, src.invoiceNumber);
+  const invoiceNumber = nextCopyNumber(db, g.userId, src.invoiceNumber);
   const input: InvoiceEditorInput = {
     invoiceNumber,
     title: src.title,

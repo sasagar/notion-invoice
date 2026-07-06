@@ -8,6 +8,7 @@ import {
   getFullInvoiceByNumber,
   type InvoiceEditorInput,
   isDuplicateNumberError,
+  nextCopyNumber,
   saveInvoice,
   updateInvoiceById,
   upsertItem,
@@ -191,5 +192,16 @@ describe("repository 請求書エディタ（create/update/delete/getEditor）",
       .get(id) as { n: number };
     expect(rowCount.n).toBe(0);
     expect(deleteInvoice(db, OWNER, id)).toBe(false);
+  });
+
+  test("nextCopyNumber は再複製でも衝突しない（-copy, -copy2, -copy3…）", () => {
+    createInvoice(db, OWNER, editorInput({ invoiceNumber: "X" }));
+    expect(nextCopyNumber(db, OWNER, "X")).toBe("X-copy");
+    createInvoice(db, OWNER, editorInput({ invoiceNumber: "X-copy" }));
+    expect(nextCopyNumber(db, OWNER, "X")).toBe("X-copy2");
+    createInvoice(db, OWNER, editorInput({ invoiceNumber: "X-copy2" }));
+    expect(nextCopyNumber(db, OWNER, "X")).toBe("X-copy3");
+    // owner が違えば -copy から
+    expect(nextCopyNumber(db, OTHER, "X")).toBe("X-copy");
   });
 });
