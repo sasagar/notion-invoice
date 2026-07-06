@@ -24,9 +24,12 @@ export function InvoiceCard({ meta, customerName }: { meta: InvoiceMeta; custome
               </div>
               <StatusTag status={meta.status} />
             </div>
-            <div className="mt-2 flex items-center justify-between text-xs text-stone-400 dark:text-slate-500">
-              <span>#{meta.id}</span>
-              {meta.dueTo && <span>支払期限 {formatDate(meta.dueTo)}</span>}
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-stone-400 dark:text-slate-500">
+              <span className="flex flex-wrap items-center gap-x-3">
+                <span>#{meta.id}</span>
+                {meta.dueTo && <span>支払期限 {formatDate(meta.dueTo)}</span>}
+              </span>
+              <span>更新 {formatDate(meta.updatedAt)}</span>
             </div>
           </div>
         </div>
