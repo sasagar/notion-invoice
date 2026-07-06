@@ -521,6 +521,7 @@ export function InvoiceEditor({
                           <input
                             type="number"
                             step="any"
+                            inputMode="decimal"
                             value={newItemPrice}
                             onChange={(e) => setNewItemPrice(e.target.value)}
                             placeholder="8000"
@@ -553,6 +554,7 @@ export function InvoiceEditor({
                       <input
                         type="number"
                         step="any"
+                        inputMode="decimal"
                         value={r.unitPrice}
                         onChange={(e) => patchRow(r.key, { unitPrice: e.target.value })}
                         className={`${inputClass} text-right`}
@@ -563,6 +565,7 @@ export function InvoiceEditor({
                       <input
                         type="number"
                         step="any"
+                        inputMode="decimal"
                         value={r.quantity}
                         onChange={(e) => patchRow(r.key, { quantity: e.target.value })}
                         className={`${inputClass} text-right`}
@@ -647,7 +650,7 @@ export function InvoiceEditor({
                           type="button"
                           onClick={() => moveRow(index, -1)}
                           disabled={index === 0}
-                          className="px-1 text-stone-400 hover:text-kent-blue-500 disabled:opacity-30"
+                          className="flex min-h-6 min-w-9 items-center justify-center px-1 py-1 text-stone-400 hover:text-kent-blue-500 disabled:opacity-30"
                           aria-label="上へ"
                         >
                           ▲
@@ -656,7 +659,7 @@ export function InvoiceEditor({
                           type="button"
                           onClick={() => moveRow(index, 1)}
                           disabled={index === rows.length - 1}
-                          className="px-1 text-stone-400 hover:text-kent-blue-500 disabled:opacity-30"
+                          className="flex min-h-6 min-w-9 items-center justify-center px-1 py-1 text-stone-400 hover:text-kent-blue-500 disabled:opacity-30"
                           aria-label="下へ"
                         >
                           ▼
@@ -665,7 +668,7 @@ export function InvoiceEditor({
                       <button
                         type="button"
                         onClick={() => removeRow(r.key)}
-                        className="px-1 pb-1 text-shuiro-500 hover:text-shuiro-600 dark:text-shuiro-400"
+                        className="flex min-h-11 min-w-11 items-center justify-center px-1 text-lg text-shuiro-500 hover:text-shuiro-600 dark:text-shuiro-400"
                         aria-label="行を削除"
                       >
                         ×
@@ -725,7 +728,7 @@ export function InvoiceEditor({
             </Card>
           )}
 
-          <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-3 lg:flex">
             <button type="submit" disabled={busy} className={primaryBtn}>
               {busy ? "保存中…" : editing ? "保存" : "作成"}
             </button>
@@ -735,6 +738,30 @@ export function InvoiceEditor({
           </div>
         </aside>
       </div>
+
+      {/* モバイル: 画面下部の固定バー（御請求額 + 保存）。lg 以上ではサイドバーが担う */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-paper-line bg-paper/95 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-slate-500">
+              御請求額
+            </p>
+            <p className="truncate font-display text-xl font-bold tabular-nums text-kent-blue-600 dark:text-kent-blue-200">
+              {formatYen(totals.invoiceSum)}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button type="button" onClick={onCancel} className={subtleBtn}>
+              キャンセル
+            </button>
+            <button type="submit" disabled={busy} className={primaryBtn}>
+              {busy ? "保存中…" : editing ? "保存" : "作成"}
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* 固定バーの高さ分の余白（モバイルのみ） */}
+      <div className="h-20 lg:hidden" />
     </form>
   );
 }
