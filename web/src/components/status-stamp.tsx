@@ -21,12 +21,16 @@ const TIER_STYLE: Record<Tier, string> = {
 /**
  * 検収印風のステータス表示。角印を模した矩形の二重罫線バッジで、
  * 実際の印影（自社情報）と呼応させる意図的な意匠。
+ *
+ * 実物の印鑑は文字数に関わらず同じ大きさなので、幅・高さは固定。
+ * 文字数が多いステータスは折り返して収める（一覧で後続テキストの
+ * 開始位置がずれないようにするため）。
  */
 export function StatusStamp({ status, className = "" }: { status: string; className?: string }) {
   const tier: Tier = STATUS_TIER[status] ?? "sealed";
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-[2px] px-2.5 py-1 font-sans text-[11px] font-bold tracking-widest ${TIER_STYLE[tier]} ${className}`}
+      className={`inline-flex h-10 w-16 shrink-0 items-center justify-center whitespace-normal break-keep rounded-[2px] text-center font-sans text-[9px] font-bold leading-[1.15] tracking-wide ${TIER_STYLE[tier]} ${className}`}
       style={{ "--stamp-rotate": "-6deg" } as CSSProperties}
     >
       {status || "—"}
