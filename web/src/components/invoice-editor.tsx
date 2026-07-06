@@ -43,7 +43,7 @@ const CUSTOM_UNIT = "__custom_unit__";
 const UNIT_SET = new Set<string>(UNITS);
 
 const inputClass =
-  "w-full border-b-2 border-paper-line bg-transparent px-0.5 py-1.5 outline-none transition focus:border-kent-blue-500 dark:border-slate-700 dark:focus:border-kent-blue-300";
+  "min-h-11 w-full border-b-2 border-paper-line bg-transparent px-0.5 py-1.5 outline-none transition focus:border-kent-blue-500 sm:min-h-0 dark:border-slate-700 dark:focus:border-kent-blue-300";
 const labelClass =
   "flex flex-col gap-1 text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-slate-400";
 const fieldLabelClass =
@@ -399,7 +399,7 @@ export function InvoiceEditor({
                 </select>
               </label>
               <div className="flex flex-wrap items-end gap-6 sm:col-span-2">
-                <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-slate-300">
+                <label className="flex min-h-11 items-center gap-2 text-sm text-stone-600 sm:min-h-0 dark:text-slate-300">
                   <input
                     type="checkbox"
                     checked={taxIncluded}
@@ -407,7 +407,7 @@ export function InvoiceEditor({
                   />
                   内税
                 </label>
-                <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-slate-300">
+                <label className="flex min-h-11 items-center gap-2 text-sm text-stone-600 sm:min-h-0 dark:text-slate-300">
                   <input
                     type="checkbox"
                     checked={withholdingExempt}
@@ -415,7 +415,7 @@ export function InvoiceEditor({
                   />
                   源泉徴収非対象
                 </label>
-                <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-slate-300">
+                <label className="flex min-h-11 items-center gap-2 text-sm text-stone-600 sm:min-h-0 dark:text-slate-300">
                   既定の丸め
                   <select
                     value={rounding}
@@ -645,12 +645,12 @@ export function InvoiceEditor({
                           {formatYen(rowSubtotal(r))}
                         </span>
                       </div>
-                      <div className="flex flex-col leading-none">
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => moveRow(index, -1)}
                           disabled={index === 0}
-                          className="flex min-h-6 min-w-9 items-center justify-center px-1 py-1 text-stone-400 hover:text-kent-blue-500 disabled:opacity-30"
+                          className="flex min-h-11 min-w-11 items-center justify-center text-stone-400 hover:text-kent-blue-500 disabled:opacity-30"
                           aria-label="上へ"
                         >
                           ▲
@@ -659,7 +659,7 @@ export function InvoiceEditor({
                           type="button"
                           onClick={() => moveRow(index, 1)}
                           disabled={index === rows.length - 1}
-                          className="flex min-h-6 min-w-9 items-center justify-center px-1 py-1 text-stone-400 hover:text-kent-blue-500 disabled:opacity-30"
+                          className="flex min-h-11 min-w-11 items-center justify-center text-stone-400 hover:text-kent-blue-500 disabled:opacity-30"
                           aria-label="下へ"
                         >
                           ▼
