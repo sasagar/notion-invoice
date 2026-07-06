@@ -4,6 +4,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
+import { applyAppSchema } from "@/lib/schema";
 
 const isProduction = process.env.NODE_ENV === "production";
 const rawPath = process.env.DATABASE_PATH;
@@ -42,3 +43,7 @@ db.exec(`
     updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `);
+
+// 脱 Notion 移行で追加するアプリスキーマ（顧客/請求書/明細/ファイル等）を適用。
+// notion_credentials 作成の後・アプリ利用より前に、user_version ベースで冪等に流す。
+applyAppSchema(db);
