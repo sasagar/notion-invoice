@@ -5,7 +5,10 @@ import { PdfDownload } from "@/components/pdf-download";
 import { StatusStamp } from "@/components/status-stamp";
 import { TaxTable } from "@/components/tax-table";
 import { WithholdingTable } from "@/components/withholding-table";
-import { getFullInvoice } from "@/lib/data/backend";
+import { InvoiceActions } from "@/components/invoice-actions";
+import { getFullInvoice, isSqliteBackend } from "@/lib/data/backend";
+import { db } from "@/lib/db";
+import { getInvoiceEditorByNumber, type InvoiceEditorData } from "@/lib/repository";
 import { formatDate, formatDateTime, formatYen } from "@/lib/format";
 import { roundAmount } from "@/lib/money/sanitizer";
 import type { FullInvoice } from "@/lib/notion/types";
@@ -36,6 +39,11 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
   const { invoice, customer, account } = full;
   const { meta, rows, totals } = invoice;
   const incl = meta.taxIncluded;
+  // SQLite モードのときだけ編集導線とメモ（内部用）を出す（notion 時は現状表示のまま）。
+  const sqlite = isSqliteBackend();
+  const editorData: InvoiceEditorData | null = sqlite
+    ? getInvoiceEditorByNumber(db, userId, slug)
+    : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -84,8 +92,9 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
             </p>
           </div>
         </div>
-        <div className="mt-6 border-t border-paper-line pt-5 dark:border-slate-800">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-paper-line pt-5 dark:border-slate-800">
           <PdfDownload number={meta.id} customer={customer} account={account} />
+          {sqlite && editorData && <InvoiceActions number={meta.id} id={editorData.id} />}
         </div>
       </section>
 
@@ -240,6 +249,16 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
           <SectionHeading>備考</SectionHeading>
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-stone-600 dark:text-slate-300">
             {meta.note}
+          </p>
+        </Card>
+      )}
+
+      {/* メモ（内部用・PDF には出さない） */}
+      {sqlite && editorData?.memo && (
+        <Card className="border-dashed bg-stone-50/50 dark:bg-slate-900/20">
+          <SectionHeading>メモ（内部用）</SectionHeading>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-stone-500 dark:text-slate-400">
+            {editorData.memo}
           </p>
         </Card>
       )}
