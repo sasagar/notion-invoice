@@ -183,7 +183,7 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
                     {r.quantity.toLocaleString()} <span className="font-sans">{r.unit}</span>
                   </td>
                   <td className="p-3 text-right tabular-nums">
-                    {formatYen(roundAmount(r.amounts.subtotal))}
+                    {formatYen(roundAmount(r.amounts.subtotal, meta.rounding))}
                   </td>
                   <td className="p-3 text-center font-sans">{r.taxRate}</td>
                 </tr>

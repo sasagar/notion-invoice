@@ -6,7 +6,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { deriveLineAmounts } from "@/lib/money/line-amounts";
-import { computeTotals } from "@/lib/money/sanitizer";
+import { computeTotals, type RoundingMode } from "@/lib/money/sanitizer";
 import type { InvoiceListItem } from "@/lib/notion/fetchers";
 import type { FullInvoice, Invoice, InvoiceMeta, InvoiceRow } from "@/lib/notion/types";
 import { getAccount } from "@/lib/repository/accounts";
@@ -39,6 +39,7 @@ export type InvoiceInput = {
   dueTo: string | null;
   taxIncluded: boolean;
   withholdingExempt: boolean;
+  rounding?: RoundingMode; // 行金額の丸め方式（省略時は四捨五入）
   note: string;
   memo: string;
   rows: InvoiceRowInput[];
@@ -70,6 +71,7 @@ export type InvoiceEditorData = {
   dueTo: string | null;
   taxIncluded: boolean;
   withholdingExempt: boolean;
+  rounding: RoundingMode;
   note: string;
   memo: string;
   rows: InvoiceRowData[];
@@ -114,6 +116,11 @@ function mapInvoiceRow(raw: unknown): InvoiceRow {
   };
 }
 
+/** DB の rounding 値を RoundingMode に正規化（未知値は従来挙動の四捨五入）。 */
+function roundingFrom(v: unknown): RoundingMode {
+  return v === "floor" || v === "ceil" ? v : "round";
+}
+
 /** InvoiceMeta の id には invoice_number を入れる（既存の意味論に合わせる）。 */
 function mapInvoiceMeta(r: Record<string, unknown>, itemRelationIds: string[]): InvoiceMeta {
   return {
@@ -124,6 +131,7 @@ function mapInvoiceMeta(r: Record<string, unknown>, itemRelationIds: string[]): 
     dueTo: strOrNull(r["due_to"]),
     taxIncluded: boolFromInt(r["tax_included"]),
     withholdingExempt: boolFromInt(r["withholding_exempt"]),
+    rounding: roundingFrom(r["rounding"]),
     note: str(r["note"]),
     createdAt: str(r["created_at"]),
     updatedAt: str(r["updated_at"]),
@@ -147,6 +155,7 @@ function totalsOf(rows: InvoiceRow[], meta: InvoiceMeta): Invoice["totals"] {
     rows: rows.map((x) => x.amounts),
     taxIncluded: meta.taxIncluded,
     withholdingExempt: meta.withholdingExempt,
+    rounding: meta.rounding,
   });
 }
 
@@ -299,8 +308,8 @@ export function saveInvoice(db: AppDatabase, ownerId: string, input: InvoiceInpu
       db.prepare(`
         INSERT INTO invoices
           (id, owner_id, invoice_number, title, status, customer_id, account_id,
-           published_at, due_to, tax_included, withholding_exempt, note, memo, notion_page_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           published_at, due_to, tax_included, withholding_exempt, rounding, note, memo, notion_page_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         id,
         ownerId,
@@ -313,6 +322,7 @@ export function saveInvoice(db: AppDatabase, ownerId: string, input: InvoiceInpu
         input.dueTo,
         input.taxIncluded ? 1 : 0,
         input.withholdingExempt ? 1 : 0,
+        input.rounding ?? "round",
         input.note,
         input.memo,
         input.notionPageId,
@@ -322,7 +332,7 @@ export function saveInvoice(db: AppDatabase, ownerId: string, input: InvoiceInpu
         UPDATE invoices SET
           invoice_number = ?, title = ?, status = ?, customer_id = ?, account_id = ?,
           published_at = ?, due_to = ?, tax_included = ?, withholding_exempt = ?,
-          note = ?, memo = ?, notion_page_id = ?, updated_at = datetime('now')
+          rounding = ?, note = ?, memo = ?, notion_page_id = ?, updated_at = datetime('now')
         WHERE id = ?
       `).run(
         input.invoiceNumber,
@@ -334,6 +344,7 @@ export function saveInvoice(db: AppDatabase, ownerId: string, input: InvoiceInpu
         input.dueTo,
         input.taxIncluded ? 1 : 0,
         input.withholdingExempt ? 1 : 0,
+        input.rounding ?? "round",
         input.note,
         input.memo,
         input.notionPageId,
@@ -358,8 +369,8 @@ export function createInvoice(db: AppDatabase, ownerId: string, input: InvoiceEd
     db.prepare(`
       INSERT INTO invoices
         (id, owner_id, invoice_number, title, status, customer_id, account_id,
-         published_at, due_to, tax_included, withholding_exempt, note, memo, notion_page_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+         published_at, due_to, tax_included, withholding_exempt, rounding, note, memo, notion_page_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
     `).run(
       id,
       ownerId,
@@ -372,6 +383,7 @@ export function createInvoice(db: AppDatabase, ownerId: string, input: InvoiceEd
       input.dueTo,
       input.taxIncluded ? 1 : 0,
       input.withholdingExempt ? 1 : 0,
+      input.rounding ?? "round",
       input.note,
       input.memo,
     );
@@ -397,7 +409,7 @@ export function updateInvoiceById(
         UPDATE invoices SET
           invoice_number = ?, title = ?, status = ?, customer_id = ?, account_id = ?,
           published_at = ?, due_to = ?, tax_included = ?, withholding_exempt = ?,
-          note = ?, memo = ?, updated_at = datetime('now')
+          rounding = ?, note = ?, memo = ?, updated_at = datetime('now')
         WHERE owner_id = ? AND id = ?
       `)
       .run(
@@ -410,6 +422,7 @@ export function updateInvoiceById(
         input.dueTo,
         input.taxIncluded ? 1 : 0,
         input.withholdingExempt ? 1 : 0,
+        input.rounding ?? "round",
         input.note,
         input.memo,
         ownerId,
@@ -464,6 +477,7 @@ function mapEditor(db: AppDatabase, r: Record<string, unknown>): InvoiceEditorDa
     dueTo: strOrNull(r["due_to"]),
     taxIncluded: boolFromInt(r["tax_included"]),
     withholdingExempt: boolFromInt(r["withholding_exempt"]),
+    rounding: roundingFrom(r["rounding"]),
     note: str(r["note"]),
     memo: str(r["memo"]),
     rows: loadEditorRows(db, id),

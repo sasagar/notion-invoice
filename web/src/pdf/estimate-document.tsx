@@ -94,7 +94,7 @@ export function EstimateDocument({ invoice, customer, account }: Props) {
             </View>
             <View style={styles.tableBody}>
               {rows.map((row, index) => {
-                const subtotal = roundAmount(row.amounts.subtotal);
+                const subtotal = roundAmount(row.amounts.subtotal, invoice.meta.rounding);
                 return (
                   <View style={styles.tableRow} key={index}>
                     <Text style={[styles.tableCell, { flex: 3 }]}>{row.name}</Text>

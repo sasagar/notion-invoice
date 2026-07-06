@@ -22,6 +22,7 @@ export function mapInvoiceMeta(raw: unknown): InvoiceMeta {
     dueTo: dateStart(p["支払い期限日"]),
     taxIncluded: checkbox(p["内税"]),
     withholdingExempt: checkbox(p["源泉徴収非対象"]),
+    rounding: "round", // Notion 側には丸め設定が無いため常に四捨五入（従来挙動）
     note: plainText(p["備考"]),
     createdAt: page.created_time,
     updatedAt: page.last_edited_time,
@@ -85,6 +86,7 @@ export function buildInvoice(rawInvoice: unknown, rawRows: unknown[]): Invoice {
     rows: rows.map((r) => r.amounts),
     taxIncluded: meta.taxIncluded,
     withholdingExempt: meta.withholdingExempt,
+    rounding: meta.rounding,
   });
   return { meta, rows, totals };
 }

@@ -205,3 +205,30 @@ describe("repository 請求書エディタ（create/update/delete/getEditor）",
     expect(nextCopyNumber(db, OTHER, "X")).toBe("X-copy");
   });
 });
+
+describe("丸め方式の永続化", () => {
+  test("createで保存したroundingがgetInvoiceEditorByIdで復元される", () => {
+    const db = makeDb();
+    const id = createInvoice(db, OWNER, editorInput({ invoiceNumber: "RND-1", rounding: "floor" }));
+    expect(getInvoiceEditorById(db, OWNER, id)?.rounding).toBe("floor");
+  });
+
+  test("rounding省略時はroundが既定", () => {
+    const db = makeDb();
+    const id = createInvoice(db, OWNER, editorInput({ invoiceNumber: "RND-2" }));
+    expect(getInvoiceEditorById(db, OWNER, id)?.rounding).toBe("round");
+  });
+
+  test("updateInvoiceByIdでroundingを変更できる", () => {
+    const db = makeDb();
+    const id = createInvoice(db, OWNER, editorInput({ invoiceNumber: "RND-3", rounding: "floor" }));
+    const ok = updateInvoiceById(
+      db,
+      OWNER,
+      id,
+      editorInput({ invoiceNumber: "RND-3", rounding: "ceil" }),
+    );
+    expect(ok).toBe(true);
+    expect(getInvoiceEditorById(db, OWNER, id)?.rounding).toBe("ceil");
+  });
+});

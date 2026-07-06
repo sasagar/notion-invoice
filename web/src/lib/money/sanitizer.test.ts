@@ -104,3 +104,58 @@ describe("computeTotals（旧invoiceSanitizerと一致）", () => {
     expect(t.invoiceSum).toBe(7328); // 7333+233+0-238
   });
 });
+
+describe("roundAmount の丸め方式", () => {
+  test("floor: 絶対値の切り捨て（負数は0方向へ対称）", () => {
+    expect(roundAmount(1000.9, "floor")).toBe(1000);
+    expect(roundAmount(1000.1, "floor")).toBe(1000);
+    expect(roundAmount(-1000.9, "floor")).toBe(-1000);
+  });
+
+  test("ceil: 絶対値の切り上げ（負数は0から遠ざかる方向へ対称）", () => {
+    expect(roundAmount(1000.1, "ceil")).toBe(1001);
+    expect(roundAmount(-1000.1, "ceil")).toBe(-1001);
+    expect(roundAmount(1000, "ceil")).toBe(1000);
+  });
+
+  test("round: 既定（従来挙動と同一）", () => {
+    expect(roundAmount(1000.5)).toBe(1001);
+    expect(roundAmount(-1000.5)).toBe(-1001);
+    expect(roundAmount(1000.5, "round")).toBe(roundAmount(1000.5));
+  });
+});
+
+describe("computeTotals の丸め方式", () => {
+  const rows = [
+    row({ amount10: 1000.5, subtotal: 1000.5 }),
+    row({ amount10: 2000.4, subtotal: 2000.4 }),
+  ];
+
+  test("rounding 省略時は四捨五入（従来挙動）", () => {
+    const t = computeTotals({ rows, taxIncluded: false, withholdingExempt: true });
+    expect(t.sum).toBe(3001 + 0); // round(1000.5)=1001, round(2000.4)=2000
+    expect(t.sum10).toBe(3001);
+  });
+
+  test("floor 指定で行ごとに切り捨ててから合算", () => {
+    const t = computeTotals({
+      rows,
+      taxIncluded: false,
+      withholdingExempt: true,
+      rounding: "floor",
+    });
+    expect(t.sum10).toBe(3000); // 1000+2000
+    expect(t.invoiceSum).toBe(3000 + 300); // +floor(3000*0.1)
+  });
+
+  test("ceil 指定で行ごとに切り上げてから合算", () => {
+    const t = computeTotals({
+      rows,
+      taxIncluded: false,
+      withholdingExempt: true,
+      rounding: "ceil",
+    });
+    expect(t.sum10).toBe(3002); // 1001+2001
+    expect(t.invoiceSum).toBe(3002 + 300); // +floor(3002*0.1)
+  });
+});

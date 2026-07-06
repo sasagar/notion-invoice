@@ -1,4 +1,4 @@
-import type { InvoiceTotals, LineAmounts } from "@/lib/money/sanitizer";
+import type { InvoiceTotals, LineAmounts, RoundingMode } from "@/lib/money/sanitizer";
 
 export type InvoiceRow = {
   id: string;
@@ -38,6 +38,7 @@ export type InvoiceMeta = {
   dueTo: string | null; // 支払い期限日
   taxIncluded: boolean; // 内税
   withholdingExempt: boolean; // 源泉徴収非対象
+  rounding: RoundingMode; // 行金額の丸め方式（四捨五入/切り捨て/切り上げ）
   note: string; // 備考
   createdAt: string;
   updatedAt: string;

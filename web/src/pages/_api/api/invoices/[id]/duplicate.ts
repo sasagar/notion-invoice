@@ -28,6 +28,7 @@ export const POST = async (
     dueTo: null,
     taxIncluded: src.taxIncluded,
     withholdingExempt: src.withholdingExempt,
+    rounding: src.rounding,
     note: src.note,
     memo: src.memo,
     rows: src.rows.map((r) => ({

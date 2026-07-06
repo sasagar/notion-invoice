@@ -10,11 +10,13 @@ import {
   firstInvoiceIssue,
   INVOICE_STATUSES,
   invoiceSchema,
+  ROUNDING_LABELS,
+  ROUNDING_MODES,
   TAX_RATES,
   UNITS,
 } from "@/lib/invoice-schema";
 import { deriveLineAmounts } from "@/lib/money/line-amounts";
-import { computeTotals } from "@/lib/money/sanitizer";
+import { computeTotals, type RoundingMode } from "@/lib/money/sanitizer";
 import type { InvoiceEditorData } from "@/lib/repository";
 
 type Option = { id: string; label: string };
@@ -90,6 +92,7 @@ export function InvoiceEditor({
   const [dueTo, setDueTo] = useState(initial?.dueTo ?? "");
   const [taxIncluded, setTaxIncluded] = useState(initial?.taxIncluded ?? false);
   const [withholdingExempt, setWithholdingExempt] = useState(initial?.withholdingExempt ?? false);
+  const [rounding, setRounding] = useState<RoundingMode>(initial?.rounding ?? "round");
   const [note, setNote] = useState(initial?.note ?? "");
   const [memo, setMemo] = useState(initial?.memo ?? "");
 
@@ -110,7 +113,7 @@ export function InvoiceEditor({
   const lineAmounts = rows.map((r) =>
     deriveLineAmounts(Number(r.unitPrice) || 0, Number(r.quantity) || 0, r.taxRate),
   );
-  const totals = computeTotals({ rows: lineAmounts, taxIncluded, withholdingExempt });
+  const totals = computeTotals({ rows: lineAmounts, taxIncluded, withholdingExempt, rounding });
 
   const patchRow = (key: string, patch: Partial<RowState>) => {
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -170,6 +173,7 @@ export function InvoiceEditor({
       dueTo: dueTo || null,
       taxIncluded,
       withholdingExempt,
+      rounding,
       note,
       memo,
       rows: rows.map((r) => ({
@@ -298,7 +302,7 @@ export function InvoiceEditor({
               ))}
             </select>
           </label>
-          <div className="flex items-end gap-6 sm:col-span-2">
+          <div className="flex flex-wrap items-end gap-6 sm:col-span-2">
             <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-slate-300">
               <input
                 type="checkbox"
@@ -314,6 +318,20 @@ export function InvoiceEditor({
                 onChange={(e) => setWithholdingExempt(e.target.checked)}
               />
               源泉徴収非対象
+            </label>
+            <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-slate-300">
+              小計の丸め
+              <select
+                value={rounding}
+                onChange={(e) => setRounding(e.target.value as RoundingMode)}
+                className={inputClass}
+              >
+                {ROUNDING_MODES.map((m) => (
+                  <option key={m} value={m}>
+                    {ROUNDING_LABELS[m]}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
           <label className={`${labelClass} sm:col-span-2`}>
