@@ -1,6 +1,13 @@
 import { LoginForm } from "@/components/login-form";
+import { getServerSession } from "@/lib/session";
+import { unstable_redirect } from "waku/router/server";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  // ログイン済みでログイン画面を出す意味はないので一覧へ。
+  const session = await getServerSession();
+  if (session) {
+    unstable_redirect("/invoice/list/1");
+  }
   return (
     <div className="mx-auto max-w-md py-8">
       <div className="rounded-lg border border-paper-line bg-white/70 p-8 dark:border-slate-800 dark:bg-slate-900/40">
@@ -13,4 +20,4 @@ export default function LoginPage() {
   );
 }
 
-export const getConfig = async () => ({ render: "static" as const });
+export const getConfig = async () => ({ render: "dynamic" as const });
