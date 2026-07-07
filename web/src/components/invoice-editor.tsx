@@ -339,7 +339,7 @@ export function InvoiceEditor({
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className={inputClass}
+                  className={`${inputClass} select-ledger`}
                 >
                   {INVOICE_STATUSES.map((s) => (
                     <option key={s} value={s}>
@@ -373,7 +373,7 @@ export function InvoiceEditor({
                 <select
                   value={customerId}
                   onChange={(e) => setCustomerId(e.target.value)}
-                  className={inputClass}
+                  className={`${inputClass} select-ledger`}
                 >
                   <option value="">（未選択）</option>
                   {customers.map((c) => (
@@ -388,7 +388,7 @@ export function InvoiceEditor({
                 <select
                   value={accountId}
                   onChange={(e) => setAccountId(e.target.value)}
-                  className={inputClass}
+                  className={`${inputClass} select-ledger`}
                 >
                   <option value="">（未選択）</option>
                   {accounts.map((a) => (
@@ -420,7 +420,7 @@ export function InvoiceEditor({
                   <select
                     value={rounding}
                     onChange={(e) => setRounding(e.target.value as RoundingMode)}
-                    className={inputClass}
+                    className={`${inputClass} select-ledger`}
                   >
                     {ROUNDING_MODES.map((m) => (
                       <option key={m} value={m}>
@@ -466,7 +466,7 @@ export function InvoiceEditor({
                       <select
                         value={r.itemId}
                         onChange={(e) => onSelectItem(r.key, e.target.value)}
-                        className={inputClass}
+                        className={`${inputClass} select-ledger`}
                       >
                         <option value="">（自由入力）</option>
                         {items.map((it) => (
@@ -585,7 +585,7 @@ export function InvoiceEditor({
                         <select
                           value={r.unit}
                           onChange={(e) => onUnitSelect(r.key, e.target.value)}
-                          className={inputClass}
+                          className={`${inputClass} select-ledger`}
                         >
                           <option value="">（なし）</option>
                           {UNITS.map((u) => (
@@ -605,7 +605,7 @@ export function InvoiceEditor({
                       <select
                         value={r.taxRate}
                         onChange={(e) => patchRow(r.key, { taxRate: e.target.value })}
-                        className={inputClass}
+                        className={`${inputClass} select-ledger`}
                       >
                         {TAX_RATES.map((t) => (
                           <option key={t} value={t}>
@@ -619,7 +619,7 @@ export function InvoiceEditor({
                       <select
                         value={r.rounding}
                         onChange={(e) => patchRow(r.key, { rounding: e.target.value })}
-                        className={inputClass}
+                        className={`${inputClass} select-ledger`}
                       >
                         <option value="">既定</option>
                         {ROUNDING_MODES.map((m) => (
