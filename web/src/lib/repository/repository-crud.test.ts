@@ -20,6 +20,9 @@ import {
   updateAccount,
   updateCustomer,
   updateItem,
+  listActiveCustomerRecords,
+  listCustomerRecords,
+  setCustomerArchived,
 } from "@/lib/repository";
 import { applyAppSchema } from "@/lib/schema";
 
@@ -155,5 +158,45 @@ describe("repository 手動CRUD（顧客/自社/項目/ファイル）", () => {
     const full = getFullInvoiceByNumber(db, OWNER, "INV-DEL");
     expect(full).not.toBeNull();
     expect(full?.customer).toBeNull();
+  });
+});
+
+describe("顧客のアーカイブ", () => {
+  test("アーカイブすると有効一覧から外れ、全件一覧には残る", () => {
+    const db = makeDb();
+    const id = createCustomer(db, OWNER, {
+      name: "旧顧客",
+      companyName: "株式会社アーカイブ",
+      honorific: "御中",
+      companyInfo: "",
+      contactName: "",
+    });
+    expect(setCustomerArchived(db, OWNER, id, true)).toBe(true);
+    expect(listActiveCustomerRecords(db, OWNER).some((c) => c.id === id)).toBe(false);
+    const all = listCustomerRecords(db, OWNER);
+    const rec = all.find((c) => c.id === id);
+    expect(rec).toBeDefined();
+    expect(rec?.archivedAt).not.toBeNull();
+  });
+
+  test("復元すると有効一覧に戻る", () => {
+    const db = makeDb();
+    const id = createCustomer(db, OWNER, {
+      name: "復元顧客",
+      companyName: "",
+      honorific: "様",
+      companyInfo: "",
+      contactName: "",
+    });
+    setCustomerArchived(db, OWNER, id, true);
+    expect(setCustomerArchived(db, OWNER, id, false)).toBe(true);
+    const rec = listActiveCustomerRecords(db, OWNER).find((c) => c.id === id);
+    expect(rec).toBeDefined();
+    expect(rec?.archivedAt).toBeNull();
+  });
+
+  test("他ownerや未知idは変更できない", () => {
+    const db = makeDb();
+    expect(setCustomerArchived(db, OWNER, "nonexistent", true)).toBe(false);
   });
 });

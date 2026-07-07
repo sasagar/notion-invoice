@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "waku/router/client";
+import { CustomerArchiveButton } from "@/components/masters/customer-archive-button";
 import {
   dangerBtn,
   inputClass,
@@ -120,7 +121,8 @@ export function CustomerForm({ record }: { record?: CustomerRecord }) {
         <button type="submit" disabled={busy} className={primaryBtn}>
           {editing ? "保存" : "追加"}
         </button>
-        {editing && (
+        {record && <CustomerArchiveButton id={record.id} archived={record.archivedAt !== null} />}
+        {editing && record && (
           <button type="button" onClick={onDelete} disabled={busy} className={dangerBtn}>
             削除
           </button>

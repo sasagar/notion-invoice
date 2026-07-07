@@ -2,7 +2,7 @@ import { InvoiceEditor } from "@/components/invoice-editor";
 import { SqliteOnlyNotice } from "@/components/sqlite-only-notice";
 import { isSqliteBackend } from "@/lib/data/backend";
 import { db } from "@/lib/db";
-import { listAccountRecords, listCustomerRecords, listItems } from "@/lib/repository";
+import { listAccountRecords, listActiveCustomerRecords, listItems } from "@/lib/repository";
 import { requireSession } from "@/lib/session";
 
 export default async function InvoiceNewPage() {
@@ -16,7 +16,7 @@ export default async function InvoiceNewPage() {
       {isSqliteBackend() ? (
         <InvoiceEditor
           initial={null}
-          customers={listCustomerRecords(db, userId).map((c) => ({
+          customers={listActiveCustomerRecords(db, userId).map((c) => ({
             id: c.id,
             label: c.companyName || c.name,
           }))}

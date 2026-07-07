@@ -111,8 +111,12 @@ export function deleteCustomer(db: AppDatabase, ownerId: string, id: string): bo
   return res.changes > 0;
 }
 
-/** 管理画面用の顧客レコード（id + 由来 notion_page_id を含む）。 */
-export type CustomerRecord = CustomerFields & { id: string; notionPageId: string | null };
+/** 管理画面用の顧客レコード（id + 由来 notion_page_id + アーカイブ状態を含む）。 */
+export type CustomerRecord = CustomerFields & {
+  id: string;
+  notionPageId: string | null;
+  archivedAt: string | null;
+};
 
 function mapCustomerRecord(row: Record<string, unknown>): CustomerRecord {
   return {
@@ -123,13 +127,40 @@ function mapCustomerRecord(row: Record<string, unknown>): CustomerRecord {
     companyInfo: str(row["company_info"]),
     contactName: str(row["contact_name"]),
     notionPageId: strOrNull(row["notion_page_id"]),
+    archivedAt: strOrNull(row["archived_at"]),
   };
 }
 
-/** オーナーの顧客を id 付きで一覧（管理画面用・顧客名昇順）。 */
+/** オーナーの顧客を id 付きで一覧（管理画面用・顧客名昇順。アーカイブ済みも含む）。 */
 export function listCustomerRecords(db: AppDatabase, ownerId: string): CustomerRecord[] {
   const rows = db.prepare("SELECT * FROM customers WHERE owner_id = ? ORDER BY name").all(ownerId);
   return rows.map((r) => mapCustomerRecord(asRow(r)));
+}
+
+/** 有効（未アーカイブ）の顧客のみ id 付きで一覧（エディタの選択肢用・顧客名昇順）。 */
+export function listActiveCustomerRecords(db: AppDatabase, ownerId: string): CustomerRecord[] {
+  const rows = db
+    .prepare("SELECT * FROM customers WHERE owner_id = ? AND archived_at IS NULL ORDER BY name")
+    .all(ownerId);
+  return rows.map((r) => mapCustomerRecord(asRow(r)));
+}
+
+/** アーカイブ状態を設定する（archived=true で日時記録、false で解除）。変更できたら true。 */
+export function setCustomerArchived(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+  archived: boolean,
+): boolean {
+  const res = db
+    .prepare(`
+      UPDATE customers SET
+        archived_at = ${archived ? "datetime('now')" : "NULL"},
+        updated_at = datetime('now')
+      WHERE owner_id = ? AND id = ?
+    `)
+    .run(ownerId, id);
+  return res.changes > 0;
 }
 
 /** id 指定で顧客レコードを 1 件取得（編集画面の初期値用・無ければ null）。 */
