@@ -46,7 +46,7 @@ export function StatusChanger({ id, status }: { id: string; status: string }) {
         value={status}
         disabled={busy}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-sm border border-paper-line bg-white/70 px-2 py-1 text-xs text-stone-600 outline-none transition hover:border-kent-blue-400 focus:border-kent-blue-500 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300 dark:focus:border-kent-blue-300"
+        className="select-ledger rounded-sm border border-paper-line bg-white/70 px-2 py-1 text-xs text-stone-600 outline-none transition hover:border-kent-blue-400 focus:border-kent-blue-500 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300 dark:focus:border-kent-blue-300"
       >
         {INVOICE_STATUSES.map((s) => (
           <option key={s} value={s}>
