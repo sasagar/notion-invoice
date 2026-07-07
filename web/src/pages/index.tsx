@@ -1,6 +1,13 @@
 import { Link } from "waku";
+import { getServerSession } from "@/lib/session";
+import { unstable_redirect } from "waku/router/server";
 
 export default async function HomePage() {
+  // ログイン済みならランディング（ログイン誘導）ではなく一覧へ。
+  const session = await getServerSession();
+  if (session) {
+    unstable_redirect("/invoice/list/1");
+  }
   return (
     <div className="mx-auto max-w-2xl py-16 text-center">
       <p className="mb-3 font-mono text-xs uppercase tracking-[0.3em] text-stone-400 dark:text-slate-500">
@@ -22,4 +29,4 @@ export default async function HomePage() {
   );
 }
 
-export const getConfig = async () => ({ render: "static" as const });
+export const getConfig = async () => ({ render: "dynamic" as const });

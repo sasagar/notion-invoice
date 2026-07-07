@@ -20,7 +20,11 @@ export default async function InvoiceNewPage() {
             id: c.id,
             label: c.companyName || c.name,
           }))}
-          accounts={listAccountRecords(db, userId).map((a) => ({ id: a.id, label: a.companyName }))}
+          accounts={listAccountRecords(db, userId).map((a) => ({
+            id: a.id,
+            // 選択ラベルは担当者名（自社マスタの表示名として流用）。空なら会社名。
+            label: a.contactName || a.companyName,
+          }))}
           items={listItems(db, userId).map((it) => ({
             id: it.id,
             name: it.name,
