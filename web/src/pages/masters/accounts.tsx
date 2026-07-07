@@ -49,12 +49,15 @@ export default async function MastersAccountsPage() {
                     />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium">{r.companyName}</p>
-                    {r.registrationNumber && (
-                      <p className="font-mono text-xs text-stone-500 dark:text-slate-400">
-                        {r.registrationNumber}
-                      </p>
-                    )}
+                    {/* 主表示は担当者名（エディタの選択ラベルと同じ表示名） */}
+                    <p className="font-medium">{r.contactName || r.companyName}</p>
+                    <p className="truncate text-xs text-stone-500 dark:text-slate-400">
+                      {r.contactName && <span>{r.companyName}</span>}
+                      {r.slug && <span className="font-mono">　{r.slug}</span>}
+                      {r.registrationNumber && (
+                        <span className="font-mono">　{r.registrationNumber}</span>
+                      )}
+                    </p>
                   </div>
                   <span className="shrink-0 font-mono text-xs text-stone-400 dark:text-slate-500">
                     編集 →
