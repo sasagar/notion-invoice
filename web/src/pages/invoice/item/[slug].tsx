@@ -157,7 +157,36 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
         <div className="px-5 pt-5">
           <SectionHeading>請求明細</SectionHeading>
         </div>
-        <div className="overflow-x-auto">
+        {/* モバイル: 行ごとの縦積みカード（表は sm 以上のみ） */}
+        <ul className="divide-y divide-paper-line sm:hidden dark:divide-slate-800">
+          {rows.map((r) => (
+            <li key={r.id} className="px-5 py-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium">{r.name}</p>
+                  {r.itemNames.length > 0 && (
+                    <p className="mt-0.5 text-xs text-stone-400 dark:text-slate-500">
+                      {r.itemNames.join(" / ")}
+                    </p>
+                  )}
+                </div>
+                <span className="shrink-0 rounded-sm border border-paper-line px-1.5 py-0.5 text-[10px] text-stone-500 dark:border-slate-700 dark:text-slate-400">
+                  {r.taxRate}
+                </span>
+              </div>
+              <div className="mt-2 flex items-baseline justify-between gap-3 font-mono text-sm">
+                <span className="text-stone-500 dark:text-slate-400">
+                  {formatYen(r.unitPrice)} × {r.quantity.toLocaleString()}
+                  <span className="font-sans">{r.unit}</span>
+                </span>
+                <span className="font-semibold tabular-nums">
+                  {formatYen(roundAmount(r.amounts.subtotal, r.rounding ?? meta.rounding))}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full text-sm">
             <thead className="border-b border-paper-line text-xs uppercase tracking-wider text-stone-400 dark:border-slate-800 dark:text-slate-500">
               <tr>
