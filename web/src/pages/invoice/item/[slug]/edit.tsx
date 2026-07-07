@@ -4,9 +4,10 @@ import { SqliteOnlyNotice } from "@/components/sqlite-only-notice";
 import { isSqliteBackend } from "@/lib/data/backend";
 import { db } from "@/lib/db";
 import {
+  getCustomerRecord,
   getInvoiceEditorByNumber,
   listAccountRecords,
-  listCustomerRecords,
+  listActiveCustomerRecords,
   listItems,
 } from "@/lib/repository";
 import { requireSession } from "@/lib/session";
@@ -34,13 +35,25 @@ function EditBody({ userId, slug }: { userId: string; slug: string }) {
   if (initial === null) {
     return <ErrorState message={`請求書 #${slug} が見つかりませんでした。`} />;
   }
+  // 選択肢は有効顧客のみ。ただし編集中の請求書が参照する顧客がアーカイブ済みの
+  // 場合は、紐付けが勝手に外れないようラベル付きで選択肢に残す。
+  const customers = listActiveCustomerRecords(db, userId).map((c) => ({
+    id: c.id,
+    label: c.companyName || c.name,
+  }));
+  if (initial.customerId && !customers.some((c) => c.id === initial.customerId)) {
+    const current = getCustomerRecord(db, userId, initial.customerId);
+    if (current) {
+      customers.push({
+        id: current.id,
+        label: `${current.companyName || current.name}（アーカイブ済み）`,
+      });
+    }
+  }
   return (
     <InvoiceEditor
       initial={initial}
-      customers={listCustomerRecords(db, userId).map((c) => ({
-        id: c.id,
-        label: c.companyName || c.name,
-      }))}
+      customers={customers}
       accounts={listAccountRecords(db, userId).map((a) => ({
         id: a.id,
         // 選択ラベルは担当者名（自社マスタの表示名として流用）。空なら会社名。
