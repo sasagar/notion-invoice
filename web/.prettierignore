@@ -1,0 +1,10 @@
+# ビルド生成物・ローカルデータ（ルートの .gitignore は web/ を起点とする
+# oxfmt からは解決されないため、フォーマッタ用にここで明示する）
+dist/
+.waku/
+data/
+public/
+# pnpm が管理するロックファイルは整形しない
+pnpm-lock.yaml
+# tsconfig.json は trailingComma:"all" が JSON 不正なカンマを足すため対象外
+tsconfig.json
