@@ -8,7 +8,9 @@ import {
   deleteCustomer,
   deleteFile,
   deleteItem,
+  duplicateAccount,
   getAccount,
+  getAccountRecord,
   getCustomer,
   getFileForOwner,
   getFullInvoiceByNumber,
@@ -130,6 +132,57 @@ describe("repository 手動CRUD（顧客/自社/項目/ファイル）", () => {
 
     expect(deleteAccount(db, OWNER, id)).toBe(true);
     expect(getAccount(db, OWNER, id)).toBeNull();
+  });
+
+  test("自社の複製: 担当者名に -copy が付き、衝突したら連番になる", () => {
+    const id = createAccount(db, OWNER, accountFields);
+
+    const copy1 = duplicateAccount(db, OWNER, id);
+    expect(copy1).not.toBeNull();
+    expect(getAccount(db, OWNER, copy1 ?? "")?.contactName).toBe("自担当-copy");
+    // 会社名やその他の項目はそのまま引き継ぐ。
+    expect(getAccount(db, OWNER, copy1 ?? "")?.companyName).toBe("自社");
+    expect(getAccount(db, OWNER, copy1 ?? "")?.bankInfo).toBe("○○銀行");
+
+    // 同じ元をもう一度複製すると -copy が埋まっているので -copy2 になる。
+    const copy2 = duplicateAccount(db, OWNER, id);
+    expect(getAccount(db, OWNER, copy2 ?? "")?.contactName).toBe("自担当-copy2");
+  });
+
+  test("自社の複製: 担当者名が空なら会社名に -copy が付く", () => {
+    const id = createAccount(db, OWNER, { ...accountFields, contactName: "" });
+    const copy = duplicateAccount(db, OWNER, id);
+    const rec = getAccount(db, OWNER, copy ?? "");
+    expect(rec?.contactName).toBe("");
+    expect(rec?.companyName).toBe("自社-copy");
+  });
+
+  test("自社の複製: 印影は BLOB ごと複製され、複製元を消しても残る", () => {
+    const fileId = insertFile(db, OWNER, {
+      mimeType: "image/png",
+      byteSize: 3,
+      data: Buffer.from([1, 2, 3]),
+    });
+    const id = createAccount(db, OWNER, { ...accountFields, sealFileId: fileId });
+    const copy = duplicateAccount(db, OWNER, id);
+    const copied = getAccountRecord(db, OWNER, copy ?? "");
+    // 参照を共有せず、別の file id を指す。
+    expect(copied?.sealFileId).not.toBe(fileId);
+    expect(copied?.sealImageUrl).toBe(
+      `data:image/png;base64,${Buffer.from([1, 2, 3]).toString("base64")}`,
+    );
+
+    // 複製元を削除しても（印影BLOBごと消えても）複製先の印影は残る。
+    expect(deleteAccount(db, OWNER, id)).toBe(true);
+    expect(deleteFile(db, OWNER, fileId)).toBe(true);
+    expect(getAccountRecord(db, OWNER, copy ?? "")?.sealImageUrl).toBe(
+      `data:image/png;base64,${Buffer.from([1, 2, 3]).toString("base64")}`,
+    );
+  });
+
+  test("自社の複製: 他 owner のレコードは複製できない", () => {
+    const id = createAccount(db, OWNER, accountFields);
+    expect(duplicateAccount(db, OTHER, id)).toBeNull();
   });
 
   test("ファイル: getFileForOwner の owner スコープと deleteFile→seal_file_id SET NULL", () => {

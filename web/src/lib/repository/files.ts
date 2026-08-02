@@ -63,3 +63,21 @@ export function deleteFile(db: AppDatabase, ownerId: string, id: string): boolea
   const res = db.prepare("DELETE FROM files WHERE owner_id = ? AND id = ?").run(ownerId, id);
   return res.changes > 0;
 }
+
+/**
+ * 既存ファイルを BLOB ごと複製し、新しい id を返す（owner 一致のみ。無ければ null）。
+ * 参照を共有せず実体を複製するのは、複製元の印影差し替え/削除が
+ * deleteFile を伴い、共有していると複製先の印影まで道連れで消えるため。
+ */
+export function copyFile(db: AppDatabase, ownerId: string, id: string): string | null {
+  const src = getFileForOwner(db, ownerId, id);
+  if (src === null) {
+    return null;
+  }
+  return insertFile(db, ownerId, {
+    kind: src.kind,
+    mimeType: src.mimeType,
+    byteSize: src.byteSize,
+    data: src.data,
+  });
+}

@@ -5,6 +5,7 @@ import { useRouter } from "waku/router/client";
 import {
   dangerBtn,
   inputClass,
+  jsonAction,
   jsonDelete,
   jsonMutate,
   labelClass,
@@ -98,6 +99,22 @@ export function AccountForm({ record }: { record?: AccountRecord }) {
     }
   };
 
+  const onDuplicate = async () => {
+    if (!record) {
+      return;
+    }
+    setBusy(true);
+    setError("");
+    const res = await jsonAction(`/api/accounts/${record.id}/duplicate`);
+    setBusy(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    // 複製直後は名前や口座を直したくなるので、そのまま複製先の編集画面を開く
+    router.push(res.id === null ? LIST : `/masters/accounts/${res.id}`);
+  };
+
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       {error && <p className="text-sm text-shuiro-600 dark:text-shuiro-400">{error}</p>}
@@ -178,6 +195,11 @@ export function AccountForm({ record }: { record?: AccountRecord }) {
         <button type="submit" disabled={busy} className={primaryBtn}>
           {editing ? "保存" : "追加"}
         </button>
+        {editing && (
+          <button type="button" onClick={onDuplicate} disabled={busy} className={subtleBtn}>
+            複製
+          </button>
+        )}
         {editing && (
           <button type="button" onClick={onDelete} disabled={busy} className={dangerBtn}>
             削除
