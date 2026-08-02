@@ -61,3 +61,15 @@ export async function uploadSeal(
     ? { ok: true, id: j.id }
     : { ok: false, error: "アップロードに失敗しました" };
 }
+
+/** ボディなしの POST（複製など）。成功時はサーバが返した id を返す。 */
+export async function jsonAction(
+  url: string,
+): Promise<{ ok: true; id: string | null } | { ok: false; error: string }> {
+  const res = await fetch(url, { method: "POST", credentials: "include" });
+  if (!res.ok) {
+    return { ok: false, error: await errorFrom(res, "操作に失敗しました") };
+  }
+  const j = (await res.json().catch(() => ({}))) as { id?: string };
+  return { ok: true, id: typeof j.id === "string" ? j.id : null };
+}

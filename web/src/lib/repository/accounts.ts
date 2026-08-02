@@ -6,6 +6,7 @@
  */
 import { randomUUID } from "node:crypto";
 import type { Account } from "@/lib/notion/types";
+import { copyFile } from "@/lib/repository/files";
 import { asRow, str, strOrNull } from "@/lib/repository/row";
 import type { AppDatabase } from "@/lib/schema";
 
@@ -205,4 +206,64 @@ export function getAccountSealFileIdById(
     .prepare("SELECT seal_file_id FROM accounts WHERE owner_id = ? AND id = ?")
     .get(ownerId, id);
   return row === undefined ? null : strOrNull(asRow(row)["seal_file_id"]);
+}
+
+/** 指定列に同じ値の自社レコードがあるか（複製名の連番判定用）。 */
+function accountLabelExists(
+  db: AppDatabase,
+  ownerId: string,
+  column: "contact_name" | "company_name",
+  value: string,
+): boolean {
+  const row = db
+    .prepare(`SELECT 1 FROM accounts WHERE owner_id = ? AND ${column} = ? LIMIT 1`)
+    .get(ownerId, value);
+  return row !== undefined;
+}
+
+/** 複製時の表示名を作る（請求書複製と同じ `-copy` 流儀。衝突したら -copy2, -copy3…）。 */
+function nextCopyLabel(
+  db: AppDatabase,
+  ownerId: string,
+  column: "contact_name" | "company_name",
+  base: string,
+): string {
+  let candidate = `${base}-copy`;
+  let n = 2;
+  while (accountLabelExists(db, ownerId, column, candidate)) {
+    candidate = `${base}-copy${n}`;
+    n += 1;
+  }
+  return candidate;
+}
+
+/**
+ * 自社マスタを複製する（1 トランザクション）。複製した行の id を返す。元が無ければ null。
+ * 一覧の主表示は担当者名なので、そこに `-copy` を付けて複製と一目で分かるようにする
+ * （担当者名が空の行は主表示が会社名になるため、そちらに付ける）。
+ * 印影は参照ではなく BLOB ごと複製する（copyFile の注記を参照）。
+ */
+export function duplicateAccount(db: AppDatabase, ownerId: string, id: string): string | null {
+  const tx = db.transaction((): string | null => {
+    const src = getAccountRecord(db, ownerId, id);
+    if (src === null) {
+      return null;
+    }
+    const byContact = src.contactName !== "";
+    const fields: AccountFields = {
+      slug: src.slug,
+      companyName: byContact
+        ? src.companyName
+        : nextCopyLabel(db, ownerId, "company_name", src.companyName),
+      contactName: byContact
+        ? nextCopyLabel(db, ownerId, "contact_name", src.contactName)
+        : src.contactName,
+      companyInfo: src.companyInfo,
+      bankInfo: src.bankInfo,
+      registrationNumber: src.registrationNumber,
+      sealFileId: src.sealFileId === null ? null : copyFile(db, ownerId, src.sealFileId),
+    };
+    return createAccount(db, ownerId, fields);
+  });
+  return tx();
 }
