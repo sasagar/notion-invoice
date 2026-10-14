@@ -1,7 +1,6 @@
-import { renderToBuffer } from "@react-pdf/renderer";
 import { auth } from "@/lib/auth";
 import { getFullInvoice } from "@/lib/data/backend";
-import { InvoiceDocument } from "@/pdf";
+import { renderFittedPdf } from "@/pdf";
 
 export const GET = async (
   req: Request,
@@ -17,8 +16,8 @@ export const GET = async (
     if (!full) {
       return Response.json({ error: "not found" }, { status: 404 });
     }
-    const { invoice, customer, account } = full;
-    const buffer = await renderToBuffer(InvoiceDocument({ invoice, customer, account }));
+    // 帯だけが次ページに落ちる等のわずかなはみ出しは、余白を詰めて 1 ページに収める。
+    const buffer = await renderFittedPdf("invoice", full);
     return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "application/pdf",
