@@ -576,3 +576,43 @@ export function nextCopyNumber(db: AppDatabase, ownerId: string, base: string): 
   }
   return candidate;
 }
+
+/**
+ * 請求書を複製する（番号=元番号-copy、ステータス=ドラフト、発行日/期限=null）。
+ * 元が無い/他 owner なら null。複製 API と MCP ツールで共有する。
+ */
+export function duplicateInvoice(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+): { id: string; invoiceNumber: string } | null {
+  const src = getInvoiceEditorById(db, ownerId, id);
+  if (!src) {
+    return null;
+  }
+  const invoiceNumber = nextCopyNumber(db, ownerId, src.invoiceNumber);
+  const input: InvoiceEditorInput = {
+    invoiceNumber,
+    title: src.title,
+    status: "ドラフト",
+    customerId: src.customerId,
+    accountId: src.accountId,
+    publishedAt: null,
+    dueTo: null,
+    taxIncluded: src.taxIncluded,
+    withholdingExempt: src.withholdingExempt,
+    rounding: src.rounding,
+    note: src.note,
+    memo: src.memo,
+    rows: src.rows.map((r) => ({
+      name: r.name,
+      itemNames: r.itemNames,
+      unitPrice: r.unitPrice,
+      quantity: r.quantity,
+      unit: r.unit,
+      taxRate: r.taxRate,
+      itemIds: r.itemIds,
+    })),
+  };
+  return { id: createInvoice(db, ownerId, input), invoiceNumber };
+}
