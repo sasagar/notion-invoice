@@ -42,6 +42,10 @@ AI エージェント向けに請求書データを Streamable HTTP（ステー�
 - 未ログインは `/login`、未同意は `/oauth/consent` へ署名付きクエリ（`sig`）で送られる。`authClient` の
   `oauthProviderClient` がサインイン/同意に `oauth_query` を自動添付してフローを再開する。DCR では
   `skip_consent` を指定できず、利用者の同意なしにコードは出ない（同意済みのクライアントは同意画面を省略）
+- クライアント登録は DCR と **CIMD**（`@better-auth/cimd`。client_id が HTTPS URL のメタデータ文書。
+  Claude Code は `https://claude.ai/oauth/claude-code-client-metadata`）の両対応。文書の取得は
+  `@better-auth/cimd/node` の SSRF 対策済みトランスポート（公開アドレスのみ・接続固定・リダイレクト不追従）で行う。
+  自前の fetch に差し替えないこと
 - ディスカバリ `/.well-known/oauth-*` は `web/src/middleware/oauth-well-known.ts` で auth.handler へ橋渡しする
 - `web/src/lib/mcp/oauth-registration.ts`: MCP SDK のローカルクライアントは `application_type` を送らず
   `http://localhost` で登録するため、loopback のみの登録に `native` を補う（無いと Claude Code 等が登録できない）

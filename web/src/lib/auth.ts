@@ -1,6 +1,8 @@
 import "@/lib/env";
 import process from "node:process";
 import { type BetterAuthPlugin, betterAuth } from "better-auth";
+import { cimd } from "@better-auth/cimd";
+import { fetchClientMetadataResource } from "@better-auth/cimd/node";
 import { mcp } from "@better-auth/mcp";
 import { admin, captcha, jwt } from "better-auth/plugins";
 import { db } from "@/lib/db";
@@ -33,6 +35,16 @@ const mcpPlugin = mcp({
   allowDynamicClientRegistration: true,
   allowUnauthenticatedClientRegistration: true,
 }) as unknown as BetterAuthPlugin;
+
+// CIMD（Client ID Metadata Document）: client_id に HTTPS URL を使うクライアント（Claude Code /
+// claude.ai 等）を、事前登録なしで受け入れる。URL 先のメタデータ文書を取得・検証して
+// クライアントを作る。取得は公式の Node 用トランスポート（DNS を 1 回だけ解決して公開
+// アドレスのみ許可・接続先を固定・リダイレクト不追従）で行い、SSRF を防ぐ。
+// DCR と同じく skip_consent は持てないため、利用者の同意なしにコードは出ない。
+const cimdPlugin = cimd({
+  fetchClientMetadataResource,
+  metadataProfile: "mcp-2026-07-28",
+});
 
 export const auth = betterAuth({
   database: db,
@@ -67,6 +79,7 @@ export const auth = betterAuth({
     // ログイン確認ごと壊れる。この機能は使わないので無効化する（oauth-provider 推奨設定）。
     jwt({ disableSettingJwtHeader: true }),
     mcpPlugin,
+    cimdPlugin,
     ...(process.env.TURNSTILE_SECRET_KEY
       ? [
           captcha({
