@@ -37,16 +37,23 @@ Origin/CSRF(403) → session(401) → SQLite モード以外は 409。Notion 読
 
 AI エージェント向けに請求書データを Streamable HTTP（ステートレス・JSON 応答）で公開する。
 
-- 認証: better-auth の `mcp` プラグイン（OAuth 2.1 + 動的クライアント登録 + PKCE）。
-  ディスカバリ `/.well-known/oauth-*` は `web/src/middleware/oauth-well-known.ts` で橋渡しする。
-  未ログイン時は `/login?client_id=...` に送られ、`LoginForm` が redirect を追わずにサインインして認可を再開する
-- 認可は **同意画面 `/oauth/consent` を必須**にしている（`web/src/lib/mcp/oauth-guards.ts`）。プラグイン既定では
-  prompt=consent 無しだと同意なしでコードを返し、登録が誰でもできるためリンク 1 つでトークンを奪えるため。
-  同意前コード（consent_code）のトークン交換も拒否する。これらのガードは外さないこと
+- 認証: `@better-auth/mcp`（oauth-provider ベースの OAuth 2.1 + 動的クライアント登録 + PKCE）と `jwt()`。
+  アクセストークンは `MCP_RESOURCE`（`/api/mcp`）を audience とする JWT で、`requireMcpAuth` が検証し `sub` を userId とする
+- 未ログインは `/login`、未同意は `/oauth/consent` へ署名付きクエリ（`sig`）で送られる。`authClient` の
+  `oauthProviderClient` がサインイン/同意に `oauth_query` を自動添付してフローを再開する。DCR では
+  `skip_consent` を指定できず、利用者の同意なしにコードは出ない（同意済みのクライアントは同意画面を省略）
+- ディスカバリ `/.well-known/oauth-*` は `web/src/middleware/oauth-well-known.ts` で auth.handler へ橋渡しする
+- `web/src/lib/mcp/oauth-registration.ts`: MCP SDK のローカルクライアントは `application_type` を送らず
+  `http://localhost` で登録するため、loopback のみの登録に `native` を補う（無いと Claude Code 等が登録できない）
+- `jwt({ disableSettingJwtHeader: true })` は外さないこと（既定だと全セッション確認で JWT 署名が走り、
+  `BETTER_AUTH_SECRET` を変えると JWKS の復号に失敗してログイン確認ごと壊れる）。
+  シークレットを変える場合は `jwks` 表を空にする
+- `mcp()` の型は `exactOptionalPropertyTypes` と非互換のため `auth.ts` で `BetterAuthPlugin` として受けている
 - ツール定義: `web/src/lib/mcp/server.ts`（リクエストごとに userId を束縛して生成）。
   請求書の読み取り/PDF は両バックエンド対応、マスタ参照と書き込みは SQLite モードのみ。削除系ツールは提供しない
-- AI からの既存請求書の変更可否: `web/src/lib/mcp/policy.ts` の `agentWriteDenialReason`
-- OAuth 用テーブル（oauthApplication/oauthAccessToken/oauthConsent）は `db:migrate` で作成。本番の `BETTER_AUTH_URL` は公開 URL にする（メタデータの issuer/resource になる）
+- AI からの既存請求書の変更可否: `web/src/lib/mcp/policy.ts` の `agentWriteDenialReason`（現在は全許可）
+- OAuth 用テーブルは `db:migrate` で作成。better-auth 1.6 の旧 mcp 表は空なら `db:migrate` が削除する。
+  本番の `BETTER_AUTH_URL` は公開 URL にする（issuer/resource の基準）
 
 ## コマンド（`web/` 内）
 

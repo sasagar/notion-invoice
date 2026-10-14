@@ -1,31 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import { authClient } from "@/lib/auth-client";
 
 /**
- * 同意画面の許可/拒否ボタン。better-auth の /oauth2/consent に結果を送り、
- * 返ってきた redirectURI（MCP クライアントのコールバック）へ遷移する。
+ * 同意画面の許可/拒否ボタン。oauthProviderClient が URL の署名付きクエリを
+ * oauth_query として添付して /oauth2/consent に送り、返ってきた {redirect, url}
+ * （MCP クライアントのコールバック）へ better-auth クライアントが遷移する。
  */
-export function ConsentForm({ consentCode }: { consentCode: string }) {
+export function ConsentForm() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const decide = async (accept: boolean) => {
     setPending(true);
     setError(null);
-    const res = await fetch("/api/auth/oauth2/consent", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ accept, consent_code: consentCode }),
-    }).catch(() => null);
-    const body = (await res?.json().catch(() => null)) as { redirectURI?: string } | null;
-    if (!res?.ok || !body?.redirectURI) {
+    const res = await authClient.oauth2.consent({ accept });
+    if (res.error) {
       setPending(false);
       setError("処理に失敗しました。接続元のアプリからやり直してください。");
-      return;
     }
-    window.location.href = body.redirectURI;
   };
 
   return (

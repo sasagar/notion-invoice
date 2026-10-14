@@ -1,7 +1,8 @@
 import "@/lib/env";
 import process from "node:process";
-import { betterAuth } from "better-auth";
-import { admin, captcha, mcp } from "better-auth/plugins";
+import { type BetterAuthPlugin, betterAuth } from "better-auth";
+import { mcp } from "@better-auth/mcp";
+import { admin, captcha, jwt } from "better-auth/plugins";
 import { db } from "@/lib/db";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -18,11 +19,28 @@ if (isProduction && (!secret || secret.length < 32)) {
 
 const baseURL = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
+/** MCP サーバーの保護リソース識別子（アクセストークンの audience）。 */
+export const MCP_RESOURCE = new URL("/api/mcp", baseURL).href;
+
+// @better-auth/mcp のプラグイン型は OpenAPI メタデータに `items?: undefined` 等を含み、
+// このプロジェクトの exactOptionalPropertyTypes と両立しない（ライブラリ側の型の問題）。
+// サーバー側で oauth 系エンドポイントを auth.api から型付きで呼ばないため、ここだけ
+// BetterAuthPlugin として受ける（クライアントの型は oauthProviderClient が持つ）。
+const mcpPlugin = mcp({
+  loginPage: "/login",
+  consentPage: "/oauth/consent",
+  resource: MCP_RESOURCE,
+  allowDynamicClientRegistration: true,
+  allowUnauthenticatedClientRegistration: true,
+}) as unknown as BetterAuthPlugin;
+
 export const auth = betterAuth({
   database: db,
   baseURL,
   secret: secret ?? "dev-only-insecure-secret-not-for-production",
   basePath: "/api/auth",
+  // jwt プラグインの /token（セッション→JWT 交換）は使わないため無効化する（oauth-provider 推奨）。
+  disabledPaths: ["/token"],
   emailAndPassword: {
     enabled: true,
     // 自己サインアップは無効。ユーザーは管理者が admin プラグインで発行する。
@@ -37,17 +55,18 @@ export const auth = betterAuth({
   // Turnstile captcha は TURNSTILE_SECRET_KEY がある時のみ有効化。
   // 保護対象は better-auth 既定(/sign-in/email 等)。トークンは
   // クライアントが x-captcha-response ヘッダで送る。
-  // mcp: MCP クライアント（Claude 等）向けの OAuth 2.1 認可サーバー
-  // （動的クライアント登録・PKCE）。未ログインなら /login へ送り、ログイン後に
-  // 同意画面を経て認可する。発行トークンは /api/mcp の withMcpAuth で検証する。
+  // mcp: MCP クライアント（Claude 等）向けの OAuth 2.1 認可サーバー（@better-auth/mcp）。
+  // 動的クライアント登録＋PKCE。未ログインなら /login、未同意なら /oauth/consent へ
+  // 署名付きクエリで送る。アクセストークンは MCP_RESOURCE を audience とする JWT（jwt
+  // プラグインの JWKS で署名）で、/api/mcp の requireMcpAuth が検証する。
+  // DCR では skip_consent を指定できないため、利用者の同意なしにコードは発行されない。
   plugins: [
     admin(),
-    mcp({
-      loginPage: "/login",
-      resource: new URL("/api/mcp", baseURL).href,
-      // 認可は必ず /oauth/consent で利用者の明示的な許可を経る（[...all].ts で prompt=consent を強制）。
-      oidcConfig: { loginPage: "/login", consentPage: "/oauth/consent" },
-    }),
+    // MCP アクセストークンの署名鍵（JWKS）用。既定ではセッション確認のたびに JWT を署名して
+    // set-auth-jwt ヘッダに載せるため、全ページで鍵の復号が走り、シークレット変更時には
+    // ログイン確認ごと壊れる。この機能は使わないので無効化する（oauth-provider 推奨設定）。
+    jwt({ disableSettingJwtHeader: true }),
+    mcpPlugin,
     ...(process.env.TURNSTILE_SECRET_KEY
       ? [
           captcha({
