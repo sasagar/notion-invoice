@@ -40,6 +40,9 @@ AI エージェント向けに請求書データを Streamable HTTP（ステー�
 - 認証: better-auth の `mcp` プラグイン（OAuth 2.1 + 動的クライアント登録 + PKCE）。
   ディスカバリ `/.well-known/oauth-*` は `web/src/middleware/oauth-well-known.ts` で橋渡しする。
   未ログイン時は `/login?client_id=...` に送られ、`LoginForm` が redirect を追わずにサインインして認可を再開する
+- 認可は **同意画面 `/oauth/consent` を必須**にしている（`web/src/lib/mcp/oauth-guards.ts`）。プラグイン既定では
+  prompt=consent 無しだと同意なしでコードを返し、登録が誰でもできるためリンク 1 つでトークンを奪えるため。
+  同意前コード（consent_code）のトークン交換も拒否する。これらのガードは外さないこと
 - ツール定義: `web/src/lib/mcp/server.ts`（リクエストごとに userId を束縛して生成）。
   請求書の読み取り/PDF は両バックエンド対応、マスタ参照と書き込みは SQLite モードのみ。削除系ツールは提供しない
 - AI からの既存請求書の変更可否: `web/src/lib/mcp/policy.ts` の `agentWriteDenialReason`
@@ -67,7 +70,7 @@ pnpm run notion:schema  # Notion DB スキーマのダンプ（設計調査用�
 - API（`_api/api/`）: `auth/[...all].ts`（better-auth）、`print/*`（PDF）、`notion-credentials.ts`、`files.ts`（印影 UP）、
   `invoices`（作成/更新/`duplicate`/`status`）、`customers`（CRUD/`archive`）、`accounts`（CRUD/`duplicate`）、`items`（CRUD）
 - 保護ページは `requireSession()`（未ログインは `/login` へ）
-- `_api/api/mcp.ts`（MCP エンドポイント）
+- `_api/api/mcp.ts`（MCP エンドポイント）、`oauth/consent.tsx`（MCP 接続の同意画面）
 - `pages.gen.ts` は typegen の生成物（手で編集しない）
 
 ## ビルド上の注意
