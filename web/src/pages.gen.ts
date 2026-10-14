@@ -30,6 +30,8 @@ import type { getConfig as File_MastersItems_getConfig } from './pages/masters/i
 // prettier-ignore
 import type { getConfig as File_MastersItemsId_getConfig } from './pages/masters/items/[id]';
 // prettier-ignore
+import type { getConfig as File_OauthConsent_getConfig } from './pages/oauth/consent';
+// prettier-ignore
 import type { getConfig as File_User_getConfig } from './pages/user';
 
 // prettier-ignore
@@ -47,6 +49,7 @@ type Page =
 | ({ path: '/masters' } & GetConfigResponse<typeof File_MastersIndex_getConfig>)
 | ({ path: '/masters/items' } & GetConfigResponse<typeof File_MastersItems_getConfig>)
 | ({ path: '/masters/items/[id]' } & GetConfigResponse<typeof File_MastersItemsId_getConfig>)
+| ({ path: '/oauth/consent' } & GetConfigResponse<typeof File_OauthConsent_getConfig>)
 | ({ path: '/user' } & GetConfigResponse<typeof File_User_getConfig>);
 
 // prettier-ignore

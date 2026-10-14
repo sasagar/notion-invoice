@@ -39,10 +39,15 @@ export const auth = betterAuth({
   // クライアントが x-captcha-response ヘッダで送る。
   // mcp: MCP クライアント（Claude 等）向けの OAuth 2.1 認可サーバー
   // （動的クライアント登録・PKCE）。未ログインなら /login へ送り、ログイン後に
-  // 認可フローを再開する。発行トークンは /api/mcp の withMcpAuth で検証する。
+  // 同意画面を経て認可する。発行トークンは /api/mcp の withMcpAuth で検証する。
   plugins: [
     admin(),
-    mcp({ loginPage: "/login", resource: new URL("/api/mcp", baseURL).href }),
+    mcp({
+      loginPage: "/login",
+      resource: new URL("/api/mcp", baseURL).href,
+      // 認可は必ず /oauth/consent で利用者の明示的な許可を経る（[...all].ts で prompt=consent を強制）。
+      oidcConfig: { loginPage: "/login", consentPage: "/oauth/consent" },
+    }),
     ...(process.env.TURNSTILE_SECRET_KEY
       ? [
           captcha({
