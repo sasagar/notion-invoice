@@ -48,7 +48,8 @@ AI エージェント向けに請求書データを Streamable HTTP（ステー�
   自前の fetch に差し替えないこと
 - **接続元は許可制**（`web/src/lib/mcp/client-policy.ts`）: DCR の戻り先は claude.ai / claude.com のコールバックと
   http の loopback のみ（`oauth-registration.ts` が better-auth の前で拒否）、CIMD は claude.ai / claude.com の
-  文書のみ取得する。新しい接続元（他の MCP クライアント）を使うときはここに追加する
+  文書のみ取得する。新しい接続元（他の MCP クライアント）を使うときはここに追加する。
+  最終的な強制は認可時の `validateRedirectUri`（`auth.ts`。登録済み一致 かつ 許可リスト内）で、入口の拒否は一段目
 - CIMD の取得失敗・遅延は `[cimd]` で journal に出る（`cimd-transport.ts`。所要時間・エラー・DNS の順序）
 - ディスカバリ `/.well-known/oauth-*` は `web/src/middleware/oauth-well-known.ts` で auth.handler へ橋渡しする
 - `web/src/lib/mcp/oauth-registration.ts`: MCP SDK のローカルクライアントは `application_type` を送らず

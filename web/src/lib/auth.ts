@@ -5,7 +5,7 @@ import { cimd } from "@better-auth/cimd";
 import { fetchClientMetadataResource } from "@better-auth/cimd/node";
 import { mcp } from "@better-auth/mcp";
 import { withCimdFetchDiagnostics } from "@/lib/mcp/cimd-transport";
-import { isAllowedCimdClientId } from "@/lib/mcp/client-policy";
+import { isAllowedCimdClientId, isAllowedRedirectUri } from "@/lib/mcp/client-policy";
 import { admin, captcha, jwt } from "better-auth/plugins";
 import { db } from "@/lib/db";
 
@@ -36,6 +36,11 @@ const mcpPlugin = mcp({
   resource: MCP_RESOURCE,
   allowDynamicClientRegistration: true,
   allowUnauthenticatedClientRegistration: true,
+  // 認可（コード発行）とエラー時のリダイレクトのたびに、戻り先が「登録済みと一致」かつ
+  // 「許可リスト内」であることを求める。登録の入口チェック（oauth-registration.ts）を
+  // どの経路で迂回しても、既存のクライアントでも、許可リスト外へはコードを返さない。
+  validateRedirectUri: (uri, _registeredUris, defaultResult) =>
+    defaultResult && isAllowedRedirectUri(uri),
 }) as unknown as BetterAuthPlugin;
 
 // CIMD（Client ID Metadata Document）: client_id に HTTPS URL を使うクライアント（Claude Code /

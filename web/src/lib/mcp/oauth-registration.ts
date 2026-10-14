@@ -1,8 +1,9 @@
 /**
  * MCP クライアントの動的クライアント登録（RFC 7591）の入口処理。
  *
- * 1. 許可制: 戻り先が許可リスト（client-policy.ts）にない登録は、better-auth に渡す前に
- *    invalid_redirect_uri で拒否する。
+ * 1. 許可制（入口）: 戻り先が許可リスト（client-policy.ts）にない登録は、better-auth に渡す前に
+ *    invalid_redirect_uri で拒否する。これは早期にわかりやすく断るための一段目で、最終的な
+ *    強制は認可時の validateRedirectUri（auth.ts）が行う（既存クライアントや入口の迂回にも効く）。
  * 2. 互換補正: oauth-provider は application_type 省略時を "web" とみなし、web クライアントには
  *    http の loopback リダイレクトを許さない（OIDC Registration の規定どおり）。一方、MCP SDK を
  *    使うローカルクライアント（Claude Code 等）は application_type を送らずに
