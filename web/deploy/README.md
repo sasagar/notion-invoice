@@ -22,6 +22,8 @@
 | `VITE_TURNSTILE_SITE_KEY` | Turnstile のサイトキー。**ビルド時に必要**（クライアントへ埋め込み）      |
 | `PER_PAGE`                | 一覧のページ件数（既定 20）                                               |
 | `DATA_BACKEND`            | 読み取り元。既定 `notion`／`sqlite` で SQLite へ切替（`db:import` 後）    |
+| `MCP_AGENT_TOKEN_SHA256`  | 任意。常駐エージェント用の固定トークンの SHA-256（hex）。平文は置かない   |
+| `MCP_AGENT_USER_EMAIL`    | 固定トークンで操作するユーザーのメールアドレス（上と組で設定）            |
 
 > `VITE_` 変数はビルド時にバンドルへ埋め込まれる。**`waku build` の前に**設定すること。
 
