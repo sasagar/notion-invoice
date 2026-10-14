@@ -52,6 +52,9 @@ AI エージェント向けに請求書データを Streamable HTTP（ステー�
 - `jwt({ disableSettingJwtHeader: true })` は外さないこと（既定だと全セッション確認で JWT 署名が走り、
   `BETTER_AUTH_SECRET` を変えると JWKS の復号に失敗してログイン確認ごと壊れる）。
   シークレットを変える場合は `jwks` 表を空にする
+- 常駐エージェント（画面がなく同意を回せない）用に固定トークンも受ける：`Authorization: Bearer <hex>` の SHA-256 が
+  `MCP_AGENT_TOKEN_SHA256` と一致したら `MCP_AGENT_USER_EMAIL` のユーザーとして処理（`lib/mcp/agent-token.ts`）。
+  どちらか未設定なら無効。サーバーにはハッシュだけを置く。止めるときは環境変数を消して再起動
 - `mcp()` の型は `exactOptionalPropertyTypes` と非互換のため `auth.ts` で `BetterAuthPlugin` として受けている
 - ツール定義: `web/src/lib/mcp/server.ts`（リクエストごとに userId を束縛して生成）。
   請求書の読み取り/PDF は両バックエンド対応、マスタ参照と書き込みは SQLite モードのみ。削除系ツールは提供しない
