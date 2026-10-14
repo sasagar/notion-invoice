@@ -46,6 +46,10 @@ AI エージェント向けに請求書データを Streamable HTTP（ステー�
   Claude Code は `https://claude.ai/oauth/claude-code-client-metadata`）の両対応。文書の取得は
   `@better-auth/cimd/node` の SSRF 対策済みトランスポート（公開アドレスのみ・接続固定・リダイレクト不追従）で行う。
   自前の fetch に差し替えないこと
+- **接続元は許可制**（`web/src/lib/mcp/client-policy.ts`）: DCR の戻り先は claude.ai / claude.com のコールバックと
+  http の loopback のみ（`oauth-registration.ts` が better-auth の前で拒否）、CIMD は claude.ai / claude.com の
+  文書のみ取得する。新しい接続元（他の MCP クライアント）を使うときはここに追加する
+- CIMD の取得失敗・遅延は `[cimd]` で journal に出る（`cimd-transport.ts`。所要時間・エラー・DNS の順序）
 - ディスカバリ `/.well-known/oauth-*` は `web/src/middleware/oauth-well-known.ts` で auth.handler へ橋渡しする
 - `web/src/lib/mcp/oauth-registration.ts`: MCP SDK のローカルクライアントは `application_type` を送らず
   `http://localhost` で登録するため、loopback のみの登録に `native` を補う（無いと Claude Code 等が登録できない）

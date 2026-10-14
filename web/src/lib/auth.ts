@@ -4,6 +4,8 @@ import { type BetterAuthPlugin, betterAuth } from "better-auth";
 import { cimd } from "@better-auth/cimd";
 import { fetchClientMetadataResource } from "@better-auth/cimd/node";
 import { mcp } from "@better-auth/mcp";
+import { withCimdFetchDiagnostics } from "@/lib/mcp/cimd-transport";
+import { isAllowedCimdClientId } from "@/lib/mcp/client-policy";
 import { admin, captcha, jwt } from "better-auth/plugins";
 import { db } from "@/lib/db";
 
@@ -41,9 +43,12 @@ const mcpPlugin = mcp({
 // クライアントを作る。取得は公式の Node 用トランスポート（DNS を 1 回だけ解決して公開
 // アドレスのみ許可・接続先を固定・リダイレクト不追従）で行い、SSRF を防ぐ。
 // DCR と同じく skip_consent は持てないため、利用者の同意なしにコードは出ない。
+// 取得してよい client_id は許可リスト（client-policy.ts）のオリジンに限る（取得前に判定）。
+// 取得の失敗・遅延は診断ログに残す（cimd-transport.ts。取得自体は公式トランスポートのまま）。
 const cimdPlugin = cimd({
-  fetchClientMetadataResource,
+  fetchClientMetadataResource: withCimdFetchDiagnostics(fetchClientMetadataResource),
   metadataProfile: "mcp-2026-07-28",
+  isMetadataDocumentUrlAllowed: (clientIdUrl) => isAllowedCimdClientId(clientIdUrl),
 });
 
 export const auth = betterAuth({
