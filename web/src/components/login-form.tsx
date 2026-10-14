@@ -19,13 +19,35 @@ export function LoginForm() {
     setPending(true);
     setError(null);
     const form = new FormData(e.currentTarget);
-    const res = await authClient.signIn.email(
-      {
-        email: String(form.get("email") ?? ""),
-        password: String(form.get("password") ?? ""),
-      },
-      captchaToken ? { headers: { "x-captcha-response": captchaToken } } : undefined,
-    );
+    const credentials = {
+      email: String(form.get("email") ?? ""),
+      password: String(form.get("password") ?? ""),
+    };
+    const captchaHeaders: Record<string, string> = captchaToken
+      ? { "x-captcha-response": captchaToken }
+      : {};
+
+    // MCP クライアントの OAuth 認可から来た場合（/login?client_id=...）。
+    // サインイン応答はクライアントの redirect_uri への 302 になり、fetch が追うと
+    // クロスオリジンで失敗するため manual で止め、Cookie 確立後に認可を再開させる。
+    const search = window.location.search;
+    if (new URLSearchParams(search).has("client_id")) {
+      const raw = await fetch("/api/auth/sign-in/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...captchaHeaders },
+        body: JSON.stringify(credentials),
+        redirect: "manual",
+      }).catch(() => null);
+      if (raw && (raw.ok || raw.type === "opaqueredirect")) {
+        window.location.href = `/api/auth/mcp/authorize${search}`;
+        return;
+      }
+      setPending(false);
+      setError("メールアドレスまたはパスワードが正しくありません");
+      return;
+    }
+
+    const res = await authClient.signIn.email(credentials, { headers: captchaHeaders });
     setPending(false);
     if (res.error) {
       setError("メールアドレスまたはパスワードが正しくありません");

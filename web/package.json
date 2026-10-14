@@ -22,6 +22,7 @@
     "notion:schema": "tsx scripts/dump-notion-schema.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
     "@notionhq/client": "^5.23.3",
     "@react-pdf/renderer": "^4.5.1",
     "better-auth": "^1.6.25",

@@ -2,10 +2,11 @@ import { LoginForm } from "@/components/login-form";
 import { getServerSession } from "@/lib/session";
 import { unstable_redirect } from "waku/router/server";
 
-export default async function LoginPage() {
-  // ログイン済みでログイン画面を出す意味はないので一覧へ。
+export default async function LoginPage({ query }: { query: string }) {
+  // ログイン済みでログイン画面を出す意味はないので一覧へ。ただし MCP の OAuth 認可から
+  // 来た場合（client_id 付き）はフォームを出し、ログイン後に LoginForm が認可を再開する。
   const session = await getServerSession();
-  if (session) {
+  if (session && !new URLSearchParams(query).has("client_id")) {
     unstable_redirect("/invoice/list/1");
   }
   return (
