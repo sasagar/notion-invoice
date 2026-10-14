@@ -3,7 +3,7 @@ import { formatDateLong } from "@/lib/format";
 import { roundAmount } from "@/lib/money/sanitizer";
 import type { Account, Customer, Invoice } from "@/lib/notion/types";
 import { formatWithPostalMark, TextWithPostalMark } from "@/pdf/pdf-helpers";
-import { styles } from "@/pdf/styles";
+import { compactStyles, styles as normalStyles } from "@/pdf/styles";
 
 const yen = (n: number) => n.toLocaleString("ja-JP");
 
@@ -11,9 +11,12 @@ type Props = {
   invoice: Invoice;
   customer: Customer | null;
   account: Account | null;
+  /** true で上下余白を詰めた版で描く（1 ページに収める用。renderFittedPdf が指定する）。 */
+  compact?: boolean;
 };
 
-export function EstimateDocument({ invoice, customer, account }: Props) {
+export function EstimateDocument({ invoice, customer, account, compact = false }: Props) {
+  const styles = compact ? compactStyles : normalStyles;
   const { meta, rows, totals } = invoice;
   const incl = meta.taxIncluded;
   const withholdingBase = incl

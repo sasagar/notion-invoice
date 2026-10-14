@@ -9,7 +9,6 @@
 import process from "node:process";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { renderToBuffer } from "@react-pdf/renderer";
 import { z } from "zod";
 import { getFullInvoice, isSqliteBackend, listInvoicePage } from "@/lib/data/backend";
 import { db } from "@/lib/db";
@@ -31,7 +30,7 @@ import {
   updateInvoiceById,
   updateInvoiceStatus,
 } from "@/lib/repository";
-import { EstimateDocument, InvoiceDocument } from "@/pdf";
+import { renderFittedPdf } from "@/pdf";
 
 const SQLITE_ONLY = "この操作は SQLite モード（DATA_BACKEND=sqlite）でのみ利用できます";
 const DUPLICATE_NUMBER = "この請求書番号は既に使われています";
@@ -119,8 +118,7 @@ export function createInvoiceMcpServer(userId: string): McpServer {
       if (!full) {
         return fail(`請求書 ${invoiceNumber} が見つかりません`);
       }
-      const Doc = kind === "estimate" ? EstimateDocument : InvoiceDocument;
-      const buffer = await renderToBuffer(Doc(full));
+      const buffer = await renderFittedPdf(kind, full);
       const base = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
       return {
         content: [

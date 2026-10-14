@@ -263,3 +263,28 @@ export const styles = StyleSheet.create({
   noteText: { fontSize: 9, color: colors.kentBlue800 },
   detailSection: { paddingBottom: 9, paddingHorizontal: 9 },
 });
+
+/**
+ * 1 ページに収めるための詰め版（renderFittedPdf が、通常版が 2 ページ以上になったときだけ試す）。
+ * 文字サイズ・罫線・帯は変えず、見出し・各段・表セルの上下余白だけを減らす。
+ * 末尾の帯（footer の太い下線）とその余白だけが次ページに落ちる程度のはみ出しを吸収する。
+ */
+export const compactStyles: typeof styles = {
+  ...styles,
+  header: { ...styles.header, paddingVertical: 6, marginBottom: 4 },
+  mainContent: { ...styles.mainContent, paddingVertical: 5 },
+  customerSection: { ...styles.customerSection, marginBottom: 8 },
+  greetingSection: { ...styles.greetingSection, marginBottom: 8 },
+  bankBoxWrapper: { ...styles.bankBoxWrapper, marginVertical: 4 },
+  sectionTitle: { ...styles.sectionTitle, paddingVertical: 4, marginBottom: 4 },
+  tableHeaderCell: { ...styles.tableHeaderCell, paddingVertical: 3 },
+  tableCell: { ...styles.tableCell, paddingVertical: 2.5 },
+  tableCellRight: { ...styles.tableCellRight, paddingVertical: 2.5 },
+  tableCellCenter: { ...styles.tableCellCenter, paddingVertical: 2.5 },
+  tableFooterCell: { ...styles.tableFooterCell, paddingVertical: 3 },
+  tableFooterValue: { ...styles.tableFooterValue, paddingVertical: 3 },
+  detailSection: { ...styles.detailSection, paddingBottom: 5 },
+  taxSection: { ...styles.taxSection, paddingVertical: 5 },
+  footer: { ...styles.footer, paddingVertical: 5 },
+  noteBoxWrapper: { ...styles.noteBoxWrapper, marginVertical: 4 },
+};
