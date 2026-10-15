@@ -55,6 +55,25 @@ export function roundAmount(value: number, mode: RoundingMode = "round"): number
   return Math.sign(value) * ROUNDERS[mode](Math.abs(value));
 }
 
+/** 源泉徴収の税率が切り替わる支払額（円）。 */
+export const WITHHOLDING_THRESHOLD = 1_000_000;
+
+/**
+ * 報酬（税抜）に対する源泉徴収税額（正の値、1 円未満切り捨て）。
+ * 100 万円以下の部分は 10.21%、100 万円を超える部分は 20.42%（所得税法 204 条＋復興特別所得税）。
+ * 浮動小数の誤差を避けるため、率は 1 万分率の整数で掛けてから割る。
+ */
+export function withholdingTax(base: number): number {
+  if (base <= WITHHOLDING_THRESHOLD) {
+    return Math.floor((base * 1021) / 10000);
+  }
+  // 100 万円までの 102,100 円 ＋ 超過分の 20.42%
+  return (
+    (WITHHOLDING_THRESHOLD * 1021) / 10000 +
+    Math.floor(((base - WITHHOLDING_THRESHOLD) * 2042) / 10000)
+  );
+}
+
 /**
  * 行ごとの対象額と内税/源泉フラグから請求額の内訳を計算する。
  */
@@ -74,14 +93,9 @@ export function computeTotals(input: SanitizerInput): InvoiceTotals {
   const tax8 = taxIncluded ? sum8 - Math.floor((sum8 * 100) / 108) : Math.floor(sum8 * 0.08);
   const tax = tax10 + tax8;
 
-  let withholding: number;
-  if (withholdingExempt) {
-    withholding = 0;
-  } else if (taxIncluded) {
-    withholding = Math.floor((sum10 + sum8 - tax10 - tax8) * 0.1021) * -1;
-  } else {
-    withholding = Math.floor((sum10 + sum8) * 0.1021) * -1;
-  }
+  // 源泉の対象は課税対象額の税抜（非課税行は対象外）。内税なら税込から税を引く。
+  const withholdingBase = taxIncluded ? sum10 + sum8 - tax10 - tax8 : sum10 + sum8;
+  const withholding = withholdingExempt ? 0 : -withholdingTax(withholdingBase);
 
   const invoiceSum = taxIncluded ? sum + withholding : sum + tax10 + tax8 + withholding;
 
