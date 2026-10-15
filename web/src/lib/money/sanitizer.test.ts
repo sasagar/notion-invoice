@@ -63,17 +63,35 @@ describe("computeTotals（旧invoiceSanitizerと一致）", () => {
     expect(t.invoiceSum).toBe(11000);
   });
 
-  test("D: 内税10%・源泉あり（浮動小数の癖を含む現行挙動と一致）", () => {
-    // 110000/1.1 は JS で 99999.999… となり floor で 99999 → tax10=10001。
-    // 旧 invoiceSanitizer.js と同じ挙動でありパリティを保つ（意図的）。
+  test("D: 内税10%・源泉あり（110000/1.1 の浮動小数誤差で 1 円ずれない）", () => {
+    // 110000/1.1 は JS で 99999.999… になる。整数比で計算して税抜 100000 を保つ。
     const t = computeTotals({
       rows: [row({ amount10: 110000, subtotal: 110000 })],
       taxIncluded: true,
       withholdingExempt: false,
     });
-    expect(t.tax10).toBe(10001);
-    expect(t.withholding).toBe(-10209);
-    expect(t.invoiceSum).toBe(99791);
+    expect(t.tax10).toBe(10000);
+    expect(t.withholding).toBe(-10210);
+    expect(t.invoiceSum).toBe(99790);
+  });
+
+  test("D2: 内税の税抜額は整数演算（BigInt）の floor(x*10/11)・floor(x*100/108) と全額で一致", () => {
+    for (let x = 1; x <= 300_000; x++) {
+      const t10 = computeTotals({
+        rows: [row({ amount10: x, subtotal: x })],
+        taxIncluded: true,
+        withholdingExempt: true,
+      });
+      const t8 = computeTotals({
+        rows: [row({ amount8: x, subtotal: x })],
+        taxIncluded: true,
+        withholdingExempt: true,
+      });
+      const n = BigInt(x);
+      if (x - t10.tax10 !== Number((n * 10n) / 11n) || x - t8.tax8 !== Number((n * 100n) / 108n)) {
+        throw new Error(`mismatch at ${x}`);
+      }
+    }
   });
 
   test("E: 外税8%", () => {

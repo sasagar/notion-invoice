@@ -15,6 +15,7 @@ import { db } from "@/lib/db";
 import { firstInvoiceIssue, INVOICE_STATUSES, invoiceSchema } from "@/lib/invoice-schema";
 import { customerSchema, firstIssue, itemSchema } from "@/lib/master-schemas";
 import { agentWriteDenialReason } from "@/lib/mcp/policy";
+import { redactFullInvoice, withoutSealImage } from "@/lib/mcp/redact";
 import {
   createCustomer,
   createInvoice,
@@ -92,13 +93,14 @@ export function createInvoiceMcpServer(userId: string): McpServer {
     "get_invoice",
     {
       title: "請求書詳細",
-      description: "請求書番号で、明細行・金額内訳・顧客・自社情報を含む完全なデータを取得する。",
+      description:
+        "請求書番号で、明細行・金額内訳・顧客・自社情報を含む完全なデータを取得する（印影画像は有無のみ）。",
       inputSchema: { invoiceNumber: z.string().min(1) },
       annotations: readOnly,
     },
     async ({ invoiceNumber }) => {
       const full = await getFullInvoice(userId, invoiceNumber, { lenientRelations: true });
-      return full ? ok(full) : fail(`請求書 ${invoiceNumber} が見つかりません`);
+      return full ? ok(redactFullInvoice(full)) : fail(`請求書 ${invoiceNumber} が見つかりません`);
     },
   );
 
@@ -162,7 +164,10 @@ export function createInvoiceMcpServer(userId: string): McpServer {
       description: "自社（発行元）マスタを取得する。請求書作成時の accountId に使う。",
       annotations: readOnly,
     },
-    async () => (isSqliteBackend() ? ok(listAccountRecords(db, userId)) : fail(SQLITE_ONLY)),
+    async () =>
+      isSqliteBackend()
+        ? ok(listAccountRecords(db, userId).map(withoutSealImage))
+        : fail(SQLITE_ONLY),
   );
 
   server.registerTool(
