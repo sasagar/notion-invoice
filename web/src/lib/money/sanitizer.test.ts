@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { computeTotals, roundAmount } from "@/lib/money/sanitizer";
+import { computeTotals, roundAmount, withholdingTax } from "@/lib/money/sanitizer";
 
 const row = (a: Partial<import("@/lib/money/sanitizer").LineAmounts>) => ({
   amount10: 0,
@@ -219,5 +219,48 @@ describe("computeTotals の行別丸め（行の上書き→請求書既定の�
     });
     expect(t.sum8).toBe(301); // 100+101+100
     expect(t.tax8).toBe(24); // floor(301*0.08)=24
+  });
+});
+
+describe("withholdingTax（100 万円超は超過分 20.42%）", () => {
+  test("100 万円以下は 10.21%（1 円未満切り捨て）", () => {
+    expect(withholdingTax(0)).toBe(0);
+    expect(withholdingTax(47200)).toBe(4819);
+    expect(withholdingTax(1_000_000)).toBe(102100);
+  });
+
+  test("100 万円超は 102,100 円 ＋ 超過分の 20.42%", () => {
+    expect(withholdingTax(1_000_001)).toBe(102100); // 0.2042 円 → 切り捨て
+    expect(withholdingTax(1_000_005)).toBe(102101);
+    expect(withholdingTax(1_500_000)).toBe(102100 + 102100);
+    expect(withholdingTax(2_000_000)).toBe(306300);
+  });
+
+  test("100 万円以下は従来の floor(x * 0.1021) と全額で一致（既存請求書の金額が変わらない）", () => {
+    for (let x = 0; x <= 1_000_000; x++) {
+      if (withholdingTax(x) !== Math.floor(x * 0.1021)) {
+        throw new Error(`mismatch at ${x}`);
+      }
+    }
+  });
+
+  test("computeTotals: 外税 120 万円は税抜 120 万円に対して計算", () => {
+    const t = computeTotals({
+      rows: [row({ amount10: 1_200_000, subtotal: 1_200_000 })],
+      taxIncluded: false,
+      withholdingExempt: false,
+    });
+    expect(t.withholding).toBe(-(102100 + 40840));
+    expect(t.invoiceSum).toBe(1_200_000 + 120_000 - 142940);
+  });
+
+  test("computeTotals: 内税 132 万円は税抜 120 万円に対して計算", () => {
+    const t = computeTotals({
+      rows: [row({ amount10: 1_320_000, subtotal: 1_320_000 })],
+      taxIncluded: true,
+      withholdingExempt: false,
+    });
+    expect(t.tax10).toBe(120_000);
+    expect(t.withholding).toBe(-142940);
   });
 });
