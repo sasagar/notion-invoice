@@ -1,6 +1,6 @@
 /**
  * 請求金額の計算（税・源泉徴収・丸め）。Notion に依存しない純粋関数。
- * 旧 invoiceSanitizer.js のロジックを厳密移植したもの。
+ * 旧 invoiceSanitizer.js のロジックを移植したもの（内税の浮動小数誤差のみ修正済み）。
  */
 
 export type LineAmounts = {
@@ -68,8 +68,10 @@ export function computeTotals(input: SanitizerInput): InvoiceTotals {
   const sum0 = rows.reduce((a, r) => a + roundAmount(r.amount0, eff(r)), 0);
   const sum = rows.reduce((a, r) => a + roundAmount(r.subtotal, eff(r)), 0);
 
-  const tax10 = taxIncluded ? sum10 - Math.floor(sum10 / 1.1) : Math.floor(sum10 * 0.1);
-  const tax8 = taxIncluded ? sum8 - Math.floor(sum8 / 1.08) : Math.floor(sum8 * 0.08);
+  // 内税の税抜額は整数どうしの比で求める。`x / 1.1` は 1.1 が 2 進で表せないため
+  // 110000 / 1.1 = 99999.99… となり、floor で税抜が 1 円減る（→ 税 +1・源泉 -1）。
+  const tax10 = taxIncluded ? sum10 - Math.floor((sum10 * 10) / 11) : Math.floor(sum10 * 0.1);
+  const tax8 = taxIncluded ? sum8 - Math.floor((sum8 * 100) / 108) : Math.floor(sum8 * 0.08);
   const tax = tax10 + tax8;
 
   let withholding: number;
