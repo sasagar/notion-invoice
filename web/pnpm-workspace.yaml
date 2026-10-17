@@ -4,3 +4,8 @@ allowBuilds:
 onlyBuiltDependencies:
   - better-sqlite3
   - esbuild
+# 推移的依存の脆弱性対応（pnpm audit）。親パッケージが修正版を取り込んだら外してよい。
+overrides:
+  fast-uri@<3.1.8: ^3.1.8 # @modelcontextprotocol/sdk > ajv（GHSA-hrr3-gc8f-f4qj ほか）
+  nanoid@<3.3.18: ^3.3.18 # vite > postcss
+  source-map-js@<1.2.2: ^1.2.2 # vite > postcss
