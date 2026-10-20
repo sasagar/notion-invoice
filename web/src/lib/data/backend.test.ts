@@ -4,6 +4,7 @@ import { type InvoiceListPage, isSqliteBackend } from "@/lib/data/backend";
 import {
   getFullInvoiceByNumber,
   type InvoiceInput,
+  listAllInvoiceItems,
   listInvoiceItemsPage,
   saveInvoice,
   upsertCustomer,
@@ -96,6 +97,15 @@ describe("data/backend（DATA_BACKEND による読み取り切替）", () => {
       expect(page.items[0]?.meta.id).toBe("INV-1");
       expect(page.items[0]?.customerName).toBe("顧客社");
       expect(page.items[0]?.totalAmount).toBe(11000);
+    });
+
+    test("全件取得はページ取得と同じ並び・同じ項目を返す", () => {
+      saveInvoice(db, OWNER, sampleInvoice({ invoiceNumber: "INV-1", publishedAt: "2026-01-01" }));
+      saveInvoice(db, OWNER, sampleInvoice({ invoiceNumber: "INV-2", publishedAt: "2026-02-01" }));
+
+      const all = listAllInvoiceItems(db, OWNER);
+      expect(all.map((x) => x.meta.id)).toEqual(["INV-2", "INV-1"]);
+      expect(all).toEqual(listInvoiceItemsPage(db, OWNER, 1, 10).items);
     });
 
     test("詳細は FullInvoice を返す（無ければ null）", () => {

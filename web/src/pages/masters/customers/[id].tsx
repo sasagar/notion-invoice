@@ -14,7 +14,7 @@ const breadcrumb = <Link to="/masters/customers">← 顧客マスタ</Link>;
 export default async function MastersCustomerEditPage({ id }: { id: string }) {
   const session = await requireSession();
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <MastersHeading title="顧客の編集" breadcrumb={breadcrumb} />
       {!isSqliteBackend() ? <MastersNotice /> : <EditBody userId={session.user.id} id={id} />}
     </div>

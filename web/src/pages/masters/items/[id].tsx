@@ -14,7 +14,7 @@ const breadcrumb = <Link to="/masters/items">← 項目マスタ</Link>;
 export default async function MastersItemEditPage({ id }: { id: string }) {
   const session = await requireSession();
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <MastersHeading title="項目の編集" breadcrumb={breadcrumb} />
       {!isSqliteBackend() ? <MastersNotice /> : <EditBody userId={session.user.id} id={id} />}
     </div>

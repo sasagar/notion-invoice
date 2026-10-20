@@ -1,11 +1,13 @@
 "use client";
 
-import { type FormEvent, useRef, useState } from "react";
+import { type FormEvent, useId, useRef, useState } from "react";
+import { LuChevronDown, LuChevronUp, LuPlus, LuX } from "react-icons/lu";
 import { useRouter } from "waku/router/client";
+import { AmountInput } from "@/components/amount-input";
 import { Card, SectionHeading } from "@/components/card";
-import { TaxTable } from "@/components/tax-table";
-import { WithholdingTable } from "@/components/withholding-table";
+import { TotalsBreakdown } from "@/components/totals-breakdown";
 import { formatYen } from "@/lib/format";
+import { useUnsavedChangesGuard } from "@/lib/hooks/use-unsaved-changes-guard";
 import {
   firstInvoiceIssue,
   INVOICE_STATUSES,
@@ -50,6 +52,8 @@ const fieldLabelClass =
   "mb-1 block text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-slate-500";
 const primaryBtn =
   "rounded-sm bg-kent-blue-500 px-5 py-2 text-white transition hover:bg-kent-blue-600 disabled:opacity-50";
+const rowIconBtn =
+  "flex min-h-11 min-w-11 items-center justify-center rounded text-lg text-stone-400 transition hover:bg-stone-900/5 hover:text-kent-blue-500 disabled:opacity-25 disabled:hover:bg-transparent sm:min-h-9 sm:min-w-9 dark:hover:bg-white/5";
 const subtleBtn =
   "rounded-sm border border-paper-line px-3 py-1.5 text-sm text-stone-600 transition hover:border-kent-blue-400 hover:text-kent-blue-600 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300";
 
@@ -95,6 +99,7 @@ export function InvoiceEditor({
   items: ItemOption[];
 }) {
   const router = useRouter();
+  const uid = useId();
   const editing = initial !== null;
 
   const [invoiceNumber, setInvoiceNumber] = useState(initial?.invoiceNumber ?? "");
@@ -125,6 +130,25 @@ export function InvoiceEditor({
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+
+  // 未保存の変更の検知: 開いた時点の入力内容と比べる（行の key は表示用なので除く）。
+  const snapshot = JSON.stringify([
+    invoiceNumber,
+    title,
+    status,
+    customerId,
+    accountId,
+    publishedAt,
+    dueTo,
+    taxIncluded,
+    withholdingExempt,
+    rounding,
+    note,
+    memo,
+    rows.map(({ key: _key, ...r }) => r),
+  ]);
+  const [initialSnapshot] = useState(snapshot);
+  const { confirmLeave, allowLeave } = useUnsavedChangesGuard(snapshot !== initialSnapshot);
 
   // インライン項目追加フォーム（1 行につき 1 つ）。
   const [addItemFor, setAddItemFor] = useState<string | null>(null);
@@ -296,11 +320,17 @@ export function InvoiceEditor({
       return;
     }
     const j = (await res.json()) as { invoiceNumber?: string };
+    allowLeave();
     router.push(`/invoice/item/${j.invoiceNumber ?? invoiceNumber}`);
   };
 
-  const onCancel = () =>
+  const onCancel = () => {
+    if (!confirmLeave()) {
+      return;
+    }
+    allowLeave();
     router.push(editing ? `/invoice/item/${initial.invoiceNumber}` : "/invoice/list/1");
+  };
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5">
@@ -398,7 +428,7 @@ export function InvoiceEditor({
                   ))}
                 </select>
               </label>
-              <div className="flex flex-wrap items-end gap-6 sm:col-span-2">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:col-span-2">
                 <label className="flex min-h-11 items-center gap-2 text-sm text-stone-600 sm:min-h-0 dark:text-slate-300">
                   <input
                     type="checkbox"
@@ -415,12 +445,12 @@ export function InvoiceEditor({
                   />
                   源泉徴収非対象
                 </label>
-                <label className="flex min-h-11 items-center gap-2 text-sm text-stone-600 sm:min-h-0 dark:text-slate-300">
-                  既定の丸め
+                <label className="flex min-h-11 items-center gap-2 text-sm whitespace-nowrap text-stone-600 sm:min-h-0 dark:text-slate-300">
+                  端数の丸め
                   <select
                     value={rounding}
                     onChange={(e) => setRounding(e.target.value as RoundingMode)}
-                    className={`${inputClass} select-ledger`}
+                    className={`${inputClass} select-ledger w-28`}
                   >
                     {ROUNDING_MODES.map((m) => (
                       <option key={m} value={m}>
@@ -428,8 +458,8 @@ export function InvoiceEditor({
                       </option>
                     ))}
                   </select>
-                  <span className="text-[10px] font-normal normal-case tracking-normal text-stone-400 dark:text-slate-500">
-                    ※各行で上書き可
+                  <span className="text-[11px] text-stone-400 dark:text-slate-500">
+                    （行ごとに変更可）
                   </span>
                 </label>
               </div>
@@ -445,13 +475,13 @@ export function InvoiceEditor({
             </div>
           </Card>
 
-          {/* 明細（グリッド行カード） */}
+          {/* 明細（行ごとのカード） */}
           <Card>
             <div className="mb-3 flex items-center justify-between">
               <SectionHeading>明細</SectionHeading>
-              <button type="button" onClick={addRow} className={subtleBtn}>
-                + 行を追加
-              </button>
+              <span className="font-mono text-xs text-stone-400 dark:text-slate-500">
+                {rows.length} 行
+              </span>
             </div>
             <div className="flex flex-col gap-3">
               {rows.map((r, index) => (
@@ -459,32 +489,62 @@ export function InvoiceEditor({
                   key={r.key}
                   className="rounded-md border border-paper-line bg-white/50 p-3 dark:border-slate-800 dark:bg-slate-900/30"
                 >
-                  {/* 1行目: 項目マスタ + 表示名 */}
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                    <label className="block w-full sm:w-56">
-                      <span className={fieldLabelClass}>項目マスタ</span>
-                      <select
-                        value={r.itemId}
-                        onChange={(e) => onSelectItem(r.key, e.target.value)}
-                        className={`${inputClass} select-ledger`}
+                  {/* 1段目: 項目マスタ + 表示名 + 並べ替え/削除 */}
+                  <div className="flex items-start gap-2">
+                    <div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-[13rem_minmax(0,1fr)]">
+                      <label className="block min-w-0">
+                        <span className={fieldLabelClass}>項目マスタ</span>
+                        <select
+                          value={r.itemId}
+                          onChange={(e) => onSelectItem(r.key, e.target.value)}
+                          className={`${inputClass} select-ledger`}
+                        >
+                          <option value="">（自由入力）</option>
+                          {items.map((it) => (
+                            <option key={it.id} value={it.id}>
+                              {it.name}
+                            </option>
+                          ))}
+                          <option value={NEW_ITEM}>＋ 新しい項目を追加…</option>
+                        </select>
+                      </label>
+                      <label className="block min-w-0">
+                        <span className={fieldLabelClass}>表示名</span>
+                        <input
+                          value={r.name}
+                          onChange={(e) => patchRow(r.key, { name: e.target.value })}
+                          className={inputClass}
+                        />
+                      </label>
+                    </div>
+                    <div className="-mr-1 flex shrink-0 items-center">
+                      <button
+                        type="button"
+                        onClick={() => moveRow(index, -1)}
+                        disabled={index === 0}
+                        className={rowIconBtn}
+                        aria-label={`${index + 1}行目を上へ`}
                       >
-                        <option value="">（自由入力）</option>
-                        {items.map((it) => (
-                          <option key={it.id} value={it.id}>
-                            {it.name}
-                          </option>
-                        ))}
-                        <option value={NEW_ITEM}>＋ 新しい項目を追加…</option>
-                      </select>
-                    </label>
-                    <label className="block min-w-0 flex-1">
-                      <span className={fieldLabelClass}>表示名</span>
-                      <input
-                        value={r.name}
-                        onChange={(e) => patchRow(r.key, { name: e.target.value })}
-                        className={inputClass}
-                      />
-                    </label>
+                        <LuChevronUp aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveRow(index, 1)}
+                        disabled={index === rows.length - 1}
+                        className={rowIconBtn}
+                        aria-label={`${index + 1}行目を下へ`}
+                      >
+                        <LuChevronDown aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeRow(r.key)}
+                        className={`${rowIconBtn} text-shuiro-500 hover:text-shuiro-600 dark:text-shuiro-400`}
+                        aria-label={`${index + 1}行目を削除`}
+                      >
+                        <LuX aria-hidden />
+                      </button>
+                    </div>
                   </div>
 
                   {/* インライン項目追加フォーム */}
@@ -507,23 +567,23 @@ export function InvoiceEditor({
                             className={inputClass}
                           />
                         </label>
-                        <label className="block w-32">
-                          <span className={fieldLabelClass}>単価(税抜)</span>
-                          <input
-                            type="number"
-                            step="any"
-                            inputMode="decimal"
+                        <div className="w-32">
+                          <label htmlFor={`${uid}-new-item-price`} className={fieldLabelClass}>
+                            単価(税抜)
+                          </label>
+                          <AmountInput
+                            id={`${uid}-new-item-price`}
                             value={newItemPrice}
-                            onChange={(e) => setNewItemPrice(e.target.value)}
-                            placeholder="8000"
+                            onValueChange={setNewItemPrice}
+                            placeholder="8,000"
                             className={`${inputClass} text-right`}
                           />
-                        </label>
+                        </div>
                         <button
                           type="button"
                           onClick={() => onCreateItem(r.key)}
                           disabled={addItemBusy}
-                          className="rounded-sm bg-kent-blue-500 px-3 py-1.5 text-sm text-white transition hover:bg-kent-blue-600 disabled:opacity-50"
+                          className="min-h-11 rounded-sm bg-kent-blue-500 px-3 py-1.5 text-sm text-white transition hover:bg-kent-blue-600 disabled:opacity-50 sm:min-h-0"
                         >
                           {addItemBusy ? "追加中…" : "追加"}
                         </button>
@@ -538,31 +598,31 @@ export function InvoiceEditor({
                     </div>
                   )}
 
-                  {/* 2行目: 単価/数量/単位/税率/丸め/行小計 + 操作 */}
-                  <div className="mt-3 flex flex-wrap items-end gap-x-4 gap-y-3">
-                    <label className="block w-28">
-                      <span className={fieldLabelClass}>単価</span>
-                      <input
-                        type="number"
-                        step="any"
-                        inputMode="decimal"
+                  {/* 2段目: 単価/数量/単位/税率/丸め/行小計（スマホは 2 列） */}
+                  <div className="mt-3 grid grid-cols-2 items-end gap-x-4 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-3">
+                    <div className="sm:w-28">
+                      <label htmlFor={`${uid}-${r.key}-unitPrice`} className={fieldLabelClass}>
+                        単価{taxIncluded ? "(税込)" : ""}
+                      </label>
+                      <AmountInput
+                        id={`${uid}-${r.key}-unitPrice`}
                         value={r.unitPrice}
-                        onChange={(e) => patchRow(r.key, { unitPrice: e.target.value })}
-                        className={`${inputClass} text-right`}
+                        onValueChange={(v) => patchRow(r.key, { unitPrice: v })}
+                        className={`${inputClass} text-right font-mono`}
                       />
-                    </label>
-                    <label className="block w-20">
-                      <span className={fieldLabelClass}>数量</span>
-                      <input
-                        type="number"
-                        step="any"
-                        inputMode="decimal"
+                    </div>
+                    <div className="sm:w-16">
+                      <label htmlFor={`${uid}-${r.key}-quantity`} className={fieldLabelClass}>
+                        数量
+                      </label>
+                      <AmountInput
+                        id={`${uid}-${r.key}-quantity`}
                         value={r.quantity}
-                        onChange={(e) => patchRow(r.key, { quantity: e.target.value })}
-                        className={`${inputClass} text-right`}
+                        onValueChange={(v) => patchRow(r.key, { quantity: v })}
+                        className={`${inputClass} text-right font-mono`}
                       />
-                    </label>
-                    <div className="w-32">
+                    </div>
+                    <div className="sm:w-24">
                       <span className={fieldLabelClass}>単位</span>
                       {r.unitCustom ? (
                         <div className="flex items-center gap-1">
@@ -575,7 +635,7 @@ export function InvoiceEditor({
                           <button
                             type="button"
                             onClick={() => patchRow(r.key, { unitCustom: false })}
-                            className="shrink-0 px-1 text-stone-400 hover:text-kent-blue-500"
+                            className="flex min-h-11 shrink-0 items-center px-1 text-stone-400 hover:text-kent-blue-500 sm:min-h-0"
                             aria-label="選択に戻す"
                           >
                             ▾
@@ -600,7 +660,7 @@ export function InvoiceEditor({
                         </select>
                       )}
                     </div>
-                    <label className="block w-24">
+                    <label className="block sm:w-20">
                       <span className={fieldLabelClass}>税率</span>
                       <select
                         value={r.taxRate}
@@ -614,7 +674,7 @@ export function InvoiceEditor({
                         ))}
                       </select>
                     </label>
-                    <label className="block w-28">
+                    <label className="block sm:w-20">
                       <span className={fieldLabelClass}>丸め</span>
                       <select
                         value={r.rounding}
@@ -629,50 +689,28 @@ export function InvoiceEditor({
                         ))}
                       </select>
                     </label>
-                    <div className="ml-auto flex items-end gap-3">
-                      <div className="text-right">
-                        <span className={fieldLabelClass}>行小計</span>
-                        <span className="block whitespace-nowrap font-mono text-sm tabular-nums text-stone-700 dark:text-slate-200">
-                          {formatYen(rowSubtotal(r))}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => moveRow(index, -1)}
-                          disabled={index === 0}
-                          className="flex min-h-11 min-w-11 items-center justify-center text-stone-400 hover:text-kent-blue-500 disabled:opacity-30"
-                          aria-label="上へ"
-                        >
-                          ▲
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveRow(index, 1)}
-                          disabled={index === rows.length - 1}
-                          className="flex min-h-11 min-w-11 items-center justify-center text-stone-400 hover:text-kent-blue-500 disabled:opacity-30"
-                          aria-label="下へ"
-                        >
-                          ▼
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeRow(r.key)}
-                        className="flex min-h-11 min-w-11 items-center justify-center px-1 text-lg text-shuiro-500 hover:text-shuiro-600 dark:text-shuiro-400"
-                        aria-label="行を削除"
-                      >
-                        ×
-                      </button>
+                    <div className="text-right sm:ml-auto">
+                      <span className={fieldLabelClass}>行小計</span>
+                      <span className="block py-1.5 font-mono text-sm whitespace-nowrap tabular-nums text-stone-700 dark:text-slate-200">
+                        {formatYen(rowSubtotal(r))}
+                      </span>
                     </div>
                   </div>
                 </div>
               ))}
               {rows.length === 0 && (
                 <p className="py-4 text-center text-sm text-stone-400 dark:text-slate-500">
-                  明細行がありません。「行を追加」で追加してください。
+                  明細行がありません。
                 </p>
               )}
+              <button
+                type="button"
+                onClick={addRow}
+                className="flex min-h-11 items-center justify-center gap-2 rounded-md border border-dashed border-paper-line text-sm text-stone-500 transition hover:border-kent-blue-400 hover:text-kent-blue-600 dark:border-slate-700 dark:text-slate-400"
+              >
+                <LuPlus aria-hidden />
+                行を追加
+              </button>
             </div>
           </Card>
         </div>
@@ -681,43 +719,11 @@ export function InvoiceEditor({
         <aside className="flex flex-col gap-4 lg:sticky lg:top-6">
           <Card>
             <SectionHeading>御請求額（プレビュー）</SectionHeading>
-            <p className="font-display text-3xl font-bold tabular-nums text-kent-blue-600 dark:text-kent-blue-200">
+            <p className="mb-4 font-display text-3xl font-bold tabular-nums text-kent-blue-600 dark:text-kent-blue-200">
               {formatYen(totals.invoiceSum)}
             </p>
-            <dl className="mt-4 flex flex-col gap-2 font-mono text-sm">
-              <div className="flex justify-between">
-                <dt className="font-sans text-stone-500 dark:text-slate-400">請求額</dt>
-                <dd className="tabular-nums">{formatYen(totals.sum)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="font-sans text-stone-500 dark:text-slate-400">
-                  消費税{taxIncluded ? "(内税額)" : ""}
-                </dt>
-                <dd className="tabular-nums">
-                  {taxIncluded ? `(${formatYen(totals.tax)})` : formatYen(totals.tax)}
-                </dd>
-              </div>
-              {totals.withholding !== 0 && (
-                <div className="flex justify-between">
-                  <dt className="font-sans text-stone-500 dark:text-slate-400">源泉徴収</dt>
-                  <dd className="tabular-nums">{formatYen(totals.withholding)}</dd>
-                </div>
-              )}
-            </dl>
+            <TotalsBreakdown totals={totals} taxIncluded={taxIncluded} />
           </Card>
-
-          {totals.tax !== 0 && (
-            <Card>
-              <SectionHeading>消費税</SectionHeading>
-              <TaxTable totals={totals} taxIncluded={taxIncluded} />
-            </Card>
-          )}
-          {totals.withholding !== 0 && (
-            <Card>
-              <SectionHeading>源泉徴収</SectionHeading>
-              <WithholdingTable totals={totals} />
-            </Card>
-          )}
 
           {/* メモは備考と物理的に離す（内部用を誤って請求書側に書かないように） */}
           <Card className="border-dashed">
@@ -746,7 +752,7 @@ export function InvoiceEditor({
       </div>
 
       {/* モバイル: 画面下部の固定バー（御請求額 + 保存）。lg 以上ではサイドバーが担う */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-paper-line bg-paper/95 px-4 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-paper-line bg-paper/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur md:left-[13.5rem] lg:hidden dark:border-slate-800 dark:bg-slate-950/95">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-slate-500">

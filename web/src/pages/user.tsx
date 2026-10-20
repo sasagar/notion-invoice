@@ -1,4 +1,5 @@
 import { Link } from "waku";
+import { LogoutButton } from "@/components/logout-button";
 import { NotionSettingsForm } from "@/components/notion-settings-form";
 import { hasCredentials } from "@/lib/credentials";
 import { isSqliteBackend } from "@/lib/data/backend";
@@ -9,7 +10,7 @@ export default async function UserPage() {
   const sqlite = isSqliteBackend();
   const hasCreds = hasCredentials(session.user.id);
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="max-w-3xl">
       <h1 className="mb-6 font-display text-2xl font-bold text-kent-blue-500 dark:text-kent-blue-200">
         設定
       </h1>
@@ -44,6 +45,13 @@ export default async function UserPage() {
           <NotionSettingsForm hasCreds={hasCreds} />
         </section>
       )}
+      <section className="mt-5 rounded-lg border border-paper-line bg-white/70 p-6 dark:border-slate-800 dark:bg-slate-900/40">
+        <h2 className="mb-1 text-xs font-bold uppercase tracking-[0.15em] text-stone-500 dark:text-slate-400">
+          アカウント
+        </h2>
+        <p className="mb-4 text-sm text-stone-600 dark:text-slate-300">{session.user.email}</p>
+        <LogoutButton />
+      </section>
     </div>
   );
 }
