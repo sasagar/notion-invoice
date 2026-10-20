@@ -3,6 +3,7 @@
  * 出力型は repository の InvoiceEditorInput に一致し、そのまま create/update に渡せる。
  */
 import { z } from "zod";
+import { parseHoursMinutes } from "@/lib/duration";
 
 /** ステータス選択肢（順序は UI の select と一致）。 */
 export const INVOICE_STATUSES = [
@@ -33,12 +34,26 @@ const nullableString = z.preprocess(
   z.string().nullable(),
 );
 
+/**
+ * 数量の入力: 数値・数値文字列に加え、「1:30」のような時:分も時間の小数として受け付ける。
+ * MCP クライアントに文字列も渡せると伝わるよう、入力側の型を number | string にしておく。
+ */
+const quantityInput = z
+  .union([z.number(), z.string()])
+  .pipe(
+    z.preprocess(
+      (v) => (typeof v === "string" ? (parseHoursMinutes(v) ?? v) : v),
+      z.coerce.number({ error: "数量は数値か「1:30」のような時:分で入力してください" }),
+    ),
+  )
+  .describe('数量。単位が「時間」なら "1:30" のような時:分の文字列でもよい（1.5 と同じ）');
+
 /** 明細行スキーマ。unitPrice/quantity は数値文字列も coerce。 */
 export const invoiceRowSchema = z.object({
   name: z.string().default(""),
   itemNames: z.array(z.string()).default([]),
   unitPrice: z.coerce.number({ error: "単価は数値で入力してください" }),
-  quantity: z.coerce.number({ error: "数量は数値で入力してください" }),
+  quantity: quantityInput,
   unit: z.string().default(""),
   taxRate: z.enum(TAX_RATES),
   // 行の丸め上書き。省略/null は「請求書の既定を継承」を意味する。

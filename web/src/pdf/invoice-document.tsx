@@ -1,4 +1,5 @@
 import { Document, Image, Page, Text, View } from "@react-pdf/renderer";
+import { formatQuantity } from "@/lib/duration";
 import { formatDateLong } from "@/lib/format";
 import { roundAmount } from "@/lib/money/sanitizer";
 import type { Account, Customer, Invoice } from "@/lib/notion/types";
@@ -120,7 +121,7 @@ export function InvoiceDocument({ invoice, customer, account, compact = false }:
                     <Text style={[styles.tableCell, { flex: 3 }]}>{row.name}</Text>
                     <Text style={[styles.tableCellRight, { flex: 1 }]}>¥ {yen(row.unitPrice)}</Text>
                     <Text style={[styles.tableCellRight, { flex: 1 }]}>
-                      {yen(row.quantity)} {row.unit}
+                      {formatQuantity(row.quantity, row.unit)}
                     </Text>
                     <Text style={[styles.tableCellRight, { flex: 1 }]}>{price}</Text>
                     <Text style={[styles.tableCellCenter, { flex: 0.5 }]}>{row.taxRate}</Text>

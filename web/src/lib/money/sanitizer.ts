@@ -44,6 +44,10 @@ const ROUNDERS: Record<RoundingMode, (v: number) => number> = {
   ceil: Math.ceil,
 };
 
+// 丸める前に 100 万分の 1 円単位へそろえ、浮動小数の誤差を消す。
+// 例: 6000 × (70/60) 時間 = 7000.000000000001 を切り上げで 7001 にしない。
+const AMOUNT_PRECISION = 1e6;
+
 /**
  * 金額を整数に丸める（既定は四捨五入）。負数は絶対値で丸めてから符号を戻す
  * （0 からの距離で丸める。値引き行の切り捨て/切り上げも金額の大きさ基準で対称）。
@@ -52,7 +56,8 @@ export function roundAmount(value: number, mode: RoundingMode = "round"): number
   if (typeof value !== "number" || Number.isNaN(value)) {
     return 0;
   }
-  return Math.sign(value) * ROUNDERS[mode](Math.abs(value));
+  const abs = Math.round(Math.abs(value) * AMOUNT_PRECISION) / AMOUNT_PRECISION;
+  return Math.sign(value) * ROUNDERS[mode](abs);
 }
 
 /** 源泉徴収の税率が切り替わる支払額（円）。 */

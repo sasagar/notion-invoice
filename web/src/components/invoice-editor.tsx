@@ -5,7 +5,9 @@ import { LuChevronDown, LuChevronUp, LuPlus, LuX } from "react-icons/lu";
 import { useRouter } from "waku/router/client";
 import { AmountInput } from "@/components/amount-input";
 import { Card, SectionHeading } from "@/components/card";
+import { DurationInput } from "@/components/duration-input";
 import { TotalsBreakdown } from "@/components/totals-breakdown";
+import { HOURS_UNIT } from "@/lib/duration";
 import { formatYen } from "@/lib/format";
 import { useUnsavedChangesGuard } from "@/lib/hooks/use-unsaved-changes-guard";
 import {
@@ -613,14 +615,24 @@ export function InvoiceEditor({
                     </div>
                     <div className="sm:w-16">
                       <label htmlFor={`${uid}-${r.key}-quantity`} className={fieldLabelClass}>
-                        数量
+                        {r.unit === HOURS_UNIT ? "時:分" : "数量"}
                       </label>
-                      <AmountInput
-                        id={`${uid}-${r.key}-quantity`}
-                        value={r.quantity}
-                        onValueChange={(v) => patchRow(r.key, { quantity: v })}
-                        className={`${inputClass} text-right font-mono`}
-                      />
+                      {/* 単位が「時間」のときは 1:30 のような時:分で入力する */}
+                      {r.unit === HOURS_UNIT ? (
+                        <DurationInput
+                          id={`${uid}-${r.key}-quantity`}
+                          value={r.quantity}
+                          onValueChange={(v) => patchRow(r.key, { quantity: v })}
+                          className={`${inputClass} text-right font-mono`}
+                        />
+                      ) : (
+                        <AmountInput
+                          id={`${uid}-${r.key}-quantity`}
+                          value={r.quantity}
+                          onValueChange={(v) => patchRow(r.key, { quantity: v })}
+                          className={`${inputClass} text-right font-mono`}
+                        />
+                      )}
                     </div>
                     <div className="sm:w-24">
                       <span className={fieldLabelClass}>単位</span>
