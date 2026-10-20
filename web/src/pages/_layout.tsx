@@ -1,8 +1,7 @@
 import "../styles.css";
 
 import type { ReactNode } from "react";
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
+import { AppShell } from "@/components/app-shell";
 import { NavigationPending, NavigationProgress } from "@/components/navigation-progress";
 
 // 初回描画前に localStorage / OS 設定から .dark を付与し、テーマ切替の
@@ -11,7 +10,7 @@ const themeInit = `(function(){try{var t=localStorage.getItem('theme');if(t==='d
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-svh flex-col">
+    <>
       <NavigationProgress />
       <title>BKTSK Notion Invoice</title>
       <meta name="description" content="Notion 連携の請求書・見積書の管理と PDF 出力" />
@@ -29,12 +28,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         // biome-ignore lint: テーマ初期化スクリプト
         dangerouslySetInnerHTML={{ __html: themeInit }}
       />
-      <Header />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+      <AppShell>
         <NavigationPending>{children}</NavigationPending>
-      </main>
-      <Footer />
-    </div>
+      </AppShell>
+    </>
   );
 }
 

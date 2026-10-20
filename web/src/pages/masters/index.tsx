@@ -13,7 +13,7 @@ const sections = [
 export default async function MastersIndexPage() {
   await requireSession();
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <MastersHeading title="マスタ管理" />
       {isSqliteBackend() ? (
         <div className="grid gap-4 sm:grid-cols-3">

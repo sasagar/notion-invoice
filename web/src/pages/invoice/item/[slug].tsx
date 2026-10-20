@@ -4,13 +4,13 @@ import { ErrorState } from "@/components/data-states";
 import { PdfDownload } from "@/components/pdf-download";
 import { StatusChanger } from "@/components/status-changer";
 import { StatusStamp } from "@/components/status-stamp";
-import { TaxTable } from "@/components/tax-table";
-import { WithholdingTable } from "@/components/withholding-table";
+import { TotalsBreakdown } from "@/components/totals-breakdown";
 import { InvoiceActions } from "@/components/invoice-actions";
 import { getFullInvoice, isSqliteBackend } from "@/lib/data/backend";
 import { db } from "@/lib/db";
 import { getInvoiceEditorByNumber, type InvoiceEditorData } from "@/lib/repository";
-import { formatDate, formatDateTime, formatYen } from "@/lib/format";
+import { formatDate, formatDateTime, formatYen, todayInTokyo } from "@/lib/format";
+import { isOverdue } from "@/lib/invoice-list";
 import { roundAmount } from "@/lib/money/sanitizer";
 import type { FullInvoice } from "@/lib/notion/types";
 import { requireSession } from "@/lib/session";
@@ -45,6 +45,9 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
   const editorData: InvoiceEditorData | null = sqlite
     ? getInvoiceEditorByNumber(db, userId, slug)
     : null;
+  const overdue = isOverdue(invoice, todayInTokyo());
+  // 項目名（マスタ由来の名前）が 1 行も無ければ列ごと出さない。
+  const hasItemNames = rows.some((r) => r.itemNames.length > 0);
 
   return (
     <div className="flex flex-col gap-5">
@@ -58,6 +61,11 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
               </span>
               <StatusStamp status={meta.status} />
               {sqlite && editorData && <StatusChanger id={editorData.id} status={meta.status} />}
+              {overdue && (
+                <span className="rounded-sm bg-shuiro-500 px-2 py-0.5 text-xs font-bold text-white">
+                  支払期限を過ぎています
+                </span>
+              )}
             </div>
             <h1 className="mt-2 font-display text-2xl font-bold leading-tight text-stone-800 dark:text-slate-100 sm:text-3xl">
               {meta.title || "(件名なし)"}
@@ -74,7 +82,15 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
               {meta.dueTo && (
                 <div className="flex gap-1.5">
                   <dt>支払期限</dt>
-                  <dd className="text-stone-600 dark:text-slate-300">{formatDate(meta.dueTo)}</dd>
+                  <dd
+                    className={
+                      overdue
+                        ? "font-bold text-shuiro-600 dark:text-shuiro-400"
+                        : "text-stone-600 dark:text-slate-300"
+                    }
+                  >
+                    {formatDate(meta.dueTo)}
+                  </dd>
                 </div>
               )}
               <div className="flex gap-1.5">
@@ -100,199 +116,168 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
         </div>
       </section>
 
-      {/* 請求先 / 自社 */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        {customer && (
-          <Card>
-            <SectionHeading>請求先</SectionHeading>
-            <p className="font-medium">
-              {customer.companyName || customer.name} {customer.honorific}
-            </p>
-            {customer.companyInfo && (
-              <p className="mt-1 whitespace-pre-wrap text-sm text-stone-500 dark:text-slate-400">
-                {customer.companyInfo}
-              </p>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-5">
+          {/* 請求先 / 自社 */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {customer && (
+              <Card>
+                <SectionHeading>請求先</SectionHeading>
+                <p className="font-medium">
+                  {customer.companyName || customer.name} {customer.honorific}
+                </p>
+                {customer.companyInfo && (
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-stone-500 dark:text-slate-400">
+                    {customer.companyInfo}
+                  </p>
+                )}
+                {customer.contactName && (
+                  <p className="mt-1 text-sm text-stone-500 dark:text-slate-400">
+                    担当: {customer.contactName}
+                  </p>
+                )}
+              </Card>
             )}
-            {customer.contactName && (
-              <p className="mt-1 text-sm text-stone-500 dark:text-slate-400">
-                担当: {customer.contactName}
-              </p>
-            )}
-          </Card>
-        )}
-        {account && (
-          <Card>
-            <SectionHeading>自社情報</SectionHeading>
-            <div className="flex items-start justify-between gap-3">
-              <p className="font-medium">{account.companyName}</p>
-              {account.sealImageUrl && (
-                <img
-                  src={account.sealImageUrl}
-                  alt="印影"
-                  className="h-16 w-16 shrink-0 object-contain"
-                />
-              )}
-            </div>
-            {account.companyInfo && (
-              <p className="mt-1 whitespace-pre-wrap text-sm text-stone-500 dark:text-slate-400">
-                {account.companyInfo}
-              </p>
-            )}
-            {account.registrationNumber && (
-              <p className="mt-1 text-sm text-stone-500 dark:text-slate-400">
-                登録番号: {account.registrationNumber}
-              </p>
-            )}
-            {account.bankInfo && (
-              <p className="mt-1 whitespace-pre-wrap text-sm text-stone-500 dark:text-slate-400">
-                {account.bankInfo}
-              </p>
-            )}
-          </Card>
-        )}
-      </div>
-
-      {/* 明細 */}
-      <Card className="overflow-hidden p-0">
-        <div className="px-5 pt-5">
-          <SectionHeading>請求明細</SectionHeading>
-        </div>
-        {/* モバイル: 行ごとの縦積みカード（表は sm 以上のみ） */}
-        <ul className="divide-y divide-paper-line sm:hidden dark:divide-slate-800">
-          {rows.map((r) => (
-            <li key={r.id} className="px-5 py-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-medium">{r.name}</p>
-                  {r.itemNames.length > 0 && (
-                    <p className="mt-0.5 text-xs text-stone-400 dark:text-slate-500">
-                      {r.itemNames.join(" / ")}
-                    </p>
+            {account && (
+              <Card>
+                <SectionHeading>自社情報</SectionHeading>
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-medium">{account.companyName}</p>
+                  {account.sealImageUrl && (
+                    <img
+                      src={account.sealImageUrl}
+                      alt="印影"
+                      className="h-16 w-16 shrink-0 object-contain"
+                    />
                   )}
                 </div>
-                <span className="shrink-0 rounded-sm border border-paper-line px-1.5 py-0.5 text-[10px] text-stone-500 dark:border-slate-700 dark:text-slate-400">
-                  {r.taxRate}
-                </span>
-              </div>
-              <div className="mt-2 flex items-baseline justify-between gap-3 font-mono text-sm">
-                <span className="text-stone-500 dark:text-slate-400">
-                  {formatYen(r.unitPrice)} × {r.quantity.toLocaleString()}
-                  <span className="font-sans">{r.unit}</span>
-                </span>
-                <span className="font-semibold tabular-nums">
-                  {formatYen(roundAmount(r.amounts.subtotal, r.rounding ?? meta.rounding))}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
-        <div className="hidden overflow-x-auto sm:block">
-          <table className="w-full text-sm">
-            <thead className="border-b border-paper-line text-xs uppercase tracking-wider text-stone-400 dark:border-slate-800 dark:text-slate-500">
-              <tr>
-                <th className="p-3 text-left font-medium">表示名</th>
-                <th className="p-3 text-left text-[10px] font-medium">項目名</th>
-                <th className="p-3 text-right font-medium">単価{incl ? "(税込)" : ""}</th>
-                <th className="p-3 text-right font-medium">数量</th>
-                <th className="p-3 text-right font-medium">小計{incl ? "(税込)" : ""}</th>
-                <th className="p-3 text-center font-medium">税率</th>
-              </tr>
-            </thead>
-            <tbody className="font-mono">
-              {rows.map((r) => (
-                <tr key={r.id} className="border-t border-paper-line/60 dark:border-slate-800/60">
-                  <td className="p-3 font-sans">{r.name}</td>
-                  <td className="p-3 font-sans text-xs text-stone-400 dark:text-slate-500">
-                    {r.itemNames.map((n, i) => (
-                      <span key={i} className="block">
-                        {n}
-                      </span>
-                    ))}
-                  </td>
-                  <td className="p-3 text-right tabular-nums">{formatYen(r.unitPrice)}</td>
-                  <td className="p-3 text-right tabular-nums">
-                    {r.quantity.toLocaleString()} <span className="font-sans">{r.unit}</span>
-                  </td>
-                  <td className="p-3 text-right tabular-nums">
-                    {formatYen(roundAmount(r.amounts.subtotal, r.rounding ?? meta.rounding))}
-                  </td>
-                  <td className="p-3 text-center font-sans">{r.taxRate}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      {/* 内訳 */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="flex flex-col gap-4">
-          {totals.tax !== 0 && (
-            <Card>
-              <SectionHeading>消費税</SectionHeading>
-              <TaxTable totals={totals} taxIncluded={incl} />
-            </Card>
-          )}
-          {totals.withholding !== 0 && (
-            <Card>
-              <SectionHeading>源泉徴収</SectionHeading>
-              <WithholdingTable totals={totals} />
-            </Card>
-          )}
-        </div>
-
-        <Card className="self-start">
-          <SectionHeading>請求額の内訳</SectionHeading>
-          <dl className="flex flex-col gap-2 font-mono text-sm">
-            <div className="flex justify-between">
-              <dt className="font-sans text-stone-500 dark:text-slate-400">請求額</dt>
-              <dd className="tabular-nums">{formatYen(totals.sum)}</dd>
-            </div>
-            <div className="flex justify-between">
-              <dt className="font-sans text-stone-500 dark:text-slate-400">
-                消費税{incl ? "(内税額)" : ""}
-              </dt>
-              <dd className="tabular-nums">
-                {incl ? `(${formatYen(totals.tax)})` : formatYen(totals.tax)}
-              </dd>
-            </div>
-            {totals.withholding !== 0 && (
-              <div className="flex justify-between">
-                <dt className="font-sans text-stone-500 dark:text-slate-400">源泉徴収</dt>
-                <dd className="tabular-nums">{formatYen(totals.withholding)}</dd>
-              </div>
+                {account.companyInfo && (
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-stone-500 dark:text-slate-400">
+                    {account.companyInfo}
+                  </p>
+                )}
+                {account.registrationNumber && (
+                  <p className="mt-1 text-sm text-stone-500 dark:text-slate-400">
+                    登録番号: {account.registrationNumber}
+                  </p>
+                )}
+                {account.bankInfo && (
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-stone-500 dark:text-slate-400">
+                    {account.bankInfo}
+                  </p>
+                )}
+              </Card>
             )}
-            <div className="ledger-total-rule mt-1 flex items-baseline justify-between border-t border-paper-line pb-2 pt-3 dark:border-slate-700">
-              <dt className="font-sans text-sm font-semibold text-stone-700 dark:text-slate-200">
-                御請求額合計
-              </dt>
-              <dd className="font-display text-xl font-bold tabular-nums text-kent-blue-600 dark:text-kent-blue-200">
-                {formatYen(totals.invoiceSum)}
-              </dd>
+          </div>
+
+          {/* 明細 */}
+          <Card className="overflow-hidden p-0">
+            <div className="px-5 pt-5">
+              <SectionHeading>請求明細</SectionHeading>
             </div>
-          </dl>
-        </Card>
+            {/* モバイル: 行ごとの縦積みカード（表は sm 以上のみ） */}
+            <ul className="divide-y divide-paper-line sm:hidden dark:divide-slate-800">
+              {rows.map((r) => (
+                <li key={r.id} className="px-5 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium">{r.name}</p>
+                      {r.itemNames.length > 0 && (
+                        <p className="mt-0.5 text-xs text-stone-400 dark:text-slate-500">
+                          {r.itemNames.join(" / ")}
+                        </p>
+                      )}
+                    </div>
+                    <span className="shrink-0 rounded-sm border border-paper-line px-1.5 py-0.5 text-[10px] text-stone-500 dark:border-slate-700 dark:text-slate-400">
+                      {r.taxRate}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-baseline justify-between gap-3 font-mono text-sm">
+                    <span className="text-stone-500 dark:text-slate-400">
+                      {formatYen(r.unitPrice)} × {r.quantity.toLocaleString()}
+                      <span className="font-sans">{r.unit}</span>
+                    </span>
+                    <span className="font-semibold tabular-nums">
+                      {formatYen(roundAmount(r.amounts.subtotal, r.rounding ?? meta.rounding))}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto sm:block">
+              <table className="w-full text-sm">
+                <thead className="border-b border-paper-line text-xs uppercase tracking-wider text-stone-400 dark:border-slate-800 dark:text-slate-500">
+                  <tr>
+                    <th className="p-3 text-left font-medium">表示名</th>
+                    {hasItemNames && (
+                      <th className="p-3 text-left text-[10px] font-medium">項目名</th>
+                    )}
+                    <th className="p-3 text-right font-medium">単価{incl ? "(税込)" : ""}</th>
+                    <th className="p-3 text-right font-medium">数量</th>
+                    <th className="p-3 text-right font-medium">小計{incl ? "(税込)" : ""}</th>
+                    <th className="p-3 text-center font-medium">税率</th>
+                  </tr>
+                </thead>
+                <tbody className="font-mono">
+                  {rows.map((r) => (
+                    <tr
+                      key={r.id}
+                      className="border-t border-paper-line/60 dark:border-slate-800/60"
+                    >
+                      <td className="p-3 font-sans">{r.name}</td>
+                      {hasItemNames && (
+                        <td className="p-3 font-sans text-xs text-stone-400 dark:text-slate-500">
+                          {r.itemNames.map((n, i) => (
+                            <span key={i} className="block">
+                              {n}
+                            </span>
+                          ))}
+                        </td>
+                      )}
+                      <td className="p-3 text-right tabular-nums">{formatYen(r.unitPrice)}</td>
+                      <td className="p-3 text-right tabular-nums">
+                        {r.quantity.toLocaleString()} <span className="font-sans">{r.unit}</span>
+                      </td>
+                      <td className="p-3 text-right tabular-nums">
+                        {formatYen(roundAmount(r.amounts.subtotal, r.rounding ?? meta.rounding))}
+                      </td>
+                      <td className="p-3 text-center font-sans">{r.taxRate}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* 備考 */}
+          {meta.note && (
+            <Card>
+              <SectionHeading>備考</SectionHeading>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-stone-600 dark:text-slate-300">
+                {meta.note}
+              </p>
+            </Card>
+          )}
+
+          {/* メモ（内部用・PDF には出さない） */}
+          {sqlite && editorData?.memo && (
+            <Card className="border-dashed bg-stone-50/50 dark:bg-slate-900/20">
+              <SectionHeading>メモ（内部用）</SectionHeading>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-stone-500 dark:text-slate-400">
+                {editorData.memo}
+              </p>
+            </Card>
+          )}
+        </div>
+
+        {/* 右: 金額の内訳（PC では画面に固定、スマホでは明細の後ろ） */}
+        <aside className="lg:sticky lg:top-6">
+          <Card>
+            <SectionHeading>金額の内訳</SectionHeading>
+            <TotalsBreakdown totals={totals} taxIncluded={incl} />
+          </Card>
+        </aside>
       </div>
-
-      {/* 備考 */}
-      {meta.note && (
-        <Card>
-          <SectionHeading>備考</SectionHeading>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-stone-600 dark:text-slate-300">
-            {meta.note}
-          </p>
-        </Card>
-      )}
-
-      {/* メモ（内部用・PDF には出さない） */}
-      {sqlite && editorData?.memo && (
-        <Card className="border-dashed bg-stone-50/50 dark:bg-slate-900/20">
-          <SectionHeading>メモ（内部用）</SectionHeading>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-stone-500 dark:text-slate-400">
-            {editorData.memo}
-          </p>
-        </Card>
-      )}
     </div>
   );
 }

@@ -16,7 +16,18 @@ import {
   listInvoicesWithTotals,
 } from "@/lib/notion/fetchers";
 import type { FullInvoice } from "@/lib/notion/types";
-import { getFullInvoiceByNumber, listInvoiceItemsPage } from "@/lib/repository";
+import { todayInTokyo } from "@/lib/format";
+import {
+  filterInvoiceItems,
+  hasListFilter,
+  type InvoiceListFilter,
+  type InvoiceListSummary,
+  summarizeInvoiceItems,
+} from "@/lib/invoice-list";
+import {
+  getFullInvoiceByNumber,
+  listAllInvoiceItems,
+} from "@/lib/repository";
 
 /** 一覧 1 ページ分（表示件数 + 全体件数）。既存の list ページが期待する形。 */
 export type InvoiceListPage = { items: InvoiceListItem[]; total: number };
@@ -55,16 +66,34 @@ async function notionGetFullInvoice(
 
 // --- 公開 API（DATA_BACKEND で分岐） ---
 
-/** 一覧 1 ページ分を取得する。 */
-export function listInvoicePage(
+/** 絞り込み後の 1 ページ分と、絞り込み前の全体集計（SQLite のときだけ）。 */
+export type InvoiceListView = InvoiceListPage & { summary: InvoiceListSummary | null };
+
+/**
+ * 絞り込み条件つきで一覧 1 ページ分を取得する。絞り込みと集計は SQLite のときだけ効き、
+ * notion のときは条件があればエラーにする（全件の明細取得が重いため対応しない）。
+ */
+export async function listInvoiceView(
   userId: string,
   pageNum: number,
   perPage: number,
-): Promise<InvoiceListPage> {
-  if (isSqliteBackend()) {
-    return Promise.resolve(listInvoiceItemsPage(db, userId, pageNum, perPage));
+  filter: InvoiceListFilter = {},
+): Promise<InvoiceListView> {
+  if (!isSqliteBackend()) {
+    if (hasListFilter(filter)) {
+      throw new Error("絞り込みは SQLite モード（DATA_BACKEND=sqlite）でのみ利用できます");
+    }
+    return { ...(await notionListInvoicePage(userId, pageNum, perPage)), summary: null };
   }
-  return notionListInvoicePage(userId, pageNum, perPage);
+  const today = todayInTokyo();
+  const all = listAllInvoiceItems(db, userId);
+  const matched = filterInvoiceItems(all, filter, today);
+  const start = Math.max(0, (pageNum - 1) * perPage);
+  return {
+    items: matched.slice(start, start + perPage),
+    total: matched.length,
+    summary: summarizeInvoiceItems(all, today),
+  };
 }
 
 /**

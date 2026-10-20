@@ -218,6 +218,26 @@ export function listInvoiceMetas(db: AppDatabase, ownerId: string): InvoiceMeta[
   });
 }
 
+/** invoices の 1 行を、顧客名+請求額込みの一覧項目にする。 */
+function toListItem(db: AppDatabase, ownerId: string, raw: unknown): InvoiceListItem {
+  const r = asRow(raw);
+  const rows = loadRows(db, str(r["id"]));
+  const meta = mapInvoiceMeta(
+    r,
+    rows.map((x) => x.id),
+  );
+  let customerName = "";
+  const customerId = strOrNull(r["customer_id"]);
+  if (customerId) {
+    const c = getCustomer(db, ownerId, customerId);
+    if (c) {
+      customerName = c.companyName || c.name;
+    }
+  }
+  const totalAmount: number | null = totalsOf(rows, meta).invoiceSum;
+  return { meta, customerName, totalAmount, editorId: str(r["id"]) };
+}
+
 /**
  * 表示ページ分の請求書を、顧客名+請求額込みで取得する。
  * 合計金額は明細行から導出（deriveLineAmounts + computeTotals の invoiceSum）。
@@ -236,26 +256,15 @@ export function listInvoiceItemsPage(
     .prepare(`SELECT * FROM invoices WHERE owner_id = ? ${LIST_ORDER} LIMIT ? OFFSET ?`)
     .all(ownerId, perPage, offset);
 
-  const items = invoiceRows.map((raw): InvoiceListItem => {
-    const r = asRow(raw);
-    const rows = loadRows(db, str(r["id"]));
-    const meta = mapInvoiceMeta(
-      r,
-      rows.map((x) => x.id),
-    );
-    let customerName = "";
-    const customerId = strOrNull(r["customer_id"]);
-    if (customerId) {
-      const c = getCustomer(db, ownerId, customerId);
-      if (c) {
-        customerName = c.companyName || c.name;
-      }
-    }
-    const totalAmount: number | null = totalsOf(rows, meta).invoiceSum;
-    return { meta, customerName, totalAmount, editorId: str(r["id"]) };
-  });
+  return { items: invoiceRows.map((raw) => toListItem(db, ownerId, raw)), total };
+}
 
-  return { items, total };
+/** オーナーの全請求書を一覧項目として取得する（絞り込み・集計用。並びは一覧と同じ）。 */
+export function listAllInvoiceItems(db: AppDatabase, ownerId: string): InvoiceListItem[] {
+  return db
+    .prepare(`SELECT * FROM invoices WHERE owner_id = ? ${LIST_ORDER}`)
+    .all(ownerId)
+    .map((raw) => toListItem(db, ownerId, raw));
 }
 
 /**

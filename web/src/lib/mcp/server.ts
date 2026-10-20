@@ -10,8 +10,10 @@ import process from "node:process";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import { getFullInvoice, isSqliteBackend, listInvoicePage } from "@/lib/data/backend";
+import { getFullInvoice, isSqliteBackend, listInvoiceView } from "@/lib/data/backend";
 import { db } from "@/lib/db";
+import { todayInTokyo } from "@/lib/format";
+import { isOverdue } from "@/lib/invoice-list";
 import { firstInvoiceIssue, INVOICE_STATUSES, invoiceSchema } from "@/lib/invoice-schema";
 import { customerSchema, firstIssue, itemSchema } from "@/lib/master-schemas";
 import { agentWriteDenialReason } from "@/lib/mcp/policy";
@@ -79,14 +81,49 @@ export function createInvoiceMcpServer(userId: string): McpServer {
     "list_invoices",
     {
       title: "請求書一覧",
-      description: "請求書を発行日の新しい順にページ単位で取得する（合計金額付き）。",
+      description:
+        "請求書を発行日の新しい順にページ単位で取得する（御請求額合計付き）。" +
+        "status・customerId・query・overdueOnly で絞り込める（SQLite モードのみ）。" +
+        "summary には絞り込み前の全体集計（入金待ち・期限超過・今月の発行）が入る。",
       inputSchema: {
         page: z.number().int().min(1).default(1),
         perPage: z.number().int().min(1).max(100).default(20),
+        status: z.enum(INVOICE_STATUSES).optional(),
+        customerId: z.string().min(1).optional().describe("list_customers の id"),
+        query: z.string().min(1).optional().describe("件名・請求書番号・顧客名の部分一致"),
+        overdueOnly: z
+          .boolean()
+          .optional()
+          .describe("請求書送付済みのまま支払期限を過ぎたものだけ"),
       },
       annotations: readOnly,
     },
-    async ({ page, perPage }) => ok(await listInvoicePage(userId, page, perPage)),
+    async ({ page, perPage, status, customerId, query, overdueOnly }) => {
+      const view = await listInvoiceView(userId, page, perPage, {
+        status,
+        customerId,
+        q: query,
+        overdue: overdueOnly,
+      });
+      const today = todayInTokyo();
+      return ok({
+        today,
+        total: view.total,
+        summary: view.summary,
+        items: view.items.map((item) => ({
+          invoiceNumber: item.meta.id,
+          title: item.meta.title,
+          status: item.meta.status,
+          customerId: item.meta.customerRelationId,
+          customerName: item.customerName,
+          publishedAt: item.meta.publishedAt,
+          dueTo: item.meta.dueTo,
+          totalAmount: item.totalAmount,
+          overdue: isOverdue(item, today),
+          updatedAt: item.meta.updatedAt,
+        })),
+      });
+    },
   );
 
   server.registerTool(

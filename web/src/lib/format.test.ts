@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { formatDate, formatDateLong, formatDateTime, formatYen } from "@/lib/format";
+import { Temporal } from "temporal-polyfill";
+import { formatDate, formatDateLong, formatDateTime, formatYen, todayInTokyo } from "@/lib/format";
 
 describe("formatDate", () => {
   test("日付のみのISO文字列を整形する", () => {
@@ -43,16 +44,21 @@ describe("formatDateLong", () => {
 });
 
 describe("formatDateTime", () => {
-  test("UTC(Z)瞬間時刻をAsia/Tokyoの日時に変換し時分秒まで整形する", () => {
-    expect(formatDateTime("2026-07-05T04:17:00.000Z")).toBe("2026年7月5日 13:17:00");
+  test("UTC(Z)瞬間時刻をAsia/Tokyoの日時に変換し時分まで整形する", () => {
+    expect(formatDateTime("2026-07-05T04:17:00.000Z")).toBe("2026年7月5日 13:17");
   });
 
   test("UTC深夜跨ぎでJSTの日付が繰り上がる", () => {
-    expect(formatDateTime("2026-07-04T16:00:00.000Z")).toBe("2026年7月5日 01:00:00");
+    expect(formatDateTime("2026-07-04T16:00:00.000Z")).toBe("2026年7月5日 01:00");
   });
 
-  test("時分秒は2桁ゼロ埋めする", () => {
-    expect(formatDateTime("2026-01-01T00:05:09.000Z")).toBe("2026年1月1日 09:05:09");
+  test("時分は2桁ゼロ埋めする", () => {
+    expect(formatDateTime("2026-01-01T00:05:09.000Z")).toBe("2026年1月1日 09:05");
+  });
+
+  test("SQLite の datetime('now')（UTC・表記なし）も JST に変換する", () => {
+    expect(formatDateTime("2026-10-20 13:21:10")).toBe("2026年10月20日 22:21");
+    expect(formatDate("2026-10-20 16:00:00")).toBe("2026年10月21日");
   });
 
   test("null/空文字は空文字、パース不能なら原文字列を返す", () => {
@@ -73,5 +79,12 @@ describe("formatYen", () => {
 
   test("小数は四捨五入する", () => {
     expect(formatYen(1000.6)).toBe("¥1,001");
+  });
+});
+
+describe("todayInTokyo", () => {
+  test("UTC の前日夜でも JST の日付を返す", () => {
+    expect(todayInTokyo(Temporal.Instant.from("2026-10-19T15:30:00Z"))).toBe("2026-10-20");
+    expect(todayInTokyo(Temporal.Instant.from("2026-10-19T14:59:59Z"))).toBe("2026-10-19");
   });
 });

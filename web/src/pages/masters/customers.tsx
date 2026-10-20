@@ -1,7 +1,8 @@
 import { Link } from "waku";
-import { Card, SectionHeading } from "@/components/card";
+import { Card } from "@/components/card";
 import { CustomerForm } from "@/components/masters/customer-form";
 import { MastersHeading } from "@/components/masters/masters-heading";
+import { NewRecordPanel } from "@/components/masters/new-record-panel";
 import { MastersNotice } from "@/components/masters/masters-notice";
 import { isSqliteBackend } from "@/lib/data/backend";
 import { db } from "@/lib/db";
@@ -15,7 +16,7 @@ export default async function MastersCustomersPage() {
   const session = await requireSession();
   if (!isSqliteBackend()) {
     return (
-      <div className="mx-auto max-w-3xl">
+      <div className="max-w-3xl">
         <MastersHeading title="顧客マスタ" breadcrumb={breadcrumb} />
         <MastersNotice />
       </div>
@@ -25,12 +26,11 @@ export default async function MastersCustomersPage() {
   const active = records.filter((r) => r.archivedAt === null);
   const archived = records.filter((r) => r.archivedAt !== null);
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <MastersHeading title="顧客マスタ" breadcrumb={breadcrumb} />
-      <Card className="mb-4">
-        <SectionHeading>新規追加</SectionHeading>
+      <NewRecordPanel open={active.length === 0}>
         <CustomerForm />
-      </Card>
+      </NewRecordPanel>
       {active.length === 0 ? (
         <p className="rounded-lg border border-paper-line bg-white/60 p-6 text-center text-sm text-stone-500 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
           顧客がありません。
