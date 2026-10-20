@@ -63,4 +63,15 @@ describe("invoiceSchema", () => {
       expect(r.data.rows[0]?.itemIds).toEqual(["i1"]);
     }
   });
+  test("数量は「1:30」のような時:分も時間の小数として受け付ける", () => {
+    const row = { name: "作業", unitPrice: 8000, unit: "時間", taxRate: "10%" };
+    const r = invoiceSchema.safeParse({ ...base, rows: [{ ...row, quantity: "1:20" }] });
+    expect(r.success).toBe(true);
+    if (r.success) {
+      expect(r.data.rows[0]?.quantity).toBeCloseTo(80 / 60, 12);
+    }
+    expect(invoiceSchema.safeParse({ ...base, rows: [{ ...row, quantity: "1:75" }] }).success).toBe(
+      false,
+    );
+  });
 });

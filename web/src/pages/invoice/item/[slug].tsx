@@ -9,6 +9,7 @@ import { InvoiceActions } from "@/components/invoice-actions";
 import { getFullInvoice, isSqliteBackend } from "@/lib/data/backend";
 import { db } from "@/lib/db";
 import { getInvoiceEditorByNumber, type InvoiceEditorData } from "@/lib/repository";
+import { formatQuantity } from "@/lib/duration";
 import { formatDate, formatDateTime, formatYen, todayInTokyo } from "@/lib/format";
 import { isOverdue } from "@/lib/invoice-list";
 import { roundAmount } from "@/lib/money/sanitizer";
@@ -194,8 +195,8 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
                   </div>
                   <div className="mt-2 flex items-baseline justify-between gap-3 font-mono text-sm">
                     <span className="text-stone-500 dark:text-slate-400">
-                      {formatYen(r.unitPrice)} × {r.quantity.toLocaleString()}
-                      <span className="font-sans">{r.unit}</span>
+                      {formatYen(r.unitPrice)} ×{" "}
+                      <span className="font-sans">{formatQuantity(r.quantity, r.unit)}</span>
                     </span>
                     <span className="font-semibold tabular-nums">
                       {formatYen(roundAmount(r.amounts.subtotal, r.rounding ?? meta.rounding))}
@@ -236,7 +237,7 @@ async function InvoiceDetailBody({ slug }: { slug: string }) {
                       )}
                       <td className="p-3 text-right tabular-nums">{formatYen(r.unitPrice)}</td>
                       <td className="p-3 text-right tabular-nums">
-                        {r.quantity.toLocaleString()} <span className="font-sans">{r.unit}</span>
+                        <span className="font-sans">{formatQuantity(r.quantity, r.unit)}</span>
                       </td>
                       <td className="p-3 text-right tabular-nums">
                         {formatYen(roundAmount(r.amounts.subtotal, r.rounding ?? meta.rounding))}

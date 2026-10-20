@@ -10,6 +10,16 @@ const row = (a: Partial<import("@/lib/money/sanitizer").LineAmounts>) => ({
 });
 
 describe("roundAmount", () => {
+  test("時:分の数量で生じる浮動小数の誤差では丸め結果が変わらない", () => {
+    // 600 × 1時間2分 は浮動小数で 620.0000000000001 になる（正しくは 620）
+    expect(600 * (62 / 60)).not.toBe(620);
+    expect(roundAmount(600 * (62 / 60), "ceil")).toBe(620);
+    // 100 × 1時間9分 は 114.99999999999999（正しくは 115）
+    expect(roundAmount(100 * (69 / 60), "floor")).toBe(115);
+    expect(roundAmount(8000 * (80 / 60), "round")).toBe(10667);
+    expect(roundAmount(1000.4, "ceil")).toBe(1001);
+  });
+
   test("四捨五入・0から離れる方向", () => {
     expect(roundAmount(1.4)).toBe(1);
     expect(roundAmount(1.5)).toBe(2);

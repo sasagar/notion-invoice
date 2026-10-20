@@ -20,6 +20,18 @@ export function groupDigits(raw: string): string {
   return frac === undefined ? grouped : `${grouped}.${frac}`;
 }
 
+/**
+ * フォーカス時に表示を切り替えると選択範囲が外れ、打った数字が既存の値に追記されてしまう。
+ * 再描画のあとで全選択し直し、タップや Tab で入ってそのまま打てば置き換わるようにする。
+ */
+export function selectAllAfterRender(el: HTMLInputElement) {
+  requestAnimationFrame(() => {
+    if (document.activeElement === el) {
+      el.select();
+    }
+  });
+}
+
 type Props = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type"> & {
   value: string;
   onValueChange: (raw: string) => void;
@@ -41,6 +53,7 @@ export function AmountInput({ value, onValueChange, onFocus, onBlur, ...rest }: 
       onChange={(e) => onValueChange(normalizeNumeric(e.target.value))}
       onFocus={(e) => {
         setFocused(true);
+        selectAllAfterRender(e.currentTarget);
         onFocus?.(e);
       }}
       onBlur={(e) => {
