@@ -65,8 +65,14 @@ const write = { readOnlyHint: false, destructiveHint: false, openWorldHint: fals
 
 /** userId に束縛した MCP サーバーを生成する。 */
 export function createInvoiceMcpServer(userId: string): McpServer {
+  const base = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
   const server = new McpServer(
-    { name: "bktsk-notion-invoice", version: "0.1.0" },
+    {
+      name: "bktsk-notion-invoice",
+      version: "0.1.0",
+      // クライアントがドメインの favicon ではなくサービスのアイコンを出せるようにする。
+      icons: [{ src: new URL("/icon.jpg", base).href, mimeType: "image/jpeg", sizes: ["512x512"] }],
+    },
     {
       instructions:
         "日本語の請求書・見積書管理ツール。金額は税抜単価×数量から自動計算されるため、" +
@@ -158,7 +164,6 @@ export function createInvoiceMcpServer(userId: string): McpServer {
         return fail(`請求書 ${invoiceNumber} が見つかりません`);
       }
       const buffer = await renderFittedPdf(kind, full);
-      const base = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
       return {
         content: [
           {
