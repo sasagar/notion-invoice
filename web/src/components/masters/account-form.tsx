@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "waku/router/client";
+import { ArchiveButton } from "@/components/masters/archive-button";
 import {
   dangerBtn,
   inputClass,
@@ -199,6 +200,9 @@ export function AccountForm({ record }: { record?: AccountRecord }) {
           <button type="button" onClick={onDuplicate} disabled={busy} className={subtleBtn}>
             複製
           </button>
+        )}
+        {record && (
+          <ArchiveButton kind="accounts" id={record.id} archived={record.archivedAt !== null} />
         )}
         {editing && (
           <button type="button" onClick={onDelete} disabled={busy} className={dangerBtn}>

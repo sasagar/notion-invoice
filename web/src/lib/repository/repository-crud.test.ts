@@ -22,8 +22,11 @@ import {
   updateAccount,
   updateCustomer,
   updateItem,
+  listAccountRecords,
+  listActiveAccountRecords,
   listActiveCustomerRecords,
   listCustomerRecords,
+  setAccountArchived,
   setCustomerArchived,
 } from "@/lib/repository";
 import { applyAppSchema } from "@/lib/schema";
@@ -251,5 +254,43 @@ describe("顧客のアーカイブ", () => {
   test("他ownerや未知idは変更できない", () => {
     const db = makeDb();
     expect(setCustomerArchived(db, OWNER, "nonexistent", true)).toBe(false);
+  });
+});
+
+describe("自社（振込先）のアーカイブ", () => {
+  test("アーカイブすると有効一覧から外れ、全件一覧には残る", () => {
+    const db = makeDb();
+    const id = createAccount(db, OWNER, { ...accountFields, bankInfo: "旧行名銀行 本店" });
+    expect(setAccountArchived(db, OWNER, id, true)).toBe(true);
+    expect(listActiveAccountRecords(db, OWNER).some((a) => a.id === id)).toBe(false);
+    const rec = listAccountRecords(db, OWNER).find((a) => a.id === id);
+    expect(rec?.archivedAt).not.toBeNull();
+  });
+
+  test("アーカイブしても過去の請求書には旧振込先が出る", () => {
+    const db = makeDb();
+    const accountId = createAccount(db, OWNER, { ...accountFields, bankInfo: "旧行名銀行 本店" });
+    saveInvoice(db, OWNER, sampleInvoice({ invoiceNumber: "INV-OLD", accountId }));
+    setAccountArchived(db, OWNER, accountId, true);
+    expect(getFullInvoiceByNumber(db, OWNER, "INV-OLD")?.account?.bankInfo).toBe("旧行名銀行 本店");
+  });
+
+  test("復元すると有効一覧に戻り、再アーカイブでも最初の日時を保つ", () => {
+    const db = makeDb();
+    const id = createAccount(db, OWNER, accountFields);
+    setAccountArchived(db, OWNER, id, true);
+    db.prepare("UPDATE accounts SET archived_at = '2020-01-01 00:00:00' WHERE id = ?").run(id);
+    setAccountArchived(db, OWNER, id, true);
+    expect(getAccountRecord(db, OWNER, id)?.archivedAt).toBe("2020-01-01 00:00:00");
+    expect(setAccountArchived(db, OWNER, id, false)).toBe(true);
+    expect(listActiveAccountRecords(db, OWNER).find((a) => a.id === id)?.archivedAt).toBeNull();
+  });
+
+  test("他ownerや未知idは変更できない", () => {
+    const db = makeDb();
+    const id = createAccount(db, OWNER, accountFields);
+    expect(setAccountArchived(db, OTHER, id, true)).toBe(false);
+    expect(setAccountArchived(db, OWNER, "nonexistent", true)).toBe(false);
+    expect(getAccountRecord(db, OWNER, id)?.archivedAt).toBeNull();
   });
 });

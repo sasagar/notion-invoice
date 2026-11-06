@@ -1,6 +1,7 @@
 import { Link } from "waku";
 import { Card } from "@/components/card";
 import { AccountForm } from "@/components/masters/account-form";
+import { ArchiveButton } from "@/components/masters/archive-button";
 import { MastersHeading } from "@/components/masters/masters-heading";
 import { NewRecordPanel } from "@/components/masters/new-record-panel";
 import { MastersNotice } from "@/components/masters/masters-notice";
@@ -21,7 +22,9 @@ export default async function MastersAccountsPage() {
       </div>
     );
   }
-  const records = listAccountRecords(db, session.user.id);
+  const all = listAccountRecords(db, session.user.id);
+  const records = all.filter((r) => r.archivedAt === null);
+  const archived = all.filter((r) => r.archivedAt !== null);
   return (
     <div className="max-w-3xl">
       <MastersHeading title="自社マスタ" breadcrumb={breadcrumb} />
@@ -67,6 +70,39 @@ export default async function MastersAccountsPage() {
             ))}
           </ul>
         </Card>
+      )}
+
+      {archived.length > 0 && (
+        <details className="mt-4">
+          <summary className="cursor-pointer text-sm text-stone-500 dark:text-slate-400">
+            アーカイブ済み（{archived.length} 件）
+          </summary>
+          <Card className="mt-2 overflow-hidden p-0 opacity-80">
+            <ul className="divide-y divide-paper-line dark:divide-slate-800">
+              {archived.map((r) => (
+                <li key={r.id} className="flex items-center gap-4 px-5 py-3">
+                  <Link to={`/masters/accounts/${r.id}`} className="min-w-0 flex-1">
+                    <p className="font-medium text-stone-500 dark:text-slate-400">
+                      {r.contactName || r.companyName}
+                    </p>
+                    {/* 行名変更前の振込先と見分けられるよう、銀行情報の先頭行を出す */}
+                    {r.bankInfo && (
+                      <p className="truncate text-xs text-stone-500 dark:text-slate-400">
+                        {r.bankInfo.split("\n")[0]}
+                      </p>
+                    )}
+                    {r.archivedAt && (
+                      <p className="font-mono text-xs text-stone-400 dark:text-slate-500">
+                        アーカイブ: {r.archivedAt}
+                      </p>
+                    )}
+                  </Link>
+                  <ArchiveButton kind="accounts" id={r.id} archived={true} />
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </details>
       )}
     </div>
   );

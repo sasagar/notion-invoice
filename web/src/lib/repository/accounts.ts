@@ -156,11 +156,12 @@ export function deleteAccount(db: AppDatabase, ownerId: string, id: string): boo
   return res.changes > 0;
 }
 
-/** 管理画面用の自社レコード（id + sealFileId + 表示用 data URI + 由来を含む）。 */
+/** 管理画面用の自社レコード（id + sealFileId + 表示用 data URI + 由来 + アーカイブ状態を含む）。 */
 export type AccountRecord = AccountFields & {
   id: string;
   sealImageUrl: string | null;
   notionPageId: string | null;
+  archivedAt: string | null;
 };
 
 function mapAccountRecord(row: Record<string, unknown>): AccountRecord {
@@ -175,15 +176,47 @@ function mapAccountRecord(row: Record<string, unknown>): AccountRecord {
     sealFileId: strOrNull(row["seal_file_id"]),
     sealImageUrl: sealDataUri(row["seal_mime_type"], row["seal_data"]),
     notionPageId: strOrNull(row["notion_page_id"]),
+    archivedAt: strOrNull(row["archived_at"]),
   };
 }
 
-/** オーナーの自社情報を id 付きで一覧（管理画面用・会社名昇順）。 */
+/** オーナーの自社情報を id 付きで一覧（管理画面用・会社名昇順。アーカイブ済みも含む）。 */
 export function listAccountRecords(db: AppDatabase, ownerId: string): AccountRecord[] {
   const rows = db
     .prepare(`${ACCOUNT_SELECT} WHERE a.owner_id = ? ORDER BY a.company_name`)
     .all(ownerId);
   return rows.map((r) => mapAccountRecord(asRow(r)));
+}
+
+/** 有効（未アーカイブ）の自社情報のみ id 付きで一覧（エディタの選択肢用・会社名昇順）。 */
+export function listActiveAccountRecords(db: AppDatabase, ownerId: string): AccountRecord[] {
+  const rows = db
+    .prepare(
+      `${ACCOUNT_SELECT} WHERE a.owner_id = ? AND a.archived_at IS NULL ORDER BY a.company_name`,
+    )
+    .all(ownerId);
+  return rows.map((r) => mapAccountRecord(asRow(r)));
+}
+
+/**
+ * アーカイブ状態を設定する（archived=true で日時記録、false で解除）。変更できたら true。
+ * 既にアーカイブ済みの行を再度アーカイブしても日時は上書きしない（最初の日時を保つ）。
+ */
+export function setAccountArchived(
+  db: AppDatabase,
+  ownerId: string,
+  id: string,
+  archived: boolean,
+): boolean {
+  const res = db
+    .prepare(`
+      UPDATE accounts SET
+        archived_at = ${archived ? "COALESCE(archived_at, datetime('now'))" : "NULL"},
+        updated_at = datetime('now')
+      WHERE owner_id = ? AND id = ?
+    `)
+    .run(ownerId, id);
+  return res.changes > 0;
 }
 
 /** id 指定で自社レコードを 1 件取得（編集画面の初期値用・無ければ null）。 */

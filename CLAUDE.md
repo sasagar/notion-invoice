@@ -87,7 +87,7 @@ pnpm run notion:schema  # Notion DB スキーマのダンプ（設計調査用�
 - 請求書: `invoice/list/[page].tsx`（一覧）、`invoice/item/[slug].tsx`（詳細）、`invoice/item/[slug]/edit.tsx`（編集）、`invoice/new.tsx`（新規）
 - マスタ（SQLite 専用）: `masters/index.tsx`、`masters/{customers,accounts,items}.tsx` と各 `[id].tsx`
 - API（`_api/api/`）: `auth/[...all].ts`（better-auth）、`print/*`（PDF）、`notion-credentials.ts`、`files.ts`（印影 UP）、
-  `invoices`（作成/更新/`duplicate`/`status`）、`customers`（CRUD/`archive`）、`accounts`（CRUD/`duplicate`）、`items`（CRUD）
+  `invoices`（作成/更新/`duplicate`/`status`）、`customers`（CRUD/`archive`）、`accounts`（CRUD/`duplicate`/`archive`）、`items`（CRUD）
 - 保護ページは `requireSession()`（未ログインは `/login` へ）
 - `_api/api/mcp.ts`（MCP エンドポイント）、`oauth/consent.tsx`（MCP 接続の同意画面）
 - `pages.gen.ts` は typegen の生成物（手で編集しない）
