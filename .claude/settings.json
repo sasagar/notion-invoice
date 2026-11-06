@@ -9,13 +9,7 @@
       "mcp__deepwiki",
       "mcp__playwright"
     ],
-    "deny": [
-      "Edit",
-      "Glob",
-      "Grep",
-      "Read",
-      "Write"
-    ],
+    "deny": [],
     "ask": []
   },
   "env": {}
