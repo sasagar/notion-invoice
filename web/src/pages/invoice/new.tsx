@@ -1,4 +1,5 @@
 import { InvoiceEditor } from "@/components/invoice-editor";
+import { buildAccountOptions } from "@/lib/account-options";
 import { SqliteOnlyNotice } from "@/components/sqlite-only-notice";
 import { isSqliteBackend } from "@/lib/data/backend";
 import { db } from "@/lib/db";
@@ -20,11 +21,7 @@ export default async function InvoiceNewPage() {
             id: c.id,
             label: c.companyName || c.name,
           }))}
-          accounts={listAccountRecords(db, userId).map((a) => ({
-            id: a.id,
-            // 選択ラベルは担当者名（自社マスタの表示名として流用）。空なら会社名。
-            label: a.contactName || a.companyName,
-          }))}
+          accounts={buildAccountOptions(listAccountRecords(db, userId), "new")}
           items={listItems(db, userId).map((it) => ({
             id: it.id,
             name: it.name,

@@ -9,7 +9,7 @@ import type Database from "better-sqlite3";
 export type AppDatabase = Database.Database;
 
 /** 現在のアプリスキーマ版数。DDL を足すたびに +1 し、下に `if (current < N)` を追加する。 */
-const APP_SCHEMA_VERSION = 4;
+const APP_SCHEMA_VERSION = 5;
 
 // version 0 -> 1: 顧客/自社/項目マスタ・請求書・明細・ファイルの各表を作成。
 // FK の親表を先に作る（SQLite の FK は行挿入時に検証されるが、CREATE 順は
@@ -125,6 +125,13 @@ const SCHEMA_V4 = `
   ALTER TABLE customers ADD COLUMN archived_at TEXT;
 `;
 
+// version 4 -> 5: 自社（振込先）のアーカイブ（NULL=有効、日時=アーカイブ済み）。
+// 銀行の行名変更などで使わなくなった振込先を、過去の請求書に紐付けたまま
+// 新規作成の選択肢から外すためのもの。
+const SCHEMA_V5 = `
+  ALTER TABLE accounts ADD COLUMN archived_at TEXT;
+`;
+
 /**
  * 未適用のアプリスキーマ DDL を順に流し、`user_version` を最新へ進める。
  * 既に最新なら何もしない（起動ごと・スクリプトからの多重呼び出しに対して冪等）。
@@ -147,6 +154,9 @@ export function applyAppSchema(db: AppDatabase): void {
     }
     if (current < 4) {
       db.exec(SCHEMA_V4);
+    }
+    if (current < 5) {
+      db.exec(SCHEMA_V5);
     }
     db.pragma(`user_version = ${APP_SCHEMA_VERSION}`);
   });

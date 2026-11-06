@@ -15,10 +15,11 @@ import { db } from "@/lib/db";
 import { todayInTokyo } from "@/lib/format";
 import { isOverdue } from "@/lib/invoice-list";
 import { firstInvoiceIssue, INVOICE_STATUSES, invoiceSchema } from "@/lib/invoice-schema";
-import { customerSchema, firstIssue, itemSchema } from "@/lib/master-schemas";
+import { accountSchema, customerSchema, firstIssue, itemSchema } from "@/lib/master-schemas";
 import { agentWriteDenialReason } from "@/lib/mcp/policy";
 import { redactFullInvoice, withoutSealImage } from "@/lib/mcp/redact";
 import {
+  createAccount,
   createCustomer,
   createInvoice,
   createItem,
@@ -27,9 +28,11 @@ import {
   getInvoiceEditorByNumber,
   isDuplicateNumberError,
   listAccountRecords,
+  listActiveAccountRecords,
   listActiveCustomerRecords,
   listCustomerRecords,
   listItems,
+  setAccountArchived,
   updateInvoiceById,
   updateInvoiceStatus,
 } from "@/lib/repository";
@@ -37,6 +40,11 @@ import { renderFittedPdf } from "@/pdf";
 
 const SQLITE_ONLY = "この操作は SQLite モード（DATA_BACKEND=sqlite）でのみ利用できます";
 const DUPLICATE_NUMBER = "この請求書番号は既に使われています";
+
+/** MCP の create_account 入力。印影は扱わず（画面で設定）、作成と同時にアーカイブできる。 */
+const accountMcpSchema = accountSchema
+  .omit({ sealFileId: true })
+  .extend({ archived: z.boolean().default(false) });
 
 /** JSON をテキストとして返す成功結果。 */
 function ok(data: unknown): CallToolResult {
@@ -203,13 +211,22 @@ export function createInvoiceMcpServer(userId: string): McpServer {
     "list_accounts",
     {
       title: "自社一覧",
-      description: "自社（発行元）マスタを取得する。請求書作成時の accountId に使う。",
+      description:
+        "自社（発行元・振込先）マスタを取得する。請求書作成時の accountId に使う。" +
+        "既定ではアーカイブ済み（行名変更などで使わなくなった旧振込先）を含めない。" +
+        "過去の請求書を旧振込先に付け替えるときは includeArchived: true で取得する。",
+      inputSchema: { includeArchived: z.boolean().default(false) },
       annotations: readOnly,
     },
-    async () =>
-      isSqliteBackend()
-        ? ok(listAccountRecords(db, userId).map(withoutSealImage))
-        : fail(SQLITE_ONLY),
+    async ({ includeArchived }) => {
+      if (!isSqliteBackend()) {
+        return fail(SQLITE_ONLY);
+      }
+      const records = includeArchived
+        ? listAccountRecords(db, userId)
+        : listActiveAccountRecords(db, userId);
+      return ok(records.map(withoutSealImage));
+    },
   );
 
   server.registerTool(
@@ -374,6 +391,57 @@ export function createInvoiceMcpServer(userId: string): McpServer {
       return parsed.success
         ? ok({ id: createItem(db, userId, parsed.data) })
         : fail(firstIssue(parsed.error));
+    },
+  );
+
+  server.registerTool(
+    "create_account",
+    {
+      title: "自社（振込先）作成",
+      description:
+        "自社（発行元・振込先）マスタを追加する（会社名必須）。印影は画面から設定する。" +
+        "行名変更前の旧振込先を過去の請求書用に登録するときは archived: true にすると、" +
+        "新規作成の選択肢に出ない状態で作成される。",
+      inputSchema: accountMcpSchema,
+      annotations: write,
+    },
+    async (args) => {
+      if (!isSqliteBackend()) {
+        return fail(SQLITE_ONLY);
+      }
+      const parsed = accountMcpSchema.safeParse(args);
+      if (!parsed.success) {
+        return fail(firstIssue(parsed.error));
+      }
+      const { archived, ...fields } = parsed.data;
+      const id = db.transaction(() => {
+        const created = createAccount(db, userId, { ...fields, sealFileId: null });
+        if (archived) {
+          setAccountArchived(db, userId, created, true);
+        }
+        return created;
+      })();
+      return ok({ id, archived });
+    },
+  );
+
+  server.registerTool(
+    "set_account_archived",
+    {
+      title: "自社（振込先）のアーカイブ/復元",
+      description:
+        "自社（振込先）をアーカイブ（archived: true）または復元（false）する。" +
+        "アーカイブしても過去の請求書との紐付けと表示は変わらず、新規作成の選択肢と一覧から外れる。",
+      inputSchema: { id: z.string().min(1), archived: z.boolean() },
+      annotations: { ...write, idempotentHint: true },
+    },
+    async ({ id, archived }) => {
+      if (!isSqliteBackend()) {
+        return fail(SQLITE_ONLY);
+      }
+      return setAccountArchived(db, userId, id, archived)
+        ? ok({ id, archived })
+        : fail("自社（振込先）が見つかりません");
     },
   );
 

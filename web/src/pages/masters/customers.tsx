@@ -6,7 +6,7 @@ import { NewRecordPanel } from "@/components/masters/new-record-panel";
 import { MastersNotice } from "@/components/masters/masters-notice";
 import { isSqliteBackend } from "@/lib/data/backend";
 import { db } from "@/lib/db";
-import { CustomerArchiveButton } from "@/components/masters/customer-archive-button";
+import { ArchiveButton } from "@/components/masters/archive-button";
 import { listCustomerRecords } from "@/lib/repository";
 import { requireSession } from "@/lib/session";
 
@@ -83,7 +83,7 @@ export default async function MastersCustomersPage() {
                       </p>
                     )}
                   </div>
-                  <CustomerArchiveButton id={r.id} archived={true} />
+                  <ArchiveButton kind="customers" id={r.id} archived={true} />
                 </li>
               ))}
             </ul>

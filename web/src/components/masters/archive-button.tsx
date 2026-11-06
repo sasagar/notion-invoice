@@ -4,15 +4,20 @@ import { useState } from "react";
 import { useRouter } from "waku/router/client";
 import { jsonMutate } from "@/components/masters/shared";
 
+/** アーカイブに対応するマスタの API パス（`/api/<kind>/<id>/archive`）。 */
+export type ArchivableKind = "customers" | "accounts";
+
 /**
- * 顧客のアーカイブ/復元ボタン。削除と違い過去の請求書との紐付けは保たれる。
- * アーカイブ済み顧客はエディタの選択肢と通常一覧から外れる。
+ * マスタ（顧客・自社）のアーカイブ/復元ボタン。削除と違い過去の請求書との紐付けは保たれる。
+ * アーカイブ済みのレコードは新規作成の選択肢と通常一覧から外れる。
  */
-export function CustomerArchiveButton({
+export function ArchiveButton({
+  kind,
   id,
   archived,
   className = "",
 }: {
+  kind: ArchivableKind;
   id: string;
   archived: boolean;
   className?: string;
@@ -24,7 +29,7 @@ export function CustomerArchiveButton({
   const toggle = async () => {
     setBusy(true);
     setError("");
-    const res = await jsonMutate(`/api/customers/${id}/archive`, "POST", { archived: !archived });
+    const res = await jsonMutate(`/api/${kind}/${id}/archive`, "POST", { archived: !archived });
     setBusy(false);
     if (res.ok) {
       router.reload();
